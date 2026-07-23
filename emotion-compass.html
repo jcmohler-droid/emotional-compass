@@ -233,7 +233,7 @@ window.addEventListener('error', function(e){
         <div class="big-grid" id="toddlerCoping"></div>
         <button class="refresh-btn" id="toddlerCopingRefresh">🔄 More options</button>
         <div class="affirm hidden" id="toddlerAffirm"></div>
-        <div class="share-box hidden" id="shareAmelia"></div>
+        <div class="share-box hidden" id="shareSimple"></div>
         <button class="reset-link" id="toddlerReset">Pick a different feeling</button>
       </div>
     </section>
@@ -294,7 +294,7 @@ window.addEventListener('error', function(e){
         </div>
 
         <div class="affirm hidden" id="qcAffirm"></div>
-        <div class="share-box hidden" id="shareCharlieQuick"></div>
+        <div class="share-box hidden" id="shareQuickBox"></div>
         <button class="reset-link" id="qcReset">Start over</button>
       </section>
     </div>
@@ -1071,8 +1071,8 @@ function showToddlerResult(f){
   document.getElementById('toddlerResult').classList.remove('hidden');
   document.getElementById('toddlerAffirm').classList.add('hidden');
   document.getElementById('toddlerAffirm').textContent = '';
-  document.getElementById('shareAmelia').classList.remove('hidden');
-  shareAmelia.update("I'm feeling " + f.label + ' ' + f.emoji + '.');
+  document.getElementById('shareSimple').classList.remove('hidden');
+  shareSimple.update("I'm feeling " + f.label + ' ' + f.emoji + '.');
 
   const copingGrid = document.getElementById('toddlerCoping');
   const refreshBtn = document.getElementById('toddlerCopingRefresh');
@@ -1091,7 +1091,7 @@ function showToddlerResult(f){
         const affirm = document.getElementById('toddlerAffirm');
         affirm.textContent = "Let's " + c.phrase + ' together! 🎉';
         affirm.classList.remove('hidden');
-        shareAmelia.update("I'm feeling " + f.label + ' ' + f.emoji + ".\nI'd like to " + c.phrase + '.');
+        shareSimple.update("I'm feeling " + f.label + ' ' + f.emoji + ".\nI'd like to " + c.phrase + '.');
       });
       copingGrid.appendChild(btn);
     });
@@ -1114,7 +1114,7 @@ function showToddlerResult(f){
 }
 document.getElementById('toddlerReset').addEventListener('click', () => {
   document.getElementById('toddlerResult').classList.add('hidden');
-  document.getElementById('shareAmelia').classList.add('hidden');
+  document.getElementById('shareSimple').classList.add('hidden');
 });
 
 /* ============================================================
@@ -1147,7 +1147,7 @@ function pickQCFeeling(id){
   document.getElementById('itmStep3').classList.add('hidden');
   document.getElementById('itmStep4').classList.add('hidden');
   document.getElementById('qcAffirm').classList.add('hidden');
-  document.getElementById('shareCharlieQuick').classList.add('hidden');
+  document.getElementById('shareQuickBox').classList.add('hidden');
 }
 function renderIntensityStep(coreId){
   const row = document.getElementById('itmIntensity');
@@ -1198,7 +1198,7 @@ function showActionStep(){
       affirm.innerHTML = '<div>' + CATEGORY_ENCOURAGEMENT[key] + '</div>' +
         '<div style="margin-top:6px;font-weight:400;">' + action.emoji + ' ' + action.label + '</div>';
       affirm.classList.remove('hidden');
-      refreshShareCharlieQuick();
+      refreshShareQuickBox();
     });
     row.appendChild(btn);
   });
@@ -1208,18 +1208,18 @@ function showActionStep(){
     affirm.innerHTML = '<div>' + (CATEGORY_ENCOURAGEMENT[key] || "Good call.") + '</div>' +
       '<div style="margin-top:6px;font-weight:400;">' + itmState.action.emoji + ' ' + itmState.action.label + '</div>';
     affirm.classList.remove('hidden');
-    refreshShareCharlieQuick();
+    refreshShareQuickBox();
   }
 }
-function refreshShareCharlieQuick(){
-  const box = document.getElementById('shareCharlieQuick');
+function refreshShareQuickBox(){
+  const box = document.getElementById('shareQuickBox');
   if(!itmState.core){ box.classList.add('hidden'); return; }
   const core = CORE_FULL.find(c => c.id === itmState.core);
   let text = 'Feeling: ' + core.label + (itmState.intensity ? ' (' + itmState.intensity + ')' : '');
   text += '\nNeed: ' + NEEDS[itmState.core];
   if(itmState.action) text += '\nIt might help to ' + itmState.action.phrase + '.';
   box.classList.remove('hidden');
-  shareCharlieQuick.update(text);
+  shareQuickBox.update(text);
 }
 
 document.getElementById('qcFinderToggle').addEventListener('click', () => {
@@ -1234,7 +1234,7 @@ document.getElementById('qcReset').addEventListener('click', () => {
   document.getElementById('qcFinder').classList.add('hidden');
   updateFinderSuggestions();
   document.getElementById('qcAffirm').classList.add('hidden');
-  document.getElementById('shareCharlieQuick').classList.add('hidden');
+  document.getElementById('shareQuickBox').classList.add('hidden');
 });
 
 /* ---- "I don't know" finder (shared entry point into Step 1) ---- */
@@ -1541,8 +1541,8 @@ function renderActionsReference(coreId){
 /* ============================================================
    INIT
 ============================================================ */
-const shareAmelia = createShareBlock(document.getElementById('shareAmelia'));
-const shareCharlieQuick = createShareBlock(document.getElementById('shareCharlieQuick'));
+const shareSimple = createShareBlock(document.getElementById('shareSimple'));
+const shareQuickBox = createShareBlock(document.getElementById('shareQuickBox'));
 
 renderToddlerGrid();
 renderQCFeelingGrid();
@@ -1550,5 +1550,6 @@ renderFinder();
 renderReferences();
 drawWheel(document.getElementById('wheelFull'), CORE_FULL, selectExploreCore);
 </script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a519781de9904b64bd0fd0994894a3f9"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
