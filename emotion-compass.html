@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emotional OS</title>
+<style>
+  :root{
+    --bg:#faf7f2;
+    --card:#ffffff;
+    --ink:#2e2b28;
+    --muted:#6b655e;
+    --line:#e7e0d6;
+    --accent:#4a5a48;
+  }
+  *{box-sizing:border-box;}
+  .hidden{display:none !important;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.5;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+  header h1{font-size:1.8rem;margin-bottom:4px;}
+  header .tagline{color:var(--accent);font-weight:600;font-size:0.95rem;margin:0 0 8px;}
+  header p{color:var(--muted);max-width:680px;}
+  section.card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:24px;
+    margin-top:24px;
+  }
+  h2{font-size:1.15rem;margin-top:0;}
+  .hint{color:var(--muted);font-size:0.9rem;margin-top:-6px;margin-bottom:16px;}
+  .kid-note{background:#f4f2ea;border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:0.88rem;color:var(--muted);margin-bottom:18px;}
+
+  /* top-level tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;}
+  .tab-btn{
+    border:1px solid var(--line);background:#fff;border-radius:999px;
+    padding:10px 18px;font-size:0.95rem;cursor:pointer;font-weight:600;color:var(--muted);
+  }
+  .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .subtabs{display:flex;gap:8px;margin-bottom:18px;}
+  .subtab-btn{
+    border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:8px 14px;font-size:0.9rem;cursor:pointer;color:var(--muted);
+  }
+  .subtab-btn.active{background:#eef1ea;border-color:var(--accent);color:var(--ink);font-weight:600;}
+  .subtab-panel{display:none;}
+  .subtab-panel.active{display:block;}
+
+  /* checklist chips (body sensations, situation tags) */
+  .region{margin-bottom:14px;}
+  .region h3{font-size:0.85rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin:0 0 8px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+  label.chip{
+    border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:999px;
+    font-size:0.9rem;cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;
+  }
+  label.chip input{margin:0;}
+  label.chip.checked{background:#eef1ea;border-color:var(--accent);}
+  .suggest-btn{border:none;border-radius:999px;padding:8px 14px;margin:4px 6px 4px 0;cursor:pointer;font-size:0.9rem;color:#fff;}
+
+  /* wheel (shared look) */
+  .wheel-area{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;}
+  svg.wheel-svg path{cursor:pointer;transition:opacity .15s;}
+  svg.wheel-svg path:hover{opacity:0.85;}
+  svg.wheel-svg text{font-size:15px;font-weight:600;fill:#fff;pointer-events:none;}
+  .drill{flex:1 1 260px;min-width:240px;}
+  .breadcrumb{font-size:0.95rem;color:var(--muted);margin-bottom:10px;min-height:1.3em;}
+  .breadcrumb b{color:var(--ink);}
+  .chip-btn{
+    border:1px solid var(--line);background:#fff;border-radius:10px;
+    padding:8px 12px;margin:0 8px 8px 0;cursor:pointer;font-size:0.92rem;text-align:left;
+  }
+  .chip-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* info / output card */
+  .info-card{margin-top:14px;padding-top:16px;border-top:1px dashed var(--line);}
+  .info-card .head{display:flex;align-items:center;gap:12px;}
+  .info-card .emoji{font-size:2.4rem;}
+  .info-card .word{font-size:1.3rem;font-weight:700;}
+  .info-row{margin-top:12px;}
+  .info-row .label{font-size:0.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:4px;}
+  .learn-more-btn{background:none;border:none;color:var(--accent);font-size:0.85rem;cursor:pointer;padding:6px 0 0;text-decoration:underline;display:block;}
+
+  /* Simple mode */
+  .big-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;}
+  .face-btn{
+    border:none;border-radius:16px;padding:22px 10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;
+    font-size:1.05rem;font-weight:700;
+  }
+  .face-btn .emoji{font-size:2.6rem;}
+  .face-btn.selected{outline:4px solid var(--ink);}
+  .result-panel{margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);text-align:center;}
+  .result-panel.hidden{display:none;}
+  .result-panel .big-emoji{font-size:4rem;}
+  .result-panel .big-word{font-size:1.6rem;font-weight:700;margin-top:4px;}
+  .coping-btn{
+    border:2px solid var(--line);background:#fff;border-radius:14px;padding:16px 10px;
+    cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:0.95rem;font-weight:600;
+  }
+  .coping-btn.selected{border-color:var(--accent);background:#eef1ea;}
+  .coping-btn .emoji{font-size:2rem;}
+  .affirm{
+    margin-top:16px;background:#eef1ea;border-radius:12px;padding:14px 16px;font-size:1.05rem;font-weight:600;color:var(--accent);
+  }
+  .affirm.hidden{display:none;}
+  .reset-link{
+    background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.85rem;margin-top:14px;
+  }
+
+  /* In the Moment */
+  .qc-step{margin-bottom:26px;}
+  .qc-step h3{font-size:0.9rem;color:var(--muted);margin:0 0 10px;text-transform:uppercase;letter-spacing:.03em;}
+  .size-btn{
+    flex:1;border:2px solid var(--line);border-radius:12px;padding:16px;background:#fff;cursor:pointer;
+    font-weight:700;text-align:center;
+  }
+  .size-btn.selected{border-color:var(--accent);background:#eef1ea;}
+  .skip-btn{
+    border:1px dashed var(--line);background:#fff;color:var(--muted);border-radius:10px;
+    padding:8px 14px;cursor:pointer;font-size:0.9rem;
+  }
+
+  /* Finder */
+  .finder-panel{margin-top:14px;padding:16px;background:#f9f7f2;border:1px dashed var(--line);border-radius:12px;}
+  .finder-block{margin-bottom:18px;}
+  .finder-block:last-child{margin-bottom:0;}
+  .finder-label{font-size:0.85rem;font-weight:600;color:var(--ink);margin-bottom:8px;}
+
+  /* share */
+  .share-box{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);}
+  .share-box .label{font-size:0.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:6px;}
+  .share-box textarea{
+    width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;
+    font-family:inherit;font-size:0.92rem;resize:vertical;margin-bottom:10px;
+  }
+  .share-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .share-actions a, .share-actions button{
+    border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:8px 14px;font-size:0.88rem;cursor:pointer;text-decoration:none;color:var(--ink);
+  }
+  .share-status{font-size:0.8rem;color:var(--muted);}
+
+  .refresh-btn{
+    display:inline-block;margin-top:10px;border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:8px;padding:8px 14px;font-size:0.88rem;cursor:pointer;
+  }
+  .refresh-btn:disabled{opacity:0.35;cursor:not-allowed;}
+
+  /* Explore drill-down: numbered, visually distinct steps */
+  .explore-step{
+    border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:0 10px 10px 0;padding:12px 14px 14px;margin-bottom:14px;background:#fdfcfa;
+  }
+  .explore-step .step-label{
+    font-size:0.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);
+    font-weight:700;margin-bottom:8px;
+  }
+  .intensity-chip{
+    border-radius:999px;font-weight:700;border-width:2px;
+  }
+  .tertiary-wrap{
+    margin:10px 0 0 14px;padding:2px 0 2px 14px;border-left:2px solid var(--line);
+  }
+  .tertiary-wrap .chip-btn{font-size:0.86rem;background:#f4f2ea;}
+  .explore-hint{color:var(--muted);font-size:0.85rem;margin:0 0 4px;}
+
+  /* needs / actions / combos / reflect / about */
+  .need-card{background:#f4f2ea;border-radius:10px;padding:12px 14px;font-size:0.98rem;}
+  .action-category{margin-bottom:16px;}
+  .action-category h4{font-size:0.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin:0 0 8px;}
+  .action-chip{cursor:default;}
+  .combo-card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .combo-card .top{font-weight:700;margin-bottom:4px;}
+  .reflect-list{margin:6px 0 12px;padding-left:20px;}
+  .reflect-list li{margin-bottom:6px;}
+  .scratch-area{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px;font-family:inherit;font-size:0.92rem;resize:vertical;}
+  .ref-item{margin-bottom:18px;}
+  .ref-item .name{font-weight:700;margin-bottom:4px;}
+  .cause-note{font-size:0.85rem;color:var(--muted);margin-top:6px;}
+</style>
+</head>
+<body>
+<script>
+/* Visible error banner — registered in its own early script tag so that
+   even if the big script below fails to parse/run for any reason (which
+   would otherwise fail completely silently inside a native app wrapper
+   with no console), the failure shows up right on the page instead of
+   just presenting a blank, non-interactive screen. */
+window.addEventListener('error', function(e){
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c2544c;color:#fff;'+
+    'padding:10px 14px;font:12px/1.4 -apple-system,monospace;z-index:99999;white-space:pre-wrap;';
+  banner.textContent = 'Script error: ' + e.message + ' (line ' + e.lineno + ', col ' + e.colno + ')';
+  function attach(){ document.body.appendChild(banner); }
+  if(document.body) attach(); else document.addEventListener('DOMContentLoaded', attach);
+});
+</script>
+<div class="wrap">
+
+  <header>
+    <h1>Emotional OS</h1>
+    <p class="tagline">Notice · Understand · Communicate · Regulate · Learn</p>
+    <p>Two ways to use it: a simple version for younger kids, and a fuller version for better readers and adults, with both a fast in-the-moment mode and a slower explore mode inside it. Nothing here saves or tracks anything — it resets each time you open it.</p>
+    <div class="tabs">
+      <button class="tab-btn active" data-target="panel-little">Simple</button>
+      <button class="tab-btn" data-target="panel-full">Full</button>
+      <button class="tab-btn" data-target="panel-about">About</button>
+    </div>
+  </header>
+
+  <!-- ============ SIMPLE ============ -->
+  <div class="tab-panel active" id="panel-little">
+    <section class="card">
+      <h2>How do you feel right now?</h2>
+      <p class="hint">Tap the face that matches.</p>
+      <div class="big-grid" id="toddlerGrid"></div>
+
+      <div class="result-panel hidden" id="toddlerResult">
+        <div class="big-emoji" id="toddlerEmoji"></div>
+        <div class="big-word" id="toddlerWord"></div>
+        <p class="hint" style="margin-top:16px;">What would help right now?</p>
+        <div class="big-grid" id="toddlerCoping"></div>
+        <button class="refresh-btn" id="toddlerCopingRefresh">🔄 More options</button>
+        <div class="affirm hidden" id="toddlerAffirm"></div>
+        <div class="share-box hidden" id="shareAmelia"></div>
+        <button class="reset-link" id="toddlerReset">Pick a different feeling</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ FULL ============ -->
+  <div class="tab-panel" id="panel-full">
+    <div class="subtabs">
+      <button class="subtab-btn active" data-sub="sub-quick">In the Moment</button>
+      <button class="subtab-btn" data-sub="sub-calm">Explore</button>
+    </div>
+
+    <!-- IN THE MOMENT -->
+    <div class="subtab-panel active" id="sub-quick">
+      <section class="card">
+        <p class="kid-note">Fast and simple, meant for right when a feeling hits — five short steps, about 30 seconds. Every step is skippable.</p>
+
+        <div class="qc-step" id="itmStep1">
+          <h3>What's happening?</h3>
+          <div class="chip-row" id="qcFeelingGrid"></div>
+          <button class="skip-btn" id="qcFinderToggle" style="margin-top:10px;">Not sure — help me figure it out</button>
+
+          <div class="finder-panel hidden" id="qcFinder">
+            <div class="finder-block">
+              <div class="finder-label">Energy level</div>
+              <div class="chip-row" id="finderEnergy"></div>
+            </div>
+            <div class="finder-block">
+              <div class="finder-label">Body sensations (check any that fit)</div>
+              <div id="finderBody"></div>
+            </div>
+            <div class="finder-block">
+              <div class="finder-label">What's going on (check any that fit)</div>
+              <div class="chip-row" id="finderSituation"></div>
+            </div>
+            <div class="finder-block">
+              <div class="finder-label">Feelings this might be</div>
+              <div id="finderSuggestList"></div>
+              <p class="hint" id="finderEmptyHint" style="margin:4px 0 0;">Check off anything above to see suggestions.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="qc-step hidden" id="itmStep2">
+          <h3>How intense?</h3>
+          <div class="chip-row" id="itmIntensity"></div>
+        </div>
+
+        <div class="qc-step hidden" id="itmStep3">
+          <h3>What do you need?</h3>
+          <div class="need-card" id="itmNeed"></div>
+        </div>
+
+        <div class="qc-step hidden" id="itmStep4">
+          <h3>Choose one action</h3>
+          <p class="hint" style="margin:-4px 0 10px;">Matched to how intense this feels right now — change "How intense?" above and these will update.</p>
+          <div class="chip-row" id="itmActions"></div>
+        </div>
+
+        <div class="affirm hidden" id="qcAffirm"></div>
+        <div class="share-box hidden" id="shareCharlieQuick"></div>
+        <button class="reset-link" id="qcReset">Start over</button>
+      </section>
+    </div>
+
+    <!-- EXPLORE -->
+    <div class="subtab-panel" id="sub-calm">
+      <section class="card">
+        <p class="kid-note">A calmer, learning-focused mode — not meant for the middle of a hard moment. Good for exploring a feeling after it's passed, or just out of curiosity.</p>
+        <div class="wheel-area">
+          <svg class="wheel-svg" id="wheelFull" width="320" height="320" viewBox="0 0 320 320"></svg>
+          <div class="drill">
+            <div class="breadcrumb" id="exploreBreadcrumb">Tap a feeling on the wheel.</div>
+
+            <div class="explore-step hidden" id="exploreStepIntensity">
+              <div class="step-label">1 · How intense</div>
+              <div class="chip-row" id="exploreIntensityRow"></div>
+            </div>
+
+            <div class="explore-step hidden" id="exploreStepSecondary">
+              <div class="step-label" id="exploreSecondaryLabel">2 · More specific</div>
+              <div class="chip-row" id="exploreSecondary"></div>
+              <div class="tertiary-wrap hidden" id="exploreTertiaryWrap">
+                <div class="step-label">3 · Most specific</div>
+                <div class="chip-row" id="exploreTertiary"></div>
+              </div>
+            </div>
+
+            <div id="exploreOutput"></div>
+            <div id="exploreCauses"></div>
+            <div id="exploreNeed"></div>
+            <div id="exploreReflect"></div>
+            <div id="exploreCombos"></div>
+            <div id="exploreActions"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ ABOUT ============ -->
+  <div class="tab-panel" id="panel-about">
+    <section class="card">
+      <h2>The research behind this</h2>
+      <p class="hint">This tool borrows and simplifies ideas from several researchers and frameworks. The "emotional combinations" in Explore are inspired by Plutchik's idea that emotions blend, but adapted to this tool's own set of eight feelings rather than reproducing his original wheel exactly. Worth reading the originals if you want the full picture.</p>
+      <div id="referenceList"></div>
+    </section>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   SHARED SVG HELPERS
+============================================================ */
+function polarToCartesian(cx, cy, r, angleDeg){
+  const a = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+}
+function describeArc(cx, cy, rOuter, rInner, startAngle, endAngle){
+  const startOuter = polarToCartesian(cx, cy, rOuter, endAngle);
+  const endOuter   = polarToCartesian(cx, cy, rOuter, startAngle);
+  const startInner = polarToCartesian(cx, cy, rInner, endAngle);
+  const endInner   = polarToCartesian(cx, cy, rInner, startAngle);
+  const largeArc = (endAngle - startAngle) <= 180 ? 0 : 1;
+  return [
+    'M', startOuter.x, startOuter.y,
+    'A', rOuter, rOuter, 0, largeArc, 0, endOuter.x, endOuter.y,
+    'L', endInner.x, endInner.y,
+    'A', rInner, rInner, 0, largeArc, 1, startInner.x, startInner.y,
+    'Z'
+  ].join(' ');
+}
+function drawWheel(svgEl, items, onClick){
+  svgEl.innerHTML = '';
+  const cx = 160, cy = 160, rOuter = 150, rInner = 60;
+  const n = items.length;
+  const step = 360 / n;
+  items.forEach((item, i) => {
+    const start = i * step, end = start + step;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', describeArc(cx, cy, rOuter, rInner, start, end));
+    path.setAttribute('fill', item.color);
+    path.setAttribute('id', svgEl.id + '_wedge_' + item.id);
+    path.addEventListener('click', () => onClick(item.id));
+    svgEl.appendChild(path);
+
+    const mid = (start + end) / 2;
+    const pos = polarToCartesian(cx, cy, (rOuter+rInner)/2, mid);
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x', pos.x);
+    text.setAttribute('y', pos.y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.textContent = item.label;
+    svgEl.appendChild(text);
+  });
+}
+function highlightWedge(svgEl, items, activeId){
+  items.forEach(item => {
+    const el = document.getElementById(svgEl.id + '_wedge_' + item.id);
+    if(!el) return;
+    el.style.opacity = (activeId === null || activeId === item.id) ? '1' : '0.45';
+    el.style.stroke = (activeId === item.id) ? '#2e2b28' : 'none';
+    el.style.strokeWidth = (activeId === item.id) ? '3' : '0';
+  });
+}
+
+/* ============================================================
+   SHARE WIDGET
+============================================================ */
+function legacyCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  if(cb) cb();
+}
+function createShareBlock(container){
+  container.innerHTML =
+    '<div class="label">Share this</div>' +
+    '<textarea rows="3"></textarea>' +
+    '<div class="share-actions">' +
+      '<button type="button" class="copy-btn">Copy</button>' +
+      '<a class="sms-btn" href="#">Text</a>' +
+      '<a class="email-btn" href="#">Email</a>' +
+      '<button type="button" class="native-btn hidden">Share…</button>' +
+    '</div>' +
+    '<span class="share-status"></span>';
+
+  const textarea = container.querySelector('textarea');
+  const smsBtn = container.querySelector('.sms-btn');
+  const emailBtn = container.querySelector('.email-btn');
+  const copyBtn = container.querySelector('.copy-btn');
+  const nativeBtn = container.querySelector('.native-btn');
+  const status = container.querySelector('.share-status');
+  let lastAuto = '';
+
+  function refreshLinks(){
+    const val = textarea.value;
+    const encoded = encodeURIComponent(val);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    smsBtn.href = isIOS ? ('sms:&body=' + encoded) : ('sms:?body=' + encoded);
+    emailBtn.href = 'mailto:?subject=' + encodeURIComponent('Feelings check-in') + '&body=' + encoded;
+  }
+  textarea.addEventListener('input', refreshLinks);
+
+  function showCopied(){
+    status.textContent = 'Copied!';
+    setTimeout(() => { status.textContent=''; }, 2000);
+  }
+  copyBtn.addEventListener('click', () => {
+    const val = textarea.value;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(val).then(showCopied, () => legacyCopy(val, showCopied));
+    } else {
+      legacyCopy(val, showCopied);
+    }
+  });
+
+  if(navigator.share && window.isSecureContext){
+    nativeBtn.classList.remove('hidden');
+    nativeBtn.addEventListener('click', () => {
+      navigator.share({ text: textarea.value }).catch(() => {});
+    });
+  }
+
+  return {
+    update(text){
+      if(textarea.value === lastAuto || textarea.value.trim() === ''){
+        textarea.value = text;
+      }
+      lastAuto = text;
+      refreshLinks();
+    }
+  };
+}
+
+/* ============================================================
+   TAB SWITCHING
+============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
+document.querySelectorAll('.subtab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.sub).classList.add('active');
+  });
+});
+
+/* ============================================================
+   CORE FEELING DATA (shared by In the Moment + Explore)
+   8 families: Happy, Sad, Angry, Anxious, Disgusted, Surprised,
+   Calm, Numb. Each has secondary/tertiary words for specificity
+   (with short + expanded text for progressive disclosure), plus
+   a short body-sensation line and (for Explore) a conversation-
+   starter line.
+============================================================ */
+function t(word, def){ return { word: word, def: def }; }
+
+const CORE_FULL = [
+  {id:'happy', label:'Happy', emoji:'🙂', color:'#d9a441',
+    talk:"If you feel like sharing — what's behind it?",
+    body:'lighter chest, more energy, easier to smile',
+    secondary:[
+      {label:'Content', band:'mild', short:'Things feel okay.',
+        desc:"A settled, satisfied ease with things as they are.",
+        nuance:"Satisfied is about having enough; Relaxed is your body letting go of tension; Comfortable is feeling safe and at ease in the situation itself.",
+        tertiary:[t('Satisfied','Your needs or expectations have been met — nothing more required right now.'), t('Relaxed','Your body and mind have eased off tension; nothing urgent pulling at you.'), t('Comfortable',"At ease with your surroundings or situation — nothing to guard against.")]},
+      {label:'Cheerful', band:'moderate', short:'Light and easily amused.',
+        desc:"Light, bright, easily amused.",
+        nuance:"Delighted is a spike of pleasure at something specific; Lighthearted is a general lightness with nothing weighing on you; Amused is the reaction to something entertaining or funny.",
+        tertiary:[t('Delighted','A bright burst of pleasure at something specific that just happened.'), t('Lighthearted','Free of worry for the moment — everything feels a little easier.'), t('Amused','Entertained or tickled by something, often with a smile or laugh.')]},
+      {label:'Proud', band:'strong', short:'You did something well.',
+        desc:"Recognizing your own worth or accomplishment.",
+        nuance:"Confident looks forward to what you can do next; Accomplished looks back at something completed; Worthy is a broader sense of deserving good things, not tied to one event.",
+        tertiary:[t('Confident','Sure of your own ability to handle what\'s ahead.'), t('Accomplished','Recognizing you finished or achieved something that took effort.'), t('Worthy','Feeling deserving of good things or respect, independent of any one achievement.')]},
+      {label:'Optimistic', band:'mild', short:'Good things feel possible.',
+        desc:"Looking forward with hope.",
+        nuance:"Hopeful is about expecting good things; Inspired is being sparked into action by something; Eager is the impatience to get started right now.",
+        tertiary:[t('Hopeful','Expecting something good is possible, even without certainty.'), t('Inspired','Moved to act or create by something you just saw, heard, or felt.'), t('Eager','Impatient in a good way — ready and wanting to start.')]},
+      {label:'Excited', band:'strong', short:'Charged up and eager.',
+        desc:"High-energy anticipation or delight.",
+        nuance:"Energetic is about physical charge; Elated is an emotional lift, usually from something specific; Ecstatic is elation turned up as far as it goes.",
+        tertiary:[t('Energetic','Physically charged up, ready to move.'), t('Elated','A strong lift in mood, often from good news.'), t('Ecstatic','Overwhelming joy — at or near the top of the scale.')]},
+      {label:'Loving', band:'mild', short:'Warm toward someone.',
+        desc:"Warmth and connection toward someone or something.",
+        nuance:"Affectionate is warmth you express outward; Grateful is warmth in response to something given to you; Tender is a gentler, more protective warmth.",
+        tertiary:[t('Affectionate','Warmth expressed outward — wanting to show someone you care.'), t('Grateful','Recognizing something good you received and appreciating it.'), t('Tender','A soft, careful warmth, often toward someone vulnerable or in need of care.')]}
+    ]},
+  {id:'sad', label:'Sad', emoji:'😔', color:'#4d6d9a',
+    talk:"No pressure to explain — I'm around if you want company or space.",
+    body:'heavy chest, low energy, tears close to the surface',
+    secondary:[
+      {label:'Lonely', band:'mild', short:'Wanting closeness.',
+        desc:"Disconnected from others, wanting closeness.",
+        nuance:"Isolated is about being cut off, regardless of why; Abandoned carries the sense someone left you specifically; Excluded is being left out of a group on purpose.",
+        tertiary:[t('Isolated','Cut off from others, whether or not anyone intended that.'), t('Abandoned','Left behind by someone who was supposed to stay.'), t('Excluded','Deliberately left out of something others are part of.')]},
+      {label:'Hurt', band:'moderate', short:'Something let you down.',
+        desc:"Pain from disappointment or rejection.",
+        nuance:"Disappointed is a letdown about an outcome; Rejected is specifically about not being wanted by someone; Devastated is either of those at an overwhelming intensity.",
+        tertiary:[t('Disappointed','Something you hoped for didn\'t happen the way you wanted.'), t('Rejected','Told or shown, directly or indirectly, that you\'re not wanted.'), t('Devastated','Hurt so large it\'s hard to function normally right now.')]},
+      {label:'Depressed', band:'strong', short:'Heavy and low.',
+        desc:"Heavy, low, drained of energy or hope.",
+        nuance:"Empty is about absence — something missing; Hopeless is a belief about the future; Heavy is the physical, effortful weight of the mood itself.",
+        tertiary:[t('Empty','A hollowed-out feeling — like something\'s missing, without a clear picture of what.'), t('Hopeless',"Believing things won't get better, no matter what you do."), t('Heavy','Weighed down, like everything takes more effort than it should.')]},
+      {label:'Grieving', band:'moderate', short:'Missing what\'s gone.',
+        desc:"Mourning a loss, longing for what's gone.",
+        nuance:"Longing is the ache to have it back; Nostalgic is the bittersweet memory itself; Mournful is the outward sorrow of grieving the loss.",
+        tertiary:[t('Longing',"An active ache to have back something or someone that's gone."), t('Nostalgic','A bittersweet pull toward a memory — warm and sad at once.'), t('Mournful','Openly sorrowful about a loss, often with an outward expression of grief.')]},
+      {label:'Vulnerable', band:'mild', short:'Feeling unprotected.',
+        desc:"Exposed, unprotected, unsteady.",
+        nuance:"Fragile is about how delicate you feel; Insecure is about doubting your own footing or worth; Helpless is lacking any power to act on the situation.",
+        tertiary:[t('Fragile',"Feeling like it wouldn't take much to break you right now."), t('Insecure','Unsure of your own footing, worth, or safety.'), t('Helpless',"Feeling like there's nothing you can do to change the situation.")]}
+    ]},
+  {id:'angry', label:'Angry', emoji:'😠', color:'#c2544c',
+    talk:"Totally fine to just be angry for a bit before talking about why.",
+    body:'tight jaw, hot face, fast heartbeat',
+    secondary:[
+      {label:'Irritated', band:'mild', short:'A low simmer.',
+        desc:"A low simmer of frustration.",
+        nuance:"Annoyed is a mild, nagging irritation; Impatient is about wanting time to move faster; Frustrated is specifically about being blocked from a goal.",
+        tertiary:[t('Annoyed','A small, persistent irritation — nothing large, just grating.'), t('Impatient','Wanting something to happen or end sooner than it is.'), t('Frustrated',"Blocked from something you want or need, and it's wearing on you.")]},
+      {label:'Resentful', band:'moderate', short:'Unfairness that lingers.',
+        desc:"Lingering unfairness that hasn't been resolved.",
+        nuance:"Bitter is resentment that has hardened over time; Betrayed is about a specific broken trust; Jealous is about wanting what someone else has, or fearing you'll lose it to them.",
+        tertiary:[t('Bitter','A hardened resentment that\'s built up over time.'), t('Betrayed','Someone you trusted broke that trust.'), t('Jealous','Wanting something someone else has, or fearing losing something to them.')]},
+      {label:'Hostile', band:'strong', short:'Sharp anger outward.',
+        desc:"Sharp, combative anger aimed outward.",
+        nuance:"Hateful is intense ill will; Vengeful is wanting to get back at someone specifically; Contemptuous is looking down on them rather than wanting to strike back.",
+        tertiary:[t('Hateful','Intense, sustained ill will toward someone or something.'), t('Vengeful','Wanting to make someone pay for what they did.'), t('Contemptuous','Looking down on someone as beneath you or undeserving of respect.')]},
+      {label:'Aggravated', band:'moderate', short:'Pushed past your limit.',
+        desc:"Pushed past your limit.",
+        nuance:"Agitated is the restless physical edge of it; Exasperated is being worn down by a repeated problem; Provoked points to someone else's action as the trigger.",
+        tertiary:[t('Agitated','Physically restless and on edge, hard to sit still with it.'), t('Exasperated','Worn down by something that keeps happening despite your efforts.'), t('Provoked','Pushed into this feeling by something someone else did.')]},
+      {label:'Humiliated', band:'strong', short:'Made to feel small.',
+        desc:"Anger mixed with being belittled.",
+        nuance:"Disrespected is about a lack of basic consideration; Ridiculed is specifically being mocked; Belittled is being made to feel small, without necessarily being mocked outright.",
+        tertiary:[t('Disrespected',"Treated as though you don't deserve basic consideration."), t('Ridiculed','Mocked or made fun of, often in front of others.'), t('Belittled','Made to feel smaller or less capable than you are.')]}
+    ]},
+  {id:'anxious', label:'Anxious', emoji:'😟', color:'#7c5c9c',
+    talk:"You don't have to know why yet — want to try grounding first?",
+    body:'tight stomach, racing thoughts, shallow breathing',
+    secondary:[
+      {label:'Worried', band:'mild', short:'Expecting something to go wrong.',
+        desc:"Uneasy anticipation of something going wrong.",
+        nuance:"Nervous has a physical, jittery quality tied to something upcoming; Uneasy is vaguer, without a clear cause; Apprehensive is dread pointed at a specific outcome you can picture.",
+        tertiary:[t('Nervous','Jittery anticipation, often with physical restlessness, about something coming up.'), t('Uneasy',"A vague sense that something isn't right, without a clear cause."), t('Apprehensive','Specifically dreading a particular outcome you can picture.')]},
+      {label:'Insecure', band:'mild', short:'Unsure of your footing.',
+        desc:"Unsure of your footing or standing.",
+        nuance:"Inadequate is about not measuring up; Exposed is about feeling unprotected or too visible; Threatened is sensing an actual risk to something you value.",
+        tertiary:[t('Inadequate',"Feeling like you don't measure up to what's needed."), t('Exposed','Feeling seen in a way that leaves you unprotected.'), t('Threatened','Sensing something is at risk — your safety, standing, or sense of self.')]},
+      {label:'Overwhelmed', band:'strong', short:'Too much at once.',
+        desc:"Too much at once, hard to think straight.",
+        nuance:"Panicked is the sudden surge itself; Trapped is about lacking an exit; Frantic is the scattered, rushed behavior that can follow either.",
+        tertiary:[t('Panicked',"A sudden, intense surge of fear that's hard to think through."), t('Trapped',"Feeling like there's no way out of the situation."), t('Frantic','Rushed and scattered, trying to do too many things to cope.')]},
+      {label:'Suspicious', band:'mild', short:'Something feels off.',
+        desc:"Wary that something isn't safe or true.",
+        nuance:"Wary is general caution; Doubtful is about not believing a claim or outcome; Distrustful is specifically about not relying on a person.",
+        tertiary:[t('Wary','Cautious, keeping your guard up just in case.'), t('Doubtful',"Not convinced something is true or will work out."), t('Distrustful','Specifically unwilling to rely on a person or their word.')]},
+      {label:'Rejected', band:'moderate', short:'Feeling unwanted.',
+        desc:"Fear rooted in being unwanted.",
+        nuance:"Alienated is a broader sense of not belonging; Unwanted is about not being valued; Excluded is about being left out of one specific thing.",
+        tertiary:[t('Alienated',"Feeling like you don't belong, even among people you know."), t('Unwanted',"Sensing that your presence isn't valued or welcomed."), t('Excluded','Left out of something specific that others are part of.')]}
+    ]},
+  {id:'disgusted', label:'Disgusted', emoji:'😖', color:'#5c8c5a',
+    talk:"This can be about a situation, a memory, or something happening right now — whatever it is.",
+    body:'tight stomach, wanting distance, scrunched-up feeling',
+    secondary:[
+      {label:'Repulsed', band:'strong', short:'Wanting to pull away.',
+        desc:"A strong urge to pull away.",
+        nuance:"Nauseated is the physical/bodily version; Revolted is the urge to turn away; Appalled adds shock that this happened, often about right and wrong.",
+        tertiary:[t('Nauseated','A physical, stomach-level reaction to something.'), t('Revolted','A strong urge to turn away from something offensive to your senses or values.'), t('Appalled','Shocked that something happened at all — a moral jolt.')]},
+      {label:'Disapproving', band:'mild', short:'Judging it as wrong.',
+        desc:"Judging something as wrong or beneath you.",
+        nuance:"Judgmental is a quick negative opinion; Critical is more specific, pointing at what's flawed; Disdainful is looking down on it as unworthy of respect.",
+        tertiary:[t('Judgmental','Quick to form a negative opinion about someone or something.'), t('Critical','Focused on flaws or what\'s wrong, specifically.'), t('Disdainful','Viewing something as beneath your consideration or respect.')]},
+      {label:'Avoidant', band:'moderate', short:'Wanting distance.',
+        desc:"Wanting distance without open hostility.",
+        nuance:"Withdrawn is pulling inward generally; Distant is keeping specific emotional space; Averse is a pointed pull away from one particular thing.",
+        tertiary:[t('Withdrawn','Pulling inward, away from engagement.'), t('Distant','Keeping emotional space between yourself and something or someone.'), t('Averse','A pull away from something specific, without necessarily disengaging overall.')]},
+      {label:'Self-critical', band:'strong', short:'Turned toward yourself.',
+        desc:"Disgust turned toward yourself.",
+        nuance:"Embarrassed is about how it looked to others; Guilty is about the specific action and its consequences; Ashamed goes further, to what it says about you as a person.",
+        tertiary:[t('Embarrassed','Self-conscious about how something looked to others.'), t('Ashamed','Believing something about you, not just what you did, is bad.'), t('Guilty','Recognizing you did something that caused harm.')]}
+    ]},
+  {id:'surprised', label:'Surprised', emoji:'😲', color:'#3f9c9c',
+    talk:'What caught you off guard?',
+    body:'quick breath, jumpy body, racing thoughts',
+    secondary:[
+      {label:'Confused', band:'mild', short:'Not sure what to think.',
+        desc:"Uncertain what just happened or what to think.",
+        nuance:"Bewildered is total confusion; Puzzled is narrower, one detail that doesn't fit; Disoriented is about losing your bearings rather than understanding.",
+        tertiary:[t('Bewildered','Thoroughly unable to make sense of what just happened.'), t('Puzzled',"Curious but stuck on a specific piece that doesn't add up."), t('Disoriented','Momentarily lost, unsure of your bearings.')]},
+      {label:'Amazed', band:'strong', short:'Struck by something big.',
+        desc:"Struck by something unexpectedly big or beautiful.",
+        nuance:"Astonished is the surprise at scale; Awestruck adds a humbled, reverent quality; Stunned is the temporary inability to respond, regardless of why.",
+        tertiary:[t('Astonished','Struck by something far bigger or more surprising than expected.'), t('Awestruck','Humbled by something vast or beautiful, almost too big to take in.'), t('Stunned','Momentarily unable to react, in a good or overwhelming way.')]},
+      {label:'Startled', band:'moderate', short:'A sudden jolt.',
+        desc:"A sudden jolt from the unexpected.",
+        nuance:"Jolted is the raw physical startle; Shocked adds the surprise of the content; Alarmed adds a sense of danger or wrongness on top.",
+        tertiary:[t('Shocked',"A sharp jolt from something you didn't see coming."), t('Alarmed',"A jolt paired with a sense that something's wrong."), t('Jolted',"The physical startle itself, before you've processed anything else.")]},
+      {label:'Curious', band:'mild', short:'Wanting to know more.',
+        desc:"Pulled toward wanting to understand more.",
+        nuance:"Intrigued has a mysterious pull to it; Interested is a more general pull; Wondering is the active mental questioning itself.",
+        tertiary:[t('Intrigued','Pulled in by something puzzling or mysterious.'), t('Interested','A general pull to know more about something.'), t('Wondering','Actively turning a question over in your mind.')]}
+    ]},
+  {id:'calm', label:'Calm', emoji:'😌', color:'#7d9c5a',
+    talk:"What's helping right now? Worth remembering for next time.",
+    body:'slow breathing, loose shoulders, quiet mind',
+    secondary:[
+      {label:'Relaxed', band:'mild', short:'Loosened and easy.',
+        desc:"Muscles and mind both loosened.",
+        nuance:"At ease is a light, momentary looseness; Settled implies things feel resolved; Serene is a deeper, steadier calm.",
+        tertiary:[t('At ease','Nothing pulling at your attention right now.'), t('Settled','A sense of having landed, nothing left unresolved for the moment.'), t('Serene','A deep, still calm, often independent of what\'s happening around you.')]},
+      {label:'Content', band:'mild', short:'Nothing needed right now.',
+        desc:"Quiet satisfaction, nothing needed right now.",
+        nuance:"Fulfilled is about meaning being met; Grounded is about steadiness in the moment; Peaceful is the absence of conflict or urgency.",
+        tertiary:[t('Fulfilled','A sense that something meaningful has been met.'), t('Grounded','Steady and connected to the present moment.'), t('Peaceful','An absence of inner conflict or urgency.')]},
+      {label:'Trusting', band:'moderate', short:'Safe enough to let go.',
+        desc:"Feeling safe enough to lower your guard.",
+        nuance:"Secure is about ongoing stability; Safe is about the absence of threat right now; Supported is specifically about others being there for you.",
+        tertiary:[t('Secure','Confident that things are stable, now and going forward.'), t('Safe','Free from a sense of threat, right now.'), t('Supported','Aware that others have your back.')]},
+      {label:'Reflective', band:'strong', short:'Turned quietly inward.',
+        desc:"Turned quietly inward.",
+        nuance:"Thoughtful is active, unhurried thinking; Centered is about balance; Still is the quiet itself, with little happening at all.",
+        tertiary:[t('Thoughtful','Turning something over in your mind, unhurried.'), t('Centered','Balanced, not pulled off course by what\'s around you.'), t('Still','Quiet, with little mental or physical motion.')]}
+    ]},
+  {id:'numb', label:'Numb', emoji:'😶', color:'#8a8378',
+    talk:"Sometimes there's no clear feeling at all — that counts too. No need to force one.",
+    body:'hard to feel anything specific, spaced out, far away',
+    secondary:[
+      {label:'Disconnected', band:'moderate', short:'Feeling far away.',
+        desc:"Feeling far away from yourself or what's happening.",
+        nuance:"Detached is watching without feeling pulled in; Distant is the emotional space itself; Unreal is when things stop feeling real at all.",
+        tertiary:[t('Detached','Watching things happen without feeling pulled into them.'), t('Distant','A sense of emotional space between you and everything else.'), t('Unreal',"Like what's happening doesn't quite feel real.")]},
+      {label:'Foggy', band:'mild', short:'Hard to focus.',
+        desc:"Hard to think clearly or focus on anything.",
+        nuance:"Spacey is a general drifting; Unfocused is scattered attention specifically; Far away is being mentally elsewhere while still physically present.",
+        tertiary:[t('Spacey','Drifting, hard to stay tracked on any one thing.'), t('Unfocused','Attention scattered, unable to settle anywhere.'), t('Far away','Present physically, but mentally somewhere else entirely.')]},
+      {label:'Checked Out', band:'strong', short:'Running on autopilot.',
+        desc:"Mentally clocked out, running on autopilot.",
+        nuance:"Shut down is a fuller system pause; Withdrawn is specifically about pulling back from others; Blank is the absence of any thought or feeling in particular.",
+        tertiary:[t('Shut down','Systems paused — not reacting to much of anything right now.'), t('Withdrawn','Pulled back from engaging with people or things around you.'), t('Blank','No particular thought or feeling coming through at all.')]},
+      {label:'Flat', band:'mild', short:'Not much coming through.',
+        desc:"Not much feeling coming through, in any direction.",
+        nuance:"Empty is the sense that something's missing; Muted is feelings present but turned down; Indifferent is a lack of caring about the outcome either way.",
+        tertiary:[t('Empty',"A hollow feeling — like something that's usually there is missing."), t('Muted','Feelings are present but turned way down in volume.'), t('Indifferent',"Not caring much either way about what's happening.")]}
+    ]}
+];
+
+/* ============================================================
+   INTENSITY LADDERS — mild to strong, per core family.
+   Interventions can change with intensity, so this is surfaced
+   as its own step rather than folded into the vocabulary.
+============================================================ */
+const INTENSITY = {
+  happy: ['Pleased','Happy','Euphoric'],
+  sad: ['Blue','Sad','Despairing'],
+  angry: ['Peeved','Angry','Furious'],
+  anxious: ['Jittery','Anxious','Overwrought'],
+  disgusted: ['Put off','Disgusted','Horrified'],
+  surprised: ['Caught off guard','Surprised','Floored'],
+  calm: ['Easing','Calm','Blissful'],
+  numb: ['Hazy','Numb','Hollow']
+};
+
+/* ============================================================
+   NEEDS — Nonviolent Communication (Rosenberg)-informed: the
+   idea that feelings point to a need, met or unmet.
+============================================================ */
+const NEEDS = {
+  happy: 'To celebrate, savor, or share this.',
+  sad: 'Comfort, connection, or space to grieve.',
+  angry: 'Respect, fairness, or a boundary honored.',
+  anxious: 'Safety, certainty, or more information.',
+  disgusted: 'To protect your values, or some distance.',
+  surprised: 'A moment to orient and make sense of things.',
+  calm: 'Rest, ease, and to stay present.',
+  numb: 'Safety, gentleness, and time to reconnect slowly.'
+};
+
+/* ============================================================
+   CAUSES — "why am I feeling this?" Common triggers per
+   family, used in Explore to move past naming into
+   understanding. "Other" is always last and never forces an
+   answer.
+============================================================ */
+const CAUSES = {
+  happy: ['Something good happened','I accomplished something','I connected with someone','Things are going as hoped','Other'],
+  sad: ['I lost something or someone','I feel disconnected from someone','Something didn\'t go how I hoped','I\'m remembering something hard','Other'],
+  angry: ['Something blocked me','Someone crossed a line or was unfair','I wasn\'t listened to or respected','I can\'t fix something that\'s wrong','Other'],
+  anxious: ['I don\'t know what\'s going to happen','Something bad might happen','I feel unprepared','I\'m worried what others think','Other'],
+  disgusted: ['Something crossed my values','Something felt physically gross','Someone acted in a way I judge harshly','I did something I\'m not proud of','Other'],
+  surprised: ['Something happened out of nowhere','Something turned out different than expected','I learned new information suddenly','Other'],
+  calm: ['Things feel resolved','I\'m somewhere safe and familiar','I did something that helped me settle','Other'],
+  numb: ['This feels like too much to process right now','I\'ve felt this way for a while and stopped noticing','Something reminded me of a hard time','I\'m protecting myself from something','Other']
+};
+
+/* ============================================================
+   ACTIONS — coping reorganized by what it's trying to
+   accomplish (Calm my body / Understand / Connect / Solve)
+   rather than siloed per emotion. Each item is tagged with the
+   emotions it fits; 'all' is a universal fallback.
+============================================================ */
+const ACTIONS = {
+  calmBody: [
+    {label:'Slow breathing — exhale longer than inhale', phrase:'slow my breathing, with a longer exhale than inhale', emoji:'🌬️', tags:['angry','anxious','numb','surprised'], intensity:'mild'},
+    {label:'Cold water on my hands or face', phrase:'run cold water over my hands or face', emoji:'🧊', tags:['angry','anxious','numb'], intensity:'strong'},
+    {label:'Move my body — walk it out, shake it out', phrase:'move my body — walk it out or shake it out', emoji:'🏃', tags:['angry','anxious','numb'], intensity:'strong'},
+    {label:'Tense and release each muscle group', phrase:'tense and release each muscle group', emoji:'💪', tags:['angry','anxious'], intensity:'mild'},
+    {label:'Press into something heavy', phrase:'press into something heavy, like a pillow or wall', emoji:'🤲', tags:['angry'], intensity:'strong'},
+    {label:'Box breathing — in 4, hold 4, out 4, hold 4', phrase:'try box breathing — in 4, hold 4, out 4, hold 4', emoji:'🌬️', tags:['anxious'], intensity:'mild'},
+    {label:'Name 5 things I can see', phrase:'name 5 things I can see', emoji:'👀', tags:['anxious','numb','surprised'], intensity:'strong'},
+    {label:'Splash your face or run your wrists under water', phrase:'splash my face or run my wrists under water', emoji:'💦', tags:['numb'], intensity:'strong'},
+    {label:'Stretch or press your feet into the floor', phrase:'stretch or press my feet into the floor', emoji:'🦶', tags:['numb'], intensity:'mild'},
+    {label:'Hum or make a sound out loud', phrase:'hum or make a sound out loud', emoji:'🎵', tags:['numb'], intensity:'mild'},
+    {label:'Take three slow breaths and notice your body', phrase:'take three slow breaths and notice how my body feels', emoji:'🌬️', tags:['calm']},
+    {label:'Take three slow breaths and savor it', phrase:'take three slow breaths and savor it', emoji:'🌬️', tags:['happy'], intensity:'mild'},
+    {label:'Let yourself move — jump, dance, shake out the excitement', phrase:'let myself move — jump, dance, or shake out the excitement', emoji:'🕺', tags:['happy'], intensity:'strong'},
+    {label:'Rest — it\'s okay to slow down', phrase:'rest for a while', emoji:'🛌', tags:['sad']},
+    {label:'Take a slow breath before responding', phrase:'take a slow breath before responding', emoji:'🌬️', tags:['disgusted'], intensity:'mild'},
+    {label:'Put real distance between yourself and it before responding', phrase:'put real distance between myself and it before responding', emoji:'🚶', tags:['disgusted'], intensity:'strong'},
+    {label:'Let yourself smile and stay with the feeling a moment', phrase:'let myself smile and stay with the feeling a moment', emoji:'🙂', tags:['happy'], intensity:'moderate'},
+    {label:'Unclench your jaw and shoulders on purpose', phrase:'unclench my jaw and shoulders on purpose', emoji:'😤', tags:['angry'], intensity:'moderate'},
+    {label:'Ground through your feet — press them into the floor', phrase:'ground through my feet — press them into the floor', emoji:'🦶', tags:['anxious'], intensity:'moderate'},
+    {label:'Unclench and let your shoulders drop', phrase:'unclench and let my shoulders drop', emoji:'😌', tags:['disgusted'], intensity:'moderate'},
+    {label:'Plant your feet and take stock for a second', phrase:'plant my feet and take stock for a second', emoji:'🦶', tags:['surprised'], intensity:'moderate'},
+    {label:'Notice one physical sensation, gently', phrase:'notice one physical sensation, gently', emoji:'🖐️', tags:['numb'], intensity:'moderate'},
+    {label:'Take a few slow breaths', phrase:'take a few slow breaths', emoji:'🌬️', tags:['all']}
+  ],
+  understand: [
+    {label:'Name it out loud', phrase:"say out loud what I'm noticing", emoji:'🗣️', tags:['angry','anxious','sad','surprised'], intensity:'mild'},
+    {label:'Write down what\'s going on, no filter', phrase:"write down whatever's in my head, no filter", emoji:'📝', tags:['sad','angry','anxious','happy'], intensity:'mild'},
+    {label:'Ask what story you\'re telling yourself', phrase:"ask myself what story I'm telling myself", emoji:'🧠', tags:['sad','angry','anxious']},
+    {label:'Picture it from a step back, like a movie', phrase:'picture the situation from a step back, like a movie', emoji:'🎬', tags:['angry'], intensity:'strong'},
+    {label:'Notice what\'s helping right now', phrase:"notice what's helping right now", emoji:'🌿', tags:['calm'], intensity:'mild'},
+    {label:'Write down what got you here, so you can find it again', phrase:'write down what got me here, so I can find it again', emoji:'📝', tags:['calm'], intensity:'strong'},
+    {label:'Ask what you\'d say to a friend feeling this', phrase:"ask myself what I'd say to a friend feeling this", emoji:'💛', tags:['sad']},
+    {label:'Name what specifically felt "off"', phrase:'name what specifically felt "off" about it', emoji:'🔍', tags:['disgusted'], intensity:'mild'},
+    {label:'Say out loud what just happened', phrase:'say out loud what just happened, in my own words', emoji:'🗣️', tags:['surprised'], intensity:'mild'},
+    {label:'Give yourself a minute before reacting further', phrase:'give myself a minute before reacting further', emoji:'⏸️', tags:['surprised'], intensity:'strong'},
+    {label:'Put the worry in a box to open later', phrase:'put the worry in a box I can open later', emoji:'📦', tags:['anxious'], intensity:'mild'},
+    {label:'Let it be big — don\'t downplay it', phrase:"let it be big — I won't downplay it", emoji:'✨', tags:['happy'], intensity:'strong'},
+    {label:'Remind yourself this feeling will pass', phrase:'remind myself this feeling will pass', emoji:'⏳', tags:['disgusted','sad','anxious'], intensity:'strong'},
+    {label:'Name that you feel numb, without judging it', phrase:"name that I feel numb right now, without judging it", emoji:'🗣️', tags:['numb']},
+    {label:'Notice what led up to this', phrase:'notice what led up to this', emoji:'🔎', tags:['happy'], intensity:'moderate'},
+    {label:'Notice which of your values this touches', phrase:'notice which of my values this touches', emoji:'🧭', tags:['disgusted'], intensity:'moderate'},
+    {label:'Ask what you know for sure versus what you\'re assuming', phrase:"ask myself what I know for sure versus what I'm assuming", emoji:'🧠', tags:['surprised'], intensity:'moderate'},
+    {label:'Name what you\'re feeling out loud', phrase:"name what I'm feeling out loud", emoji:'🗣️', tags:['all']}
+  ],
+  connect: [
+    {label:'A hug, if I want one', phrase:'get a hug, if I want one', emoji:'🤗', tags:['numb','happy']},
+    {label:'Sit near someone, no talking needed', phrase:'sit near you, no talking needed', emoji:'🧍', tags:['sad','anxious','numb'], intensity:'strong'},
+    {label:'Reach out to one person, even just a text', phrase:'reach out to one person, even just a text', emoji:'📱', tags:['sad'], intensity:'mild'},
+    {label:'Send a quick check-in text to someone', phrase:'send a quick check-in text to someone', emoji:'📱', tags:['anxious'], intensity:'mild'},
+    {label:'Talk to someone you trust about it', phrase:'talk to someone I trust about it', emoji:'💬', tags:['angry'], intensity:'strong'},
+    {label:'Mention it to someone, casually', phrase:'mention it to someone, casually', emoji:'💬', tags:['angry'], intensity:'mild'},
+    {label:'Mention it briefly to someone, no big discussion needed', phrase:'mention it briefly to someone, no big discussion needed', emoji:'💬', tags:['disgusted'], intensity:'mild'},
+    {label:'Talk it through with someone you trust', phrase:'talk it through with someone I trust', emoji:'💬', tags:['disgusted'], intensity:'strong'},
+    {label:'Share it with someone', phrase:'share it with someone', emoji:'💬', tags:['happy'], intensity:'mild'},
+    {label:'Tell the story, not just the news, to someone', phrase:'tell someone the story, not just the news', emoji:'✨', tags:['happy'], intensity:'strong'},
+    {label:'Tell someone what just happened', phrase:'tell someone what just happened', emoji:'💬', tags:['surprised'], intensity:'mild'},
+    {label:'Ask someone else what they saw or heard, to check it together', phrase:'ask someone else what they saw or heard, to check it together', emoji:'🗣️', tags:['surprised'], intensity:'strong'},
+    {label:'Share this good moment with someone', phrase:'share this good moment with someone', emoji:'💬', tags:['calm']},
+    {label:'Let someone know you need a minute before talking', phrase:'let someone know I need a minute before talking', emoji:'✋', tags:['angry'], intensity:'moderate'},
+    {label:'Ask someone to help you think it through', phrase:'ask someone to help me think it through', emoji:'💬', tags:['anxious'], intensity:'moderate'},
+    {label:'Check if someone else saw it the same way', phrase:'check if someone else saw it the same way', emoji:'💬', tags:['disgusted'], intensity:'moderate'},
+    {label:'Check in with someone else who was there', phrase:'check in with someone else who was there', emoji:'💬', tags:['surprised'], intensity:'moderate'},
+    {label:'Sit near someone you trust', phrase:'sit near someone I trust', emoji:'🧍', tags:['all']}
+  ],
+  solve: [
+    {label:'Make a plan for the next step', phrase:'make a plan for the next step', emoji:'📋', tags:['angry'], intensity:'mild'},
+    {label:'Step away for a minute', phrase:'step away for a minute', emoji:'🚪', tags:['angry'], intensity:'strong'},
+    {label:'Do one tiny task you can finish', phrase:'do one tiny task I can actually finish', emoji:'✅', tags:['sad','anxious'], intensity:'mild'},
+    {label:'Let today be a lower-bar day', phrase:'let today be a lower-bar day', emoji:'🛌', tags:['sad'], intensity:'strong'},
+    {label:'Pause everything else until this settles a bit', phrase:'pause everything else until this settles a bit', emoji:'⏸️', tags:['anxious'], intensity:'strong'},
+    {label:'Change your environment', phrase:'change my environment — a different room or some fresh air', emoji:'🚪', tags:['disgusted','numb'], intensity:'mild'},
+    {label:'Put some distance between you and it', phrase:'put some distance between me and it', emoji:'🚶', tags:['disgusted'], intensity:'strong'},
+    {label:'Wash your hands or change clothes, if that helps', phrase:'wash my hands or change clothes, if that would help', emoji:'🧼', tags:['disgusted'], intensity:'mild'},
+    {label:'Do one grounding thing before anything else', phrase:'do one grounding thing before anything else', emoji:'🧊', tags:['numb'], intensity:'strong'},
+    {label:'Plan another moment like this one', phrase:'plan another moment like this one', emoji:'📅', tags:['happy'], intensity:'mild'},
+    {label:'Do something kind for someone else', phrase:'do something kind for someone else', emoji:'🤝', tags:['happy'], intensity:'strong'},
+    {label:'Have the conversation (boundary, apology, ask)', phrase:'have the conversation — set a boundary, apologize, or ask for what I need', emoji:'💬', tags:['sad','disgusted']},
+    {label:'Decide if this needs a reaction now, or can wait', phrase:'decide if this needs a reaction now, or can wait', emoji:'⏳', tags:['surprised'], intensity:'mild'},
+    {label:'Pause before responding — give it a beat', phrase:'pause before responding — give it a beat', emoji:'⏳', tags:['surprised'], intensity:'strong'},
+    {label:'Make a note of what helped', phrase:'make a note of what helped', emoji:'📝', tags:['calm']},
+    {label:'Do something to mark the occasion', phrase:'do something to mark the occasion', emoji:'🎉', tags:['happy'], intensity:'moderate'},
+    {label:'Write down what you\'d want to say, before saying it', phrase:"write down what I'd want to say, before saying it", emoji:'📝', tags:['angry'], intensity:'moderate'},
+    {label:'Write down what\'s actually in your control', phrase:"write down what's actually in my control", emoji:'📝', tags:['anxious'], intensity:'moderate'},
+    {label:'Wait for a few more details before deciding anything', phrase:'wait for a few more details before deciding anything', emoji:'⏳', tags:['surprised'], intensity:'moderate'},
+    {label:'Do one small, familiar routine', phrase:'do one small, familiar routine', emoji:'🔁', tags:['numb'], intensity:'moderate'},
+    {label:'Decide on one small next step', phrase:'decide on one small next step', emoji:'✅', tags:['all']}
+  ]
+};
+const CATEGORY_ENCOURAGEMENT = {
+  calmBody: 'Good call — your body could use this.',
+  understand: "Good call — that's worth sitting with.",
+  connect: "Good call — you don't have to do this alone.",
+  solve: 'Good call — one concrete step is enough for now.'
+};
+function getPrimaryAction(category, emotionId, tier){
+  const list = ACTIONS[category];
+  const candidates = list.filter(a => a.tags.includes(emotionId));
+  if(typeof tier === 'number'){
+    const band = tier === 0 ? 'mild' : (tier === 1 ? 'moderate' : 'strong');
+    const banded = candidates.find(a => a.intensity === band);
+    if(banded) return banded;
+  }
+  const neutral = candidates.find(a => !a.intensity);
+  if(neutral) return neutral;
+  if(candidates.length) return candidates[0];
+  return list.find(a => a.tags.includes('all'));
+}
+function getActionsFor(category, emotionId, max){
+  return ACTIONS[category].filter(a => a.tags.includes(emotionId) || a.tags.includes('all')).slice(0, max);
+}
+const ACTION_CATEGORIES = [
+  ['calmBody','🧘 Calm my body'],
+  ['understand','🧠 Understand'],
+  ['connect','🤝 Connect'],
+  ['solve','🛠️ Solve']
+];
+
+/* ============================================================
+   EMOTIONAL COMBINATIONS — inspired by Plutchik's dyads, but
+   built for this tool's own 8 feelings rather than his original
+   set (see About tab). Illustrative, not a strict formula.
+============================================================ */
+const COMBINATIONS = [
+  {a:'anxious', b:'happy', result:'Anticipation', note:'The thrill of hoping for something while not being sure it will happen.'},
+  {a:'sad', b:'angry', result:'Hurt', note:"Grief mixed with a sense that you didn't deserve what happened."},
+  {a:'happy', b:'surprised', result:'Delight', note:"Joy at something good you didn't see coming."},
+  {a:'angry', b:'disgusted', result:'Contempt', note:'Anger plus a sense that someone or something is beneath you.'},
+  {a:'calm', b:'happy', result:'Contentment', note:'A settled joy — nothing urgent, nothing missing.'},
+  {a:'sad', b:'anxious', result:'Despair', note:"Sadness plus a fear that things won't get better."},
+  {a:'surprised', b:'disgusted', result:'Disapproval', note:'Shock at something that crosses your values.'},
+  {a:'numb', b:'sad', result:'Shutdown grief', note:'Sadness so large the system protects you by going quiet.'},
+  {a:'calm', b:'anxious', result:'Vigilance', note:'A watchful readiness — calm on the surface, alert underneath.'},
+  {a:'angry', b:'sad', result:'Bitterness', note:'Anger that has nowhere to go, so it settles into sadness.'}
+];
+
+/* ============================================================
+   REFERENCES — the research this tool simplifies.
+============================================================ */
+const REFERENCES = [
+  {name:"Plutchik's Wheel of Emotions (1980)", blurb:"Proposes eight primary emotions arranged in opposite pairs, each varying in intensity, that combine to form more complex \"dyads\" (e.g., joy + trust = love)."},
+  {name:"Russell's Circumplex Model of Affect (1980)", blurb:'Places emotions on two axes — valence (pleasant to unpleasant) and arousal (high to low energy) — the same idea behind tools like the Yale Mood Meter.'},
+  {name:'Nummenmaa et al., Bodily Maps of Emotion (PNAS, 2014)', blurb:'Mapped where people physically feel different emotions in the body, finding consistent patterns across cultures — the basis for the body-sensation finder here.'},
+  {name:"Gross's Process Model of Emotion Regulation (1998)", blurb:'Describes emotion regulation as a sequence of strategies — from choosing or changing a situation to shifting attention or reappraising it — applied at different points in an emotional response.'},
+  {name:'Lisa Feldman Barrett, Theory of Constructed Emotion (2017)', blurb:"Argues emotions aren't fixed, hardwired reactions but are actively constructed by the brain from body sensations and past experience — part of why naming and context both matter here."},
+  {name:'Marshall Rosenberg, Nonviolent Communication (2003)', blurb:'A framework connecting feelings to unmet or met universal needs, turning that awareness into honest requests — the inspiration for this tool\'s "need" and "action" steps.'},
+  {name:'Kristin Neff, Self-Compassion (2011)', blurb:'Research showing that treating yourself with the same kindness you\'d offer a friend, rather than harsh self-criticism, is associated with better emotional resilience.'}
+];
+function renderReferences(){
+  const box = document.getElementById('referenceList');
+  box.innerHTML = REFERENCES.map(r =>
+    '<div class="ref-item"><div class="name">' + r.name + '</div><div>' + r.blurb + '</div></div>'
+  ).join('');
+}
+
+/* ============================================================
+   BODY SENSATIONS — used by the finder in "What's happening?"
+   Grounded in Nummenmaa et al.'s bodily maps of emotion (PNAS,
+   2014), which found consistent body-sensation patterns for
+   different emotions across cultures.
+============================================================ */
+const BODY = [
+  {region:'Head & Face', items:[
+    {label:'Jaw or temples tight', emotions:['angry','anxious']},
+    {label:'Heat or flushing in the face', emotions:['angry','disgusted','happy']},
+    {label:'Racing thoughts, foggy head', emotions:['anxious','surprised']},
+    {label:'Pressure behind the eyes, welling tears', emotions:['sad']},
+    {label:'Hard to focus, mind feels blank', emotions:['numb']}
+  ]},
+  {region:'Throat & Chest', items:[
+    {label:'Tight throat or lump', emotions:['sad','anxious']},
+    {label:'Tight or pressured chest', emotions:['angry','anxious','sad']},
+    {label:'Heart racing or pounding', emotions:['anxious','angry','happy']},
+    {label:'Warm, expansive feeling in chest', emotions:['happy','calm']}
+  ]},
+  {region:'Stomach & Gut', items:[
+    {label:'Knotted or churning stomach', emotions:['anxious','angry','disgusted']},
+    {label:'Nausea', emotions:['disgusted','anxious']},
+    {label:'Butterflies', emotions:['anxious','happy','surprised']},
+    {label:'Hollow or empty feeling', emotions:['sad','numb']}
+  ]},
+  {region:'Limbs & Muscles', items:[
+    {label:'Heavy limbs, low energy', emotions:['sad','numb']},
+    {label:"Restless, can't sit still", emotions:['angry','anxious','surprised']},
+    {label:'Trembling or shaking', emotions:['anxious','angry']},
+    {label:'Loose, relaxed muscles', emotions:['calm','happy']},
+    {label:'Moving on autopilot, barely noticing', emotions:['numb']}
+  ]},
+  {region:'Whole Body', items:[
+    {label:"Frozen, can't move", emotions:['anxious','sad','numb']},
+    {label:'Energized, want to move', emotions:['happy','angry']},
+    {label:'Warm and settled', emotions:['calm']},
+    {label:"Feel far away or not fully “here”", emotions:['numb']}
+  ]}
+];
+
+/* ============================================================
+   ENERGY LEVEL + SITUATION TAGS — the other two finder inputs.
+   Energy level is the arousal axis from Russell's circumplex
+   model of affect (1980). Situation tags map to appraisal
+   dimensions from Lazarus/Scherer appraisal theory — context is
+   one of the signals people use to work out what they're
+   feeling, alongside body sensations.
+============================================================ */
+const ENERGY_OPTIONS = [
+  {id:'high', label:'More energy than usual — wound up, wired, or racing'},
+  {id:'low', label:'Less energy than usual — flat, heavy, or slowed down'}
+];
+const ENERGY_WEIGHTS = {
+  high: ['angry','anxious','happy','surprised'],
+  low: ['sad','calm','numb']
+};
+const SITUATION_TAGS = [
+  {label:'Something unexpected just happened', emotions:['surprised','anxious']},
+  {label:'Someone did something that felt unfair or hurtful', emotions:['angry','sad']},
+  {label:"I'm waiting to find out something", emotions:['anxious']},
+  {label:'I lost something or someone (or feel like I might)', emotions:['sad']},
+  {label:'Something felt wrong, gross, or off', emotions:['disgusted']},
+  {label:'Nothing in particular — this just crept up', emotions:['numb','calm']}
+];
+
+function joinPhrases(arr){
+  if(arr.length === 0) return '';
+  if(arr.length === 1) return arr[0];
+  if(arr.length === 2) return arr[0] + ' and ' + arr[1];
+  return arr.slice(0, -1).join(', ') + ', and ' + arr[arr.length - 1];
+}
+
+/* ============================================================
+   SIMPLE MODE (young kids) — unchanged
+============================================================ */
+const TODDLER_FEELINGS = [
+  {id:'happy', label:'Happy', emoji:'😊', color:'#d9a441'},
+  {id:'sad', label:'Sad', emoji:'😢', color:'#4d6d9a'},
+  {id:'mad', label:'Mad', emoji:'😠', color:'#c2544c'},
+  {id:'scared', label:'Scared', emoji:'😨', color:'#7c5c9c'},
+  {id:'silly', label:'Silly', emoji:'🤪', color:'#c96fa0'}
+];
+const KID_COPING_BY_FEELING = {
+  happy: {
+    primary: [
+      {label:'Happy Dance', emoji:'💃', phrase:'do a happy dance'},
+      {label:'Tell Someone', emoji:'💬', phrase:'tell someone about it'},
+      {label:'Keep Playing', emoji:'🧸', phrase:'keep playing'}
+    ],
+    more: [
+      {label:'Give a High Five', emoji:'✋', phrase:'give a high five'},
+      {label:'Sing a Silly Song', emoji:'🎶', phrase:'sing a silly song'},
+      {label:'Draw the Happy Feeling', emoji:'🎨', phrase:'draw the happy feeling'}
+    ]
+  },
+  sad: {
+    primary: [
+      {label:'Big Hug', emoji:'🤗', phrase:'get a big hug'},
+      {label:'Cozy Blanket', emoji:'🧸', phrase:'snuggle under a cozy blanket'},
+      {label:'Have a Cry', emoji:'😢', phrase:'have a cry'}
+    ],
+    more: [
+      {label:'Rock Gently', emoji:'🪑', phrase:'rock gently'},
+      {label:'Hold a Soft Toy', emoji:'🧸', phrase:'hold a soft toy'},
+      {label:'Ask for a Story', emoji:'📖', phrase:'hear a story'}
+    ]
+  },
+  mad: {
+    primary: [
+      {label:'Stomp It Out', emoji:'🦶', phrase:'stomp it out'},
+      {label:'Squeeze Something', emoji:'🤲', phrase:'squeeze something tight'},
+      {label:'Blow Bubbles', emoji:'🫧', phrase:'blow some bubbles'}
+    ],
+    more: [
+      {label:'Push Against a Wall', emoji:'🧱', phrase:'push against a wall'},
+      {label:'Tear Up Paper', emoji:'📄', phrase:'tear up some paper'},
+      {label:'Growl Like a Lion', emoji:'🦁', phrase:'growl like a lion'}
+    ]
+  },
+  scared: {
+    primary: [
+      {label:'Big Hug', emoji:'🤗', phrase:'get a big hug'},
+      {label:'Stay Close', emoji:'🧍', phrase:'stay close to you'},
+      {label:'Slow Breaths', emoji:'🫧', phrase:'take some slow breaths'}
+    ],
+    more: [
+      {label:'Hold a Flashlight', emoji:'🔦', phrase:'hold a flashlight'},
+      {label:'Sing Our Song', emoji:'🎵', phrase:'sing our song'},
+      {label:'Look at a Family Photo', emoji:'🖼️', phrase:'look at a family photo'}
+    ]
+  },
+  silly: {
+    primary: [
+      {label:'Dance It Out', emoji:'💃', phrase:'dance it out'},
+      {label:'Share the Giggles', emoji:'😄', phrase:'share the giggles'},
+      {label:'Keep Being Silly', emoji:'🤪', phrase:'keep being silly'}
+    ],
+    more: [
+      {label:'Make a Funny Face', emoji:'😜', phrase:'make a funny face'},
+      {label:'Tell a Silly Joke', emoji:'🤪', phrase:'tell a silly joke'},
+      {label:'Wiggle Like Jelly', emoji:'🫨', phrase:'wiggle like jelly'}
+    ]
+  }
+};
+
+function renderToddlerGrid(){
+  const grid = document.getElementById('toddlerGrid');
+  grid.innerHTML = '';
+  TODDLER_FEELINGS.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'face-btn';
+    btn.style.background = f.color;
+    btn.innerHTML = '<span class="emoji">'+f.emoji+'</span><span>'+f.label+'</span>';
+    btn.addEventListener('click', () => showToddlerResult(f));
+    grid.appendChild(btn);
+  });
+}
+function showToddlerResult(f){
+  document.getElementById('toddlerEmoji').textContent = f.emoji;
+  document.getElementById('toddlerWord').textContent = f.label;
+  document.getElementById('toddlerResult').classList.remove('hidden');
+  document.getElementById('toddlerAffirm').classList.add('hidden');
+  document.getElementById('toddlerAffirm').textContent = '';
+  document.getElementById('shareAmelia').classList.remove('hidden');
+  shareAmelia.update("I'm feeling " + f.label + ' ' + f.emoji + '.');
+
+  const copingGrid = document.getElementById('toddlerCoping');
+  const refreshBtn = document.getElementById('toddlerCopingRefresh');
+  const pool = KID_COPING_BY_FEELING[f.id] || {primary:[], more:[]};
+  let showingMore = false;
+
+  function buildToddlerCoping(options){
+    copingGrid.innerHTML = '';
+    options.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'coping-btn';
+      btn.innerHTML = '<span class="emoji">'+c.emoji+'</span><span>'+c.label+'</span>';
+      btn.addEventListener('click', () => {
+        copingGrid.querySelectorAll('.coping-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        const affirm = document.getElementById('toddlerAffirm');
+        affirm.textContent = "Let's " + c.phrase + ' together! 🎉';
+        affirm.classList.remove('hidden');
+        shareAmelia.update("I'm feeling " + f.label + ' ' + f.emoji + ".\nI'd like to " + c.phrase + '.');
+      });
+      copingGrid.appendChild(btn);
+    });
+  }
+  buildToddlerCoping(pool.primary);
+  refreshBtn.textContent = '🔄 More options';
+  if(pool.more && pool.more.length){
+    refreshBtn.disabled = false;
+    refreshBtn.onclick = () => {
+      showingMore = !showingMore;
+      buildToddlerCoping(showingMore ? pool.more : pool.primary);
+      refreshBtn.textContent = showingMore ? '🔄 Back to first options' : '🔄 More options';
+    };
+  } else {
+    refreshBtn.disabled = true;
+    refreshBtn.onclick = null;
+  }
+
+  document.getElementById('toddlerResult').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+document.getElementById('toddlerReset').addEventListener('click', () => {
+  document.getElementById('toddlerResult').classList.add('hidden');
+  document.getElementById('shareAmelia').classList.add('hidden');
+});
+
+/* ============================================================
+   IN THE MOMENT — fast, linear regulation flow.
+   What's happening? -> How intense? -> What do you need? ->
+   Choose one action -> Done. No vocabulary drilling here by
+   design; that lives in Explore.
+============================================================ */
+let itmState = { core:null, intensity:null, intensityIndex:null, action:null };
+
+function renderQCFeelingGrid(){
+  const grid = document.getElementById('qcFeelingGrid');
+  grid.innerHTML = '';
+  CORE_FULL.forEach(core => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.dataset.feelingId = core.id;
+    btn.textContent = core.emoji + '  ' + core.label;
+    btn.addEventListener('click', () => pickQCFeeling(core.id));
+    grid.appendChild(btn);
+  });
+}
+function pickQCFeeling(id){
+  document.querySelectorAll('#qcFeelingGrid .chip-btn').forEach(b => b.classList.toggle('active', b.dataset.feelingId === id));
+  document.getElementById('qcFinder').classList.add('hidden');
+  itmState = { core:id, intensity:null, action:null };
+
+  document.getElementById('itmStep2').classList.remove('hidden');
+  renderIntensityStep(id);
+  document.getElementById('itmStep3').classList.add('hidden');
+  document.getElementById('itmStep4').classList.add('hidden');
+  document.getElementById('qcAffirm').classList.add('hidden');
+  document.getElementById('shareCharlieQuick').classList.add('hidden');
+}
+function renderIntensityStep(coreId){
+  const row = document.getElementById('itmIntensity');
+  row.innerHTML = '';
+  INTENSITY[coreId].forEach((word, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = word;
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      itmState.intensity = word;
+      itmState.intensityIndex = idx;
+      // intensity affects which action gets suggested, so re-render step 4 if it was already showing
+      showNeedStep();
+    });
+    row.appendChild(btn);
+  });
+}
+function showNeedStep(){
+  document.getElementById('itmStep3').classList.remove('hidden');
+  document.getElementById('itmNeed').textContent = NEEDS[itmState.core];
+  showActionStep();
+}
+function showActionStep(){
+  document.getElementById('itmStep4').classList.remove('hidden');
+  const row = document.getElementById('itmActions');
+  const previousPhrase = itmState.action ? itmState.action.phrase : null;
+  row.innerHTML = '';
+  itmState.action = null;
+  document.getElementById('qcAffirm').classList.add('hidden');
+  ACTION_CATEGORIES.forEach(([key, title]) => {
+    const action = getPrimaryAction(key, itmState.core, itmState.intensityIndex);
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.innerHTML = '<b>' + title + ':</b> ' + action.emoji + ' ' + action.label;
+    btn.dataset.phrase = action.phrase;
+    btn.dataset.category = key;
+    if(previousPhrase && action.phrase === previousPhrase){
+      btn.classList.add('active');
+      itmState.action = action;
+    }
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      itmState.action = action;
+      const affirm = document.getElementById('qcAffirm');
+      affirm.innerHTML = '<div>' + CATEGORY_ENCOURAGEMENT[key] + '</div>' +
+        '<div style="margin-top:6px;font-weight:400;">' + action.emoji + ' ' + action.label + '</div>';
+      affirm.classList.remove('hidden');
+      refreshShareCharlieQuick();
+    });
+    row.appendChild(btn);
+  });
+  if(itmState.action){
+    const affirm = document.getElementById('qcAffirm');
+    const key = itmState.action.tags ? Object.keys(CATEGORY_ENCOURAGEMENT).find(k => ACTIONS[k].includes(itmState.action)) : null;
+    affirm.innerHTML = '<div>' + (CATEGORY_ENCOURAGEMENT[key] || "Good call.") + '</div>' +
+      '<div style="margin-top:6px;font-weight:400;">' + itmState.action.emoji + ' ' + itmState.action.label + '</div>';
+    affirm.classList.remove('hidden');
+    refreshShareCharlieQuick();
+  }
+}
+function refreshShareCharlieQuick(){
+  const box = document.getElementById('shareCharlieQuick');
+  if(!itmState.core){ box.classList.add('hidden'); return; }
+  const core = CORE_FULL.find(c => c.id === itmState.core);
+  let text = 'Feeling: ' + core.label + (itmState.intensity ? ' (' + itmState.intensity + ')' : '');
+  text += '\nNeed: ' + NEEDS[itmState.core];
+  if(itmState.action) text += '\nIt might help to ' + itmState.action.phrase + '.';
+  box.classList.remove('hidden');
+  shareCharlieQuick.update(text);
+}
+
+document.getElementById('qcFinderToggle').addEventListener('click', () => {
+  document.getElementById('qcFinder').classList.toggle('hidden');
+});
+document.getElementById('qcReset').addEventListener('click', () => {
+  itmState = { core:null, intensity:null, action:null };
+  document.querySelectorAll('#sub-quick .active').forEach(el => el.classList.remove('active'));
+  document.getElementById('itmStep2').classList.add('hidden');
+  document.getElementById('itmStep3').classList.add('hidden');
+  document.getElementById('itmStep4').classList.add('hidden');
+  document.getElementById('qcFinder').classList.add('hidden');
+  updateFinderSuggestions();
+  document.getElementById('qcAffirm').classList.add('hidden');
+  document.getElementById('shareCharlieQuick').classList.add('hidden');
+});
+
+/* ---- "I don't know" finder (shared entry point into Step 1) ---- */
+function renderBodyChecklist(container, onChange){
+  container.innerHTML = '';
+  BODY.forEach((group, gi) => {
+    const div = document.createElement('div');
+    div.className = 'region';
+    const h3 = document.createElement('h3');
+    h3.textContent = group.region;
+    div.appendChild(h3);
+    const row = document.createElement('div');
+    row.className = 'chip-row';
+    group.items.forEach((item, ii) => {
+      const id = container.id + '_' + gi + '_' + ii;
+      const label = document.createElement('label');
+      label.className = 'chip';
+      label.setAttribute('for', id);
+      label.innerHTML = '<input type="checkbox" id="'+id+'" data-emotions=\''+JSON.stringify(item.emotions)+'\'> ' + item.label;
+      row.appendChild(label);
+      const cb = label.querySelector('input');
+      cb.addEventListener('change', () => {
+        label.classList.toggle('checked', cb.checked);
+        onChange();
+      });
+    });
+    div.appendChild(row);
+    container.appendChild(div);
+  });
+}
+function renderFinder(){
+  const energyRow = document.getElementById('finderEnergy');
+  energyRow.innerHTML = '';
+  ENERGY_OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = opt.label;
+    btn.dataset.energyId = opt.id;
+    btn.addEventListener('click', () => {
+      const already = btn.classList.contains('active');
+      energyRow.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+      if(!already) btn.classList.add('active');
+      updateFinderSuggestions();
+    });
+    energyRow.appendChild(btn);
+  });
+
+  renderBodyChecklist(document.getElementById('finderBody'), updateFinderSuggestions);
+
+  const sitRow = document.getElementById('finderSituation');
+  sitRow.innerHTML = '';
+  SITUATION_TAGS.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = tag.label;
+    btn.dataset.emotions = JSON.stringify(tag.emotions);
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      updateFinderSuggestions();
+    });
+    sitRow.appendChild(btn);
+  });
+
+  updateFinderSuggestions();
+}
+function updateFinderSuggestions(){
+  const tally = {};
+  const energyBtn = document.querySelector('#finderEnergy .chip-btn.active');
+  if(energyBtn){
+    (ENERGY_WEIGHTS[energyBtn.dataset.energyId] || []).forEach(e => tally[e] = (tally[e]||0) + 1);
+  }
+  Array.from(document.querySelectorAll('#finderBody input:checked')).forEach(cb => {
+    JSON.parse(cb.dataset.emotions).forEach(e => tally[e] = (tally[e]||0) + 1);
+  });
+  Array.from(document.querySelectorAll('#finderSituation .chip-btn.active')).forEach(btn => {
+    JSON.parse(btn.dataset.emotions).forEach(e => tally[e] = (tally[e]||0) + 1);
+  });
+
+  const ranked = Object.keys(tally).filter(k => tally[k] > 0).sort((a,b) => tally[b] - tally[a]);
+  const list = document.getElementById('finderSuggestList');
+  const emptyHint = document.getElementById('finderEmptyHint');
+  list.innerHTML = '';
+  if(ranked.length === 0){
+    emptyHint.classList.remove('hidden');
+    return;
+  }
+  emptyHint.classList.add('hidden');
+  ranked.forEach(id => {
+    const core = CORE_FULL.find(c => c.id === id);
+    if(!core) return;
+    const btn = document.createElement('button');
+    btn.className = 'suggest-btn';
+    btn.style.background = core.color;
+    btn.textContent = core.emoji + ' ' + core.label + ' (' + tally[id] + ')';
+    btn.addEventListener('click', () => pickQCFeeling(id));
+    list.appendChild(btn);
+  });
+}
+
+/* ============================================================
+   EXPLORE — slower, reflective, learning-focused. No share
+   box here by design: this mode is for understanding a feeling,
+   not communicating it to someone else in the moment.
+============================================================ */
+let exploreState = { core:null, band:null, intensityWord:null, secondary:null, tertiary:null };
+
+function selectExploreCore(id){
+  highlightWedge(document.getElementById('wheelFull'), CORE_FULL, id);
+  exploreState = { core:id, band:null, intensityWord:null, secondary:null, tertiary:null };
+
+  const core = CORE_FULL.find(c => c.id === id);
+  document.getElementById('exploreBreadcrumb').innerHTML = '<b>' + core.label + '</b> — pick an intensity below to narrow things down.';
+
+  document.getElementById('exploreStepIntensity').classList.remove('hidden');
+  document.getElementById('exploreStepSecondary').classList.add('hidden');
+  document.getElementById('exploreTertiaryWrap').classList.add('hidden');
+  document.getElementById('exploreSecondary').innerHTML = '';
+  document.getElementById('exploreTertiary').innerHTML = '';
+
+  renderExploreIntensity(id);
+  renderExploreOutput();
+  renderCauses(id);
+  renderNeed(id);
+  renderReflect();
+  renderCombos(id);
+  renderActionsReference(id);
+}
+function renderExploreIntensity(coreId){
+  const row = document.getElementById('exploreIntensityRow');
+  row.innerHTML = '';
+  INTENSITY[coreId].forEach((word, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn intensity-chip';
+    btn.textContent = word;
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const newBand = idx === 0 ? 'mild' : (idx === 1 ? 'moderate' : 'strong');
+      exploreState.intensityWord = word;
+      if(exploreState.band !== newBand){
+        exploreState.band = newBand;
+        exploreState.secondary = null;
+        exploreState.tertiary = null;
+      }
+      document.getElementById('exploreStepSecondary').classList.remove('hidden');
+      renderExploreSecondary();
+      renderExploreTertiary();
+      renderExploreOutput();
+    });
+    row.appendChild(btn);
+  });
+}
+function renderExploreSecondary(){
+  const core = CORE_FULL.find(c => c.id === exploreState.core);
+  const box = document.getElementById('exploreSecondary');
+  box.innerHTML = '';
+  const label = document.getElementById('exploreSecondaryLabel');
+  const bandWord = exploreState.band === 'strong' ? 'stronger' : (exploreState.band === 'moderate' ? 'moderate' : 'milder');
+  label.textContent = '2 · More specific — ' + bandWord + ' words for ' + core.label.toLowerCase();
+  const filtered = core.secondary.filter(sec => sec.band === exploreState.band);
+  filtered.forEach(sec => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn' + (exploreState.secondary && exploreState.secondary.label === sec.label ? ' active' : '');
+    btn.textContent = sec.label;
+    btn.addEventListener('click', () => {
+      exploreState.secondary = sec;
+      exploreState.tertiary = null;
+      renderExploreSecondary();
+      renderExploreTertiary();
+      renderExploreOutput();
+    });
+    box.appendChild(btn);
+  });
+}
+function renderExploreTertiary(){
+  const wrap = document.getElementById('exploreTertiaryWrap');
+  const box = document.getElementById('exploreTertiary');
+  box.innerHTML = '';
+  if(!exploreState.secondary){
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  exploreState.secondary.tertiary.forEach(tw => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn' + (exploreState.tertiary && exploreState.tertiary.word === tw.word ? ' active' : '');
+    btn.textContent = tw.word;
+    btn.addEventListener('click', () => {
+      exploreState.tertiary = tw;
+      renderExploreTertiary();
+      renderExploreOutput();
+    });
+    box.appendChild(btn);
+  });
+}
+function renderExploreOutput(){
+  const core = CORE_FULL.find(c => c.id === exploreState.core);
+  const box = document.getElementById('exploreOutput');
+  let wordShown, shortText, expandHtml, hasExpand;
+  if(exploreState.tertiary){
+    wordShown = exploreState.tertiary.word;
+    shortText = exploreState.tertiary.def;
+    expandHtml = exploreState.secondary.nuance;
+    hasExpand = true;
+  } else if(exploreState.secondary){
+    wordShown = exploreState.secondary.label;
+    shortText = exploreState.secondary.short;
+    expandHtml = exploreState.secondary.desc + ' ' + exploreState.secondary.nuance;
+    hasExpand = true;
+  } else {
+    wordShown = core.label;
+    shortText = 'One of the broader feeling families — a more specific word above, if one fits, usually helps more.';
+    expandHtml = '';
+    hasExpand = false;
+  }
+  let html = '<div class="info-card">' +
+    '<div class="head"><span class="emoji">' + core.emoji + '</span><span class="word">' + wordShown + '</span></div>' +
+    '<div class="info-row"><div>' + shortText + '</div></div>';
+  if(hasExpand){
+    html += '<button class="learn-more-btn" id="exploreLearnMoreBtn">Learn more ▾</button>' +
+      '<div class="info-row hidden" id="exploreExpand">' +
+        '<div>' + expandHtml + '</div>' +
+        '<div class="info-row"><div class="label">Can feel like</div><div>' + core.body + '</div></div>' +
+        '<div class="info-row"><div class="label">If it helps to talk</div><div>' + core.talk + '</div></div>' +
+      '</div>';
+  } else {
+    html += '<div class="info-row"><div class="label">Can feel like</div><div>' + core.body + '</div></div>' +
+      '<div class="info-row"><div class="label">If it helps to talk</div><div>' + core.talk + '</div></div>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+  if(hasExpand){
+    document.getElementById('exploreLearnMoreBtn').addEventListener('click', function(){
+      const exp = document.getElementById('exploreExpand');
+      exp.classList.toggle('hidden');
+      this.textContent = exp.classList.contains('hidden') ? 'Learn more ▾' : 'Show less ▴';
+    });
+  }
+}
+function renderCauses(coreId){
+  const box = document.getElementById('exploreCauses');
+  let html = '<div class="info-row"><div class="label">What usually causes this</div><div class="chip-row" id="causesRow"></div><div class="cause-note hidden" id="causeOtherNote">That\'s okay — not every feeling needs a clear cause.</div></div>';
+  box.innerHTML = html;
+  const row = document.getElementById('causesRow');
+  CAUSES[coreId].forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = c;
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      if(c === 'Other'){
+        document.getElementById('causeOtherNote').classList.toggle('hidden', !btn.classList.contains('active'));
+      }
+    });
+    row.appendChild(btn);
+  });
+}
+function renderNeed(coreId){
+  const box = document.getElementById('exploreNeed');
+  box.innerHTML = '<div class="info-row"><div class="label">What this feeling often needs</div><div class="need-card">' + NEEDS[coreId] + '</div></div>';
+}
+function renderReflect(){
+  const box = document.getElementById('exploreReflect');
+  box.innerHTML =
+    '<div class="info-row">' +
+      '<div class="label">Go deeper (not for the middle of a hard moment)</div>' +
+      '<ul class="reflect-list">' +
+        '<li>When have you felt this before?</li>' +
+        '<li>What story are you telling yourself?</li>' +
+        '<li>What value feels threatened?</li>' +
+        '<li>What need wasn\'t met?</li>' +
+        '<li>What would help next time?</li>' +
+      '</ul>' +
+      '<textarea class="scratch-area" id="exploreScratch" rows="3" placeholder="Just for you while you think this through — nothing is saved."></textarea>' +
+    '</div>';
+}
+function renderCombos(coreId){
+  const box = document.getElementById('exploreCombos');
+  const relevant = COMBINATIONS.filter(c => c.a === coreId || c.b === coreId);
+  if(!relevant.length){ box.innerHTML = ''; return; }
+  let html = '<div class="info-row"><div class="label">Feelings that blend with this one</div>';
+  relevant.forEach(c => {
+    const otherId = c.a === coreId ? c.b : c.a;
+    const other = CORE_FULL.find(x => x.id === otherId);
+    const core = CORE_FULL.find(x => x.id === coreId);
+    html += '<div class="combo-card"><div class="top">' + core.emoji + ' + ' + (other ? other.emoji : '') + ' → ' + c.result + '</div><div>' + c.note + '</div></div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+function renderActionsReference(coreId){
+  const box = document.getElementById('exploreActions');
+  let html = '<div class="info-row"><div class="label">Ways people work with this feeling</div>';
+  ACTION_CATEGORIES.forEach(([key, title]) => {
+    const items = getActionsFor(key, coreId, 4);
+    html += '<div class="action-category"><h4>' + title + '</h4><div class="chip-row">' +
+      items.map(i => '<span class="chip-btn action-chip">' + i.emoji + '  ' + i.label + '</span>').join('') +
+      '</div></div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+const shareAmelia = createShareBlock(document.getElementById('shareAmelia'));
+const shareCharlieQuick = createShareBlock(document.getElementById('shareCharlieQuick'));
+
+renderToddlerGrid();
+renderQCFeelingGrid();
+renderFinder();
+renderReferences();
+drawWheel(document.getElementById('wheelFull'), CORE_FULL, selectExploreCore);
+</script>
+</body>
+</html>
