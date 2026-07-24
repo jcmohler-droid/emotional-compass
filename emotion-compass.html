@@ -15,6 +15,11 @@
   }
   *{box-sizing:border-box;}
   .hidden{display:none !important;}
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}
+  svg.wheel-svg path:focus-visible{outline:3px solid var(--ink);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important;}
+  }
   body{
     margin:0;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
@@ -117,6 +122,55 @@
   .reset-link{
     background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:0.85rem;margin-top:14px;
   }
+  .pathway-btn{
+    border:2px solid var(--line);background:#fff;border-radius:14px;padding:18px 10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:8px;font-size:1rem;font-weight:700;color:var(--ink);
+  }
+  .pathway-btn.selected{border-color:var(--accent);background:#eef1ea;}
+  .pathway-btn .emoji{font-size:2rem;}
+  .dots{letter-spacing:2px;font-size:1.1rem;color:var(--accent);}
+
+  /* helper mode */
+  .helper-panel{background:#f4f2ea;border:1px dashed var(--line);border-radius:10px;padding:14px 16px;margin-top:12px;font-size:0.9rem;}
+  .helper-panel h4{margin:0 0 8px;font-size:0.85rem;text-transform:uppercase;letter-spacing:.03em;color:var(--accent);}
+  .helper-panel ul{margin:0 0 12px;padding-left:20px;}
+  .helper-panel ul:last-child{margin-bottom:0;}
+  .helper-panel li{margin-bottom:5px;}
+  .helper-now{background:#eef1ea;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-weight:600;}
+
+  /* share detail toggle + preference marks */
+  .pref-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .pref-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:0.82rem;cursor:pointer;color:var(--muted);}
+  .pref-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* full-screen share display */
+  .fullscreen-share{
+    position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:32px;text-align:center;
+  }
+  .fullscreen-share .big-text{font-size:1.8rem;font-weight:700;white-space:pre-wrap;max-width:640px;line-height:1.5;}
+  .fullscreen-share .close-btn{
+    margin-top:28px;border:none;background:var(--accent);color:#fff;border-radius:10px;
+    padding:12px 26px;font-size:1rem;cursor:pointer;
+  }
+
+  /* safety card — calm, not alarming: same palette as the rest of the app */
+  .safety-overlay{
+    position:fixed;inset:0;background:rgba(46,43,40,0.55);z-index:10001;display:flex;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .safety-card{
+    background:var(--card);border-radius:16px;padding:28px;max-width:480px;width:100%;
+    box-shadow:0 10px 40px rgba(0,0,0,0.2);
+  }
+  .safety-card h2{margin-top:0;font-size:1.3rem;}
+  .safety-card p, .safety-card li{font-size:1.05rem;line-height:1.6;}
+  .safety-card ul{padding-left:20px;margin:12px 0;}
+  .safety-parent-note{font-size:0.85rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:16px;}
+  .safety-card .close-btn{
+    margin-top:18px;border:none;background:var(--accent);color:#fff;border-radius:10px;
+    padding:12px 24px;font-size:1rem;cursor:pointer;width:100%;
+  }
 
   /* In the Moment */
   .qc-step{margin-bottom:26px;}
@@ -211,30 +265,58 @@ window.addEventListener('error', function(e){
   <header>
     <h1>Emotional OS</h1>
     <p class="tagline">Notice · Understand · Communicate · Regulate · Learn</p>
-    <p>Two ways to use it: a simple version for younger kids, and a fuller version for better readers and adults, with both a fast in-the-moment mode and a slower explore mode inside it. Nothing here saves or tracks anything — it resets each time you open it.</p>
+    <p>Emotions give us information. Emotional OS can help you notice what's happening, find words for it, figure out what might help, and communicate with someone you trust — on your own, or together with a parent or caregiver.</p>
     <div class="tabs">
       <button class="tab-btn active" data-target="panel-little">Simple</button>
       <button class="tab-btn" data-target="panel-full">Full</button>
       <button class="tab-btn" data-target="panel-about">About</button>
     </div>
+    <p class="hint" style="margin-top:10px;"><b>Simple</b>: fewer words and choices — good for younger kids, or anyone who wants to keep it simple. <b>Full</b>: more detail and more choices — good for older kids, teens, adults, or anyone who wants to explore. Neither one is "better" or tied to a specific age, and you can switch between them anytime.</p>
+    <p class="hint">Nothing here saves or tracks anything — it resets every time you open or refresh it.</p>
+    <button class="reset-link" id="helperModeToggle" style="margin-top:2px;">Helping someone else?</button>
+    <div class="helper-panel hidden" id="helperPanel"></div>
   </header>
 
   <!-- ============ SIMPLE ============ -->
   <div class="tab-panel active" id="panel-little">
     <section class="card">
       <h2>How do you feel right now?</h2>
-      <p class="hint">Tap the face that matches.</p>
-      <div class="big-grid" id="toddlerGrid"></div>
+      <p class="hint">Tap what matches best — or use one of the other buttons if that fits better.</p>
+      <div class="chip-row" style="margin-bottom:12px;">
+        <button class="reset-link" id="simpleReset">Start over</button>
+        <button class="reset-link" id="simpleSafetyLink">If you don't feel safe right now</button>
+      </div>
 
-      <div class="result-panel hidden" id="toddlerResult">
-        <div class="big-emoji" id="toddlerEmoji"></div>
-        <div class="big-word" id="toddlerWord"></div>
-        <p class="hint" style="margin-top:16px;">What would help right now?</p>
-        <div class="big-grid" id="toddlerCoping"></div>
-        <button class="refresh-btn" id="toddlerCopingRefresh">🔄 More options</button>
-        <div class="affirm hidden" id="toddlerAffirm"></div>
+      <div class="big-grid" id="simpleFeelingGrid"></div>
+      <div class="chip-row" style="margin-top:12px;">
+        <button class="skip-btn" id="simpleNotSure">I'm not sure</button>
+        <button class="skip-btn" id="simpleMoreThanOne">More than one</button>
+      </div>
+      <p class="hint hidden" id="simpleMultiHint" style="margin-top:8px;">Pick up to two, then tap Continue.</p>
+      <button class="refresh-btn hidden" id="simpleMultiContinue" style="margin-top:4px;">Continue</button>
+
+      <div class="qc-step hidden" id="simpleStepIntensity">
+        <h3>How big does it feel?</h3>
+        <div class="chip-row" id="simpleIntensityRow"></div>
+      </div>
+
+      <div class="qc-step hidden" id="simpleStepPathway">
+        <h3>What might help?</h3>
+        <div class="big-grid" id="simplePathwayGrid"></div>
+      </div>
+
+      <div class="result-panel hidden" id="simpleResult">
+        <div class="big-emoji" id="simpleActionEmoji"></div>
+        <div class="big-word" id="simpleActionWord"></div>
+        <p class="hint" id="simpleActionMaybe" style="margin-top:10px;">This might help.</p>
+        <div class="chip-row" style="justify-content:center;margin-top:12px;">
+          <button class="refresh-btn" id="simpleTryAnother">🔄 Try a different idea</button>
+          <button class="refresh-btn" id="simpleNothingRight">Nothing sounds right</button>
+          <button class="refresh-btn" id="simpleWantAdult">I want a grown-up to help me choose</button>
+        </div>
+        <div class="affirm hidden" id="simpleAffirm"></div>
         <div class="share-box hidden" id="shareSimple"></div>
-        <button class="reset-link" id="toddlerReset">Pick a different feeling</button>
+        <button class="reset-link" id="simpleShowMore">Show me more detail</button>
       </div>
     </section>
   </div>
@@ -245,6 +327,7 @@ window.addEventListener('error', function(e){
       <button class="subtab-btn active" data-sub="sub-quick">In the Moment</button>
       <button class="subtab-btn" data-sub="sub-calm">Explore</button>
     </div>
+    <button class="reset-link" id="fullSafetyLink" style="margin:10px 0 0;">If you're not safe right now</button>
 
     <!-- IN THE MOMENT -->
     <div class="subtab-panel active" id="sub-quick">
@@ -254,7 +337,13 @@ window.addEventListener('error', function(e){
         <div class="qc-step" id="itmStep1">
           <h3>What's happening?</h3>
           <div class="chip-row" id="qcFeelingGrid"></div>
-          <button class="skip-btn" id="qcFinderToggle" style="margin-top:10px;">Not sure — help me figure it out</button>
+          <div class="chip-row" style="margin-top:10px;">
+            <button class="skip-btn" id="qcFinderToggle">Not sure — help me figure it out</button>
+            <button class="skip-btn" id="qcNoneFit">None of these fit — continue anyway</button>
+            <button class="skip-btn" id="qcMoreThanOne">More than one</button>
+          </div>
+          <p class="hint hidden" id="qcMultiHint" style="margin-top:8px;">Pick up to three, then tap Continue.</p>
+          <button class="refresh-btn hidden" id="qcMultiContinue" style="margin-top:4px;">Continue</button>
 
           <div class="finder-panel hidden" id="qcFinder">
             <div class="finder-block">
@@ -274,8 +363,21 @@ window.addEventListener('error', function(e){
               <div id="finderSuggestList"></div>
               <p class="hint" id="finderEmptyHint" style="margin:4px 0 0;">Check off anything above to see suggestions.</p>
             </div>
+            <button class="skip-btn" id="qcFinderContinueUnsure">Still not sure — continue anyway</button>
+          </div>
+
+          <button class="skip-btn" id="qcSensoryToggle" style="margin-top:10px;">Could your body or surroundings be adding to this? (optional)</button>
+          <div class="finder-panel hidden" id="qcSensoryPanel">
+            <div class="chip-row" id="qcSensoryRow"></div>
+          </div>
+
+          <button class="skip-btn" id="qcCommToggle" style="margin-top:10px;">How can someone check in with you right now? (optional)</button>
+          <div class="finder-panel hidden" id="qcCommPanel">
+            <div class="chip-row" id="qcCommRow"></div>
           </div>
         </div>
+
+        <div id="itmComboNote"></div>
 
         <div class="qc-step hidden" id="itmStep2">
           <h3>How intense?</h3>
@@ -285,17 +387,30 @@ window.addEventListener('error', function(e){
         <div class="qc-step hidden" id="itmStep3">
           <h3>What do you need?</h3>
           <div class="need-card" id="itmNeed"></div>
+          <button class="learn-more-btn" id="itmDeeperToggle">Want to go deeper? (optional) ▾</button>
+          <div class="info-row hidden" id="itmDeeper">
+            <div class="info-row"><div class="label">A thought that might be here</div><div id="itmThought"></div></div>
+            <div class="info-row"><div class="label">An urge that might come with this</div><div id="itmUrge"></div></div>
+            <p class="hint">Noticing an urge doesn't mean acting on it — the action you pick below can be different from the urge.</p>
+          </div>
         </div>
 
         <div class="qc-step hidden" id="itmStep4">
           <h3>Choose one action</h3>
           <p class="hint" style="margin:-4px 0 10px;">Matched to how intense this feels right now — change "How intense?" above and these will update.</p>
           <div class="chip-row" id="itmActions"></div>
+          <div class="chip-row" style="margin-top:8px;">
+            <button class="skip-btn" id="itmNothingFits">Nothing fits right now</button>
+            <button class="skip-btn" id="itmAskForHelp">I want to ask someone for help</button>
+          </div>
         </div>
 
         <div class="affirm hidden" id="qcAffirm"></div>
         <div class="share-box hidden" id="shareQuickBox"></div>
-        <button class="reset-link" id="qcReset">Start over</button>
+        <div class="chip-row">
+          <button class="reset-link" id="qcReset">Start over</button>
+          <button class="reset-link" id="itmMakeSimpler">Make this simpler</button>
+        </div>
       </section>
     </div>
 
@@ -307,6 +422,7 @@ window.addEventListener('error', function(e){
           <svg class="wheel-svg" id="wheelFull" width="320" height="320" viewBox="0 0 320 320"></svg>
           <div class="drill">
             <div class="breadcrumb" id="exploreBreadcrumb">Tap a feeling on the wheel.</div>
+            <p class="hint" style="margin-top:-6px;">Not sure which one fits, or feeling more than one? Pick whichever feels closest — you can come back and explore another anytime.</p>
 
             <div class="explore-step hidden" id="exploreStepIntensity">
               <div class="step-label">1 · How intense</div>
@@ -338,6 +454,8 @@ window.addEventListener('error', function(e){
   <div class="tab-panel" id="panel-about">
     <section class="card">
       <h2>The research behind this</h2>
+      <p class="kid-note">Emotional OS is a tool for noticing feelings, communicating needs, and considering possible next steps. It cannot diagnose a condition, determine why someone feels something, or replace support from a qualified professional.</p>
+      <p class="kid-note">If a hard feeling sticks around for a long time, gets in the way of daily life, or keeps coming back, it may be worth checking in with a pediatrician or a mental health professional.</p>
       <p class="hint">This tool borrows and simplifies ideas from several researchers and frameworks. The "emotional combinations" in Explore are inspired by Plutchik's idea that emotions blend, but adapted to this tool's own set of eight feelings rather than reproducing his original wheel exactly. Worth reading the originals if you want the full picture.</p>
       <div id="referenceList"></div>
     </section>
@@ -378,7 +496,13 @@ function drawWheel(svgEl, items, onClick){
     path.setAttribute('d', describeArc(cx, cy, rOuter, rInner, start, end));
     path.setAttribute('fill', item.color);
     path.setAttribute('id', svgEl.id + '_wedge_' + item.id);
+    path.setAttribute('tabindex', '0');
+    path.setAttribute('role', 'button');
+    path.setAttribute('aria-label', item.label);
     path.addEventListener('click', () => onClick(item.id));
+    path.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onClick(item.id); }
+    });
     svgEl.appendChild(path);
 
     const mid = (start + end) / 2;
@@ -416,15 +540,25 @@ function legacyCopy(text, cb){
   document.body.removeChild(ta);
   if(cb) cb();
 }
+function showFullscreenShare(text){
+  const overlay = document.createElement('div');
+  overlay.className = 'fullscreen-share';
+  overlay.innerHTML = '<div class="big-text"></div><button type="button" class="close-btn">Close</button>';
+  overlay.querySelector('.big-text').textContent = text;
+  overlay.querySelector('.close-btn').addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
+}
 function createShareBlock(container){
   container.innerHTML =
     '<div class="label">Share this</div>' +
+    '<label class="chip" style="margin-bottom:8px;"><input type="checkbox" class="detail-toggle"> Include more detail</label>' +
     '<textarea rows="3"></textarea>' +
     '<div class="share-actions">' +
       '<button type="button" class="copy-btn">Copy</button>' +
       '<a class="sms-btn" href="#">Text</a>' +
       '<a class="email-btn" href="#">Email</a>' +
       '<button type="button" class="native-btn hidden">Share…</button>' +
+      '<button type="button" class="fullscreen-btn">Show full screen</button>' +
     '</div>' +
     '<span class="share-status"></span>';
 
@@ -433,8 +567,12 @@ function createShareBlock(container){
   const emailBtn = container.querySelector('.email-btn');
   const copyBtn = container.querySelector('.copy-btn');
   const nativeBtn = container.querySelector('.native-btn');
+  const fullscreenBtn = container.querySelector('.fullscreen-btn');
+  const detailToggle = container.querySelector('.detail-toggle');
+  const detailLabel = container.querySelector('.chip');
   const status = container.querySelector('.share-status');
   let lastAuto = '';
+  let currentTexts = { lean:'', detailed:'' };
 
   function refreshLinks(){
     const val = textarea.value;
@@ -443,7 +581,17 @@ function createShareBlock(container){
     smsBtn.href = isIOS ? ('sms:&body=' + encoded) : ('sms:?body=' + encoded);
     emailBtn.href = 'mailto:?subject=' + encodeURIComponent('Feelings check-in') + '&body=' + encoded;
   }
+  function applyCurrentText(){
+    const useDetailed = detailToggle.checked && currentTexts.detailed && currentTexts.detailed !== currentTexts.lean;
+    const text = useDetailed ? currentTexts.detailed : currentTexts.lean;
+    if(textarea.value === lastAuto || textarea.value.trim() === ''){
+      textarea.value = text;
+    }
+    lastAuto = text;
+    refreshLinks();
+  }
   textarea.addEventListener('input', refreshLinks);
+  detailToggle.addEventListener('change', applyCurrentText);
 
   function showCopied(){
     status.textContent = 'Copied!';
@@ -457,6 +605,7 @@ function createShareBlock(container){
       legacyCopy(val, showCopied);
     }
   });
+  fullscreenBtn.addEventListener('click', () => showFullscreenShare(textarea.value));
 
   if(navigator.share && window.isSecureContext){
     nativeBtn.classList.remove('hidden');
@@ -466,12 +615,10 @@ function createShareBlock(container){
   }
 
   return {
-    update(text){
-      if(textarea.value === lastAuto || textarea.value.trim() === ''){
-        textarea.value = text;
-      }
-      lastAuto = text;
-      refreshLinks();
+    update(lean, detailed){
+      currentTexts = { lean: lean, detailed: (detailed || lean) };
+      detailLabel.classList.toggle('hidden', currentTexts.detailed === currentTexts.lean);
+      applyCurrentText();
     }
   };
 }
@@ -543,11 +690,11 @@ const CORE_FULL = [
       {label:'Lonely', band:'mild', short:'Wanting closeness.',
         desc:"Disconnected from others, wanting closeness.",
         nuance:"Isolated is about being cut off, regardless of why; Abandoned carries the sense someone left you specifically; Excluded is being left out of a group on purpose.",
-        tertiary:[t('Isolated','Cut off from others, whether or not anyone intended that.'), t('Abandoned','Left behind by someone who was supposed to stay.'), t('Excluded','Deliberately left out of something others are part of.')]},
+        tertiary:[t('Isolated','Cut off from others, whether or not anyone intended that.'), t('Abandoned','Left behind by someone who was supposed to stay — that names an event more than a feeling; it\'s often felt as grief, fear, or both.'), t('Excluded','Deliberately left out of something others are part of — a situation more than a feeling on its own; sadness or hurt often follow.')]},
       {label:'Hurt', band:'moderate', short:'Something let you down.',
         desc:"Pain from disappointment or rejection.",
         nuance:"Disappointed is a letdown about an outcome; Rejected is specifically about not being wanted by someone; Devastated is either of those at an overwhelming intensity.",
-        tertiary:[t('Disappointed','Something you hoped for didn\'t happen the way you wanted.'), t('Rejected','Told or shown, directly or indirectly, that you\'re not wanted.'), t('Devastated','Hurt so large it\'s hard to function normally right now.')]},
+        tertiary:[t('Disappointed','Something you hoped for didn\'t happen the way you wanted.'), t('Rejected','Told or shown, directly or indirectly, that you\'re not wanted — that\'s more what happened than the feeling itself, which is often sadness, anger, or both.'), t('Devastated','Hurt so large it\'s hard to function normally right now.')]},
       {label:'Depressed', band:'strong', short:'Heavy and low.',
         desc:"Heavy, low, drained of energy or hope.",
         nuance:"Empty is about absence — something missing; Hopeless is a belief about the future; Heavy is the physical, effortful weight of the mood itself.",
@@ -572,7 +719,7 @@ const CORE_FULL = [
       {label:'Resentful', band:'moderate', short:'Unfairness that lingers.',
         desc:"Lingering unfairness that hasn't been resolved.",
         nuance:"Bitter is resentment that has hardened over time; Betrayed is about a specific broken trust; Jealous is about wanting what someone else has, or fearing you'll lose it to them.",
-        tertiary:[t('Bitter','A hardened resentment that\'s built up over time.'), t('Betrayed','Someone you trusted broke that trust.'), t('Jealous','Wanting something someone else has, or fearing losing something to them.')]},
+        tertiary:[t('Bitter','A hardened resentment that\'s built up over time.'), t('Betrayed','Someone you trusted broke that trust — that names what happened more than the feeling, which often lands as hurt, anger, or both.'), t('Jealous','Wanting something someone else has, or fearing losing something to them.')]},
       {label:'Hostile', band:'strong', short:'Sharp anger outward.',
         desc:"Sharp, combative anger aimed outward.",
         nuance:"Hateful is intense ill will; Vengeful is wanting to get back at someone specifically; Contemptuous is looking down on them rather than wanting to strike back.",
@@ -580,11 +727,11 @@ const CORE_FULL = [
       {label:'Aggravated', band:'moderate', short:'Pushed past your limit.',
         desc:"Pushed past your limit.",
         nuance:"Agitated is the restless physical edge of it; Exasperated is being worn down by a repeated problem; Provoked points to someone else's action as the trigger.",
-        tertiary:[t('Agitated','Physically restless and on edge, hard to sit still with it.'), t('Exasperated','Worn down by something that keeps happening despite your efforts.'), t('Provoked','Pushed into this feeling by something someone else did.')]},
+        tertiary:[t('Agitated','Physically restless and on edge, hard to sit still with it.'), t('Exasperated','Worn down by something that keeps happening despite your efforts.'), t('Provoked','Pushed into this feeling by something someone else did — that\'s a cause, not the feeling itself.')]},
       {label:'Humiliated', band:'strong', short:'Made to feel small.',
         desc:"Anger mixed with being belittled.",
         nuance:"Disrespected is about a lack of basic consideration; Ridiculed is specifically being mocked; Belittled is being made to feel small, without necessarily being mocked outright.",
-        tertiary:[t('Disrespected',"Treated as though you don't deserve basic consideration."), t('Ridiculed','Mocked or made fun of, often in front of others.'), t('Belittled','Made to feel smaller or less capable than you are.')]}
+        tertiary:[t('Disrespected',"Treated as though you don't deserve basic consideration — a belief about how you were treated, which often brings anger, shame, or both."), t('Ridiculed','Mocked or made fun of, often in front of others — that names the event; the feeling itself is often embarrassment, anger, or both.'), t('Belittled','Made to feel smaller or less capable than you are.')]}
     ]},
   {id:'anxious', label:'Anxious', emoji:'😟', color:'#7c5c9c',
     talk:"You don't have to know why yet — want to try grounding first?",
@@ -608,7 +755,7 @@ const CORE_FULL = [
         tertiary:[t('Wary','Cautious, keeping your guard up just in case.'), t('Doubtful',"Not convinced something is true or will work out."), t('Distrustful','Specifically unwilling to rely on a person or their word.')]},
       {label:'Rejected', band:'moderate', short:'Feeling unwanted.',
         desc:"Fear rooted in being unwanted.",
-        nuance:"Alienated is a broader sense of not belonging; Unwanted is about not being valued; Excluded is about being left out of one specific thing.",
+        nuance:"Alienated is a broader sense of not belonging; Unwanted is about not being valued; Excluded is about being left out of one specific thing. Words like these often describe a belief or situation more than a feeling on their own — worth noticing what feeling actually comes with it, often sadness, anxiety, or both.",
         tertiary:[t('Alienated',"Feeling like you don't belong, even among people you know."), t('Unwanted',"Sensing that your presence isn't valued or welcomed."), t('Excluded','Left out of something specific that others are part of.')]}
     ]},
   {id:'disgusted', label:'Disgusted', emoji:'😖', color:'#5c8c5a',
@@ -686,10 +833,10 @@ const CORE_FULL = [
         desc:"Hard to think clearly or focus on anything.",
         nuance:"Spacey is a general drifting; Unfocused is scattered attention specifically; Far away is being mentally elsewhere while still physically present.",
         tertiary:[t('Spacey','Drifting, hard to stay tracked on any one thing.'), t('Unfocused','Attention scattered, unable to settle anywhere.'), t('Far away','Present physically, but mentally somewhere else entirely.')]},
-      {label:'Checked Out', band:'strong', short:'Running on autopilot.',
-        desc:"Mentally clocked out, running on autopilot.",
-        nuance:"Shut down is a fuller system pause; Withdrawn is specifically about pulling back from others; Blank is the absence of any thought or feeling in particular.",
-        tertiary:[t('Shut down','Systems paused — not reacting to much of anything right now.'), t('Withdrawn','Pulled back from engaging with people or things around you.'), t('Blank','No particular thought or feeling coming through at all.')]},
+      {label:'Checked Out', band:'strong', short:'Not fully here right now.',
+        desc:"Mentally not fully present, doing things without much thought or feeling attached.",
+        nuance:"Shut down means barely reacting to what's happening around you; Withdrawn is specifically about pulling back from others; Blank is the absence of any thought or feeling in particular.",
+        tertiary:[t('Shut down','Not reacting much to what\'s happening around you right now.'), t('Withdrawn','Pulled back from engaging with people or things around you.'), t('Blank','No particular thought or feeling coming through at all.')]},
       {label:'Flat', band:'mild', short:'Not much coming through.',
         desc:"Not much feeling coming through, in any direction.",
         nuance:"Empty is the sense that something's missing; Muted is feelings present but turned down; Indifferent is a lack of caring about the outcome either way.",
@@ -746,6 +893,81 @@ const CAUSES = {
 };
 
 /* ============================================================
+   THOUGHTS & URGES — optional, deeper layer distinguishing what
+   the mind is saying (a thought) from what the body wants to do
+   (an urge) from the feeling itself. Both stay collapsed by
+   default; noticing an urge never means acting on it — the
+   action someone picks can be different from the urge. Informed
+   by Linehan's DBT distinction between an urge and the action
+   itself, and by the classic thought/feeling/situation
+   distinction popularized in cognitive approaches (see About).
+============================================================ */
+const THOUGHTS_PROMPT = {
+  happy: "What's the story I'm telling myself about why this is happening?",
+  sad: "What am I telling myself about what this means?",
+  angry: "What am I assuming about why this happened?",
+  anxious: "What am I predicting might happen?",
+  disgusted: "What judgment am I making right now?",
+  surprised: "What am I telling myself about what just happened?",
+  calm: "What's helping me feel steady right now?",
+  numb: "Is there a thought underneath this, or does it feel more blank than that?"
+};
+const URGES = {
+  happy: 'to share it, celebrate, or keep doing what\'s working',
+  sad: 'to withdraw, cry, or reach out for comfort',
+  angry: 'to yell, push back, or get away from it',
+  anxious: 'to avoid it, over-prepare, or ask for reassurance',
+  disgusted: 'to pull away, judge it, or get distance from it',
+  surprised: 'to freeze, react right away, or ask what\'s going on',
+  calm: 'to stay right here, or not much of anything',
+  numb: 'to shut down further, or to not do anything at all'
+};
+const GENERIC_INTENSITY = ['A little','Some','A lot'];
+const GENERIC_NEED = "Comfort, clarity, or time to figure out what's going on.";
+const GENERIC_THOUGHT = "Is there a thought running in the background, even without a clear feeling word yet?";
+const GENERIC_URGE = "to do something, or to do nothing at all — either is worth noticing";
+
+/* ============================================================
+   SENSORY / CONTEXT — optional check for whether the body or
+   surroundings might be adding to what's going on. Informational
+   by default, and can also nudge which action gets suggested
+   (e.g. "too much noise" favors an action that reduces input).
+   Never framed as a cause of misbehavior — just useful context.
+============================================================ */
+const SENSORY_CONTEXT = [
+  {id:'noise', label:'Too much noise'},
+  {id:'light', label:'Too much light'},
+  {id:'people', label:'Too many people'},
+  {id:'talking', label:'Too much talking or information'},
+  {id:'touch', label:'Clothing or touch feels uncomfortable'},
+  {id:'hunger', label:'Hungry or thirsty'},
+  {id:'tired', label:'Tired'},
+  {id:'pain', label:'In pain or sick'},
+  {id:'temp', label:'Too hot or cold'},
+  {id:'change', label:'A plan changed'},
+  {id:'holding', label:'I\'ve been holding it together'},
+  {id:'movement', label:'I need movement'},
+  {id:'lessinput', label:'I need less input'},
+  {id:'unclear', label:'I can\'t tell'}
+];
+
+/* ============================================================
+   COMMUNICATION PREFERENCES — how someone can be checked in
+   with right now. Optional, feeds into the generated share text
+   so a helper knows how to approach, not just what's felt.
+============================================================ */
+const COMM_PREFS = [
+  {id:'talk', label:'I can talk', sharePhrase:'I can talk about it'},
+  {id:'type', label:'I can type or write', sharePhrase:'I can type or write instead of talking'},
+  {id:'point', label:'I can point or show this screen', sharePhrase:'I can point or show you this screen'},
+  {id:'yesno', label:'Ask me yes-or-no questions', sharePhrase:'please ask yes-or-no questions'},
+  {id:'choices', label:'Give me choices', sharePhrase:'please give me choices instead of open questions'},
+  {id:'sitnear', label:'Sit near me without talking', sharePhrase:'please just sit near me without talking'},
+  {id:'time', label:'Give me time before asking', sharePhrase:'please give me time before asking anything'},
+  {id:'notyet', label:'I don\'t want to communicate yet', sharePhrase:'I don\'t want to talk about it yet'}
+];
+
+/* ============================================================
    ACTIONS — coping reorganized by what it's trying to
    accomplish (Calm my body / Understand / Connect / Solve)
    rather than siloed per emotion. Each item is tagged with the
@@ -775,13 +997,19 @@ const ACTIONS = {
     {label:'Unclench and let your shoulders drop', phrase:'unclench and let my shoulders drop', emoji:'😌', tags:['disgusted'], intensity:'moderate'},
     {label:'Plant your feet and take stock for a second', phrase:'plant my feet and take stock for a second', emoji:'🦶', tags:['surprised'], intensity:'moderate'},
     {label:'Notice one physical sensation, gently', phrase:'notice one physical sensation, gently', emoji:'🖐️', tags:['numb'], intensity:'moderate'},
+    {label:'Reduce the noise or light around you', phrase:'reduce the noise or light around me', emoji:'🔉', tags:['all'], sensory:['noise','light']},
+    {label:'Move somewhere with fewer people', phrase:'move somewhere with fewer people', emoji:'🚪', tags:['all'], sensory:['people']},
+    {label:'Put on headphones or something to block input', phrase:'put on headphones or something to block input', emoji:'🎧', tags:['all'], sensory:['noise','lessinput','talking']},
+    {label:'Get some water or a planned snack', phrase:'get some water or a planned snack', emoji:'🥤', tags:['all'], sensory:['hunger','tired']},
+    {label:'Move your body — pace, stretch, or shake it out', phrase:'move my body — pace, stretch, or shake it out', emoji:'🏃', tags:['all'], sensory:['movement','holding']},
+    {label:'Adjust clothing or find a more comfortable layer', phrase:'adjust my clothing or find something more comfortable to wear', emoji:'👕', tags:['all'], sensory:['touch']},
     {label:'Take a few slow breaths', phrase:'take a few slow breaths', emoji:'🌬️', tags:['all']}
   ],
   understand: [
     {label:'Name it out loud', phrase:"say out loud what I'm noticing", emoji:'🗣️', tags:['angry','anxious','sad','surprised'], intensity:'mild'},
     {label:'Write down what\'s going on, no filter', phrase:"write down whatever's in my head, no filter", emoji:'📝', tags:['sad','angry','anxious','happy'], intensity:'mild'},
     {label:'Ask what story you\'re telling yourself', phrase:"ask myself what story I'm telling myself", emoji:'🧠', tags:['sad','angry','anxious']},
-    {label:'Picture it from a step back, like a movie', phrase:'picture the situation from a step back, like a movie', emoji:'🎬', tags:['angry'], intensity:'strong'},
+    {label:'Picture yourself watching from outside, like a bystander would', phrase:'picture myself stepping back and watching the situation, like a bystander would', emoji:'🎬', tags:['angry'], intensity:'strong'},
     {label:'Notice what\'s helping right now', phrase:"notice what's helping right now", emoji:'🌿', tags:['calm'], intensity:'mild'},
     {label:'Write down what got you here, so you can find it again', phrase:'write down what got me here, so I can find it again', emoji:'📝', tags:['calm'], intensity:'strong'},
     {label:'Ask what you\'d say to a friend feeling this', phrase:"ask myself what I'd say to a friend feeling this", emoji:'💛', tags:['sad']},
@@ -838,6 +1066,8 @@ const ACTIONS = {
     {label:'Write down what\'s actually in your control', phrase:"write down what's actually in my control", emoji:'📝', tags:['anxious'], intensity:'moderate'},
     {label:'Wait for a few more details before deciding anything', phrase:'wait for a few more details before deciding anything', emoji:'⏳', tags:['surprised'], intensity:'moderate'},
     {label:'Do one small, familiar routine', phrase:'do one small, familiar routine', emoji:'🔁', tags:['numb'], intensity:'moderate'},
+    {label:'Look at the plan, or find out what happens next', phrase:'look at the plan, or find out what happens next', emoji:'🗓️', tags:['all'], sensory:['change']},
+    {label:'Wait before trying to solve anything', phrase:'wait before trying to solve anything', emoji:'⏳', tags:['all'], sensory:['holding','unclear']},
     {label:'Decide on one small next step', phrase:'decide on one small next step', emoji:'✅', tags:['all']}
   ]
 };
@@ -847,16 +1077,35 @@ const CATEGORY_ENCOURAGEMENT = {
   connect: "Good call — you don't have to do this alone.",
   solve: 'Good call — one concrete step is enough for now.'
 };
-function getPrimaryAction(category, emotionId, tier){
+/* Session-only preference memory — never persisted, cleared on
+   reset or reload. Keys are built from category+label (actionKey)
+   rather than adding an id field to every action by hand. */
+let actionPreferences = {};
+function actionKey(category, action){ return category + '::' + action.label; }
+function getPrimaryAction(category, emotionId, tier, sensory, excludeKey){
   const list = ACTIONS[category];
-  const candidates = list.filter(a => a.tags.includes(emotionId));
+  let candidates = list.filter(a => a.tags.includes(emotionId));
+  if(excludeKey) candidates = candidates.filter(a => actionKey(category, a) !== excludeKey);
+  // a marked "usually helps" action wins outright, before anything else
+  const liked = candidates.find(a => actionPreferences[actionKey(category, a)] === 'like');
+  if(liked) return liked;
+  // actions marked "not for me" get skipped unless they're the only option
+  const notDisliked = candidates.filter(a => actionPreferences[actionKey(category, a)] !== 'avoid');
+  const pool = notDisliked.length ? notDisliked : candidates;
+  if(sensory && sensory.length){
+    const sensoryMatch = pool.find(a => a.sensory && a.sensory.some(s => sensory.includes(s)));
+    if(sensoryMatch) return sensoryMatch;
+    const universalSensory = list.find(a => a.tags.includes('all') && a.sensory && a.sensory.some(s => sensory.includes(s)) && actionPreferences[actionKey(category, a)] !== 'avoid');
+    if(universalSensory) return universalSensory;
+  }
   if(typeof tier === 'number'){
     const band = tier === 0 ? 'mild' : (tier === 1 ? 'moderate' : 'strong');
-    const banded = candidates.find(a => a.intensity === band);
+    const banded = pool.find(a => a.intensity === band);
     if(banded) return banded;
   }
-  const neutral = candidates.find(a => !a.intensity);
+  const neutral = pool.find(a => !a.intensity);
   if(neutral) return neutral;
+  if(pool.length) return pool[0];
   if(candidates.length) return candidates[0];
   return list.find(a => a.tags.includes('all'));
 }
@@ -892,18 +1141,22 @@ const COMBINATIONS = [
    REFERENCES — the research this tool simplifies.
 ============================================================ */
 const REFERENCES = [
-  {name:"Plutchik's Wheel of Emotions (1980)", blurb:"Proposes eight primary emotions arranged in opposite pairs, each varying in intensity, that combine to form more complex \"dyads\" (e.g., joy + trust = love)."},
-  {name:"Russell's Circumplex Model of Affect (1980)", blurb:'Places emotions on two axes — valence (pleasant to unpleasant) and arousal (high to low energy) — the same idea behind tools like the Yale Mood Meter.'},
-  {name:'Nummenmaa et al., Bodily Maps of Emotion (PNAS, 2014)', blurb:'Mapped where people physically feel different emotions in the body, finding consistent patterns across cultures — the basis for the body-sensation finder here.'},
-  {name:"Gross's Process Model of Emotion Regulation (1998)", blurb:'Describes emotion regulation as a sequence of strategies — from choosing or changing a situation to shifting attention or reappraising it — applied at different points in an emotional response.'},
-  {name:'Lisa Feldman Barrett, Theory of Constructed Emotion (2017)', blurb:"Argues emotions aren't fixed, hardwired reactions but are actively constructed by the brain from body sensations and past experience — part of why naming and context both matter here."},
-  {name:'Marshall Rosenberg, Nonviolent Communication (2003)', blurb:'A framework connecting feelings to unmet or met universal needs, turning that awareness into honest requests — the inspiration for this tool\'s "need" and "action" steps.'},
-  {name:'Kristin Neff, Self-Compassion (2011)', blurb:'Research showing that treating yourself with the same kindness you\'d offer a friend, rather than harsh self-criticism, is associated with better emotional resilience.'}
+  {name:"Plutchik's Wheel of Emotions (1980)", blurb:"Proposes eight primary emotions arranged in opposite pairs, each varying in intensity, that combine to form more complex \"dyads\" (e.g., joy + trust = love).", book:'Emotion: A Psychoevolutionary Synthesis (Robert Plutchik, Harper & Row, 1980)', url:'https://www.goodreads.com/book/show/1958103.Emotion'},
+  {name:"Russell's Circumplex Model of Affect (1980)", blurb:'Places emotions on two axes — valence (pleasant to unpleasant) and arousal (high to low energy) — the same idea behind tools like the Yale Mood Meter.', book:'Original journal article (no standalone book) — Journal of Personality and Social Psychology, 39, 1161–1178', url:'https://psycnet.apa.org/record/1981-25062-001'},
+  {name:'Nummenmaa et al., Bodily Maps of Emotion (PNAS, 2014)', blurb:'Mapped where people physically feel different emotions in the body, finding consistent patterns across cultures — the basis for the body-sensation finder here.', book:'Original open-access paper — Proceedings of the National Academy of Sciences', url:'https://www.pnas.org/doi/10.1073/pnas.1321664111'},
+  {name:"Gross's Process Model of Emotion Regulation (1998)", blurb:'Describes emotion regulation as a sequence of strategies — from choosing or changing a situation to shifting attention or reappraising it — applied at different points in an emotional response.', book:'Handbook of Emotion Regulation (James J. Gross, ed., Guilford Press)', url:'https://www.routledge.com/Handbook-of-Emotion-Regulation-Third-Edition/Gross-Ford/p/book/9781462549412'},
+  {name:'Lisa Feldman Barrett, Theory of Constructed Emotion (2017)', blurb:"Argues emotions aren't fixed, hardwired reactions but are actively constructed by the brain from body sensations and past experience — part of why naming and context both matter here.", book:'How Emotions Are Made: The Secret Life of the Brain (Lisa Feldman Barrett, 2017)', url:'https://lisafeldmanbarrett.com/books/how-emotions-are-made/'},
+  {name:'Marshall Rosenberg, Nonviolent Communication (2003)', blurb:'A framework connecting feelings to unmet or met universal needs, turning that awareness into honest requests — the inspiration for this tool\'s "need" and "action" steps.', book:'Nonviolent Communication: A Language of Life (Marshall B. Rosenberg, PuddleDancer Press)', url:'https://nonviolentcommunication.com/product/nvc/'},
+  {name:'Kristin Neff, Self-Compassion (2011)', blurb:'Research showing that treating yourself with the same kindness you\'d offer a friend, rather than harsh self-criticism, is associated with better emotional resilience.', book:'Self-Compassion: The Proven Power of Being Kind to Yourself (Kristin Neff, 2011)', url:'https://self-compassion.org/books-by-kristin-neff/'},
+  {name:'Marsha Linehan, Dialectical Behavior Therapy', blurb:"Distinguishes an action urge — the pull to do something — from the action itself, and teaches that the two don't have to match. That distinction is where this tool's optional \"urge\" step comes from.", book:'DBT Skills Training Manual (Marsha M. Linehan, Guilford Press)', url:'https://www.guilford.com/books/DBT-Skills-Training-Manual/Marsha-Linehan/9781462556359'},
+  {name:'David Burns, Cognitive Model of Thoughts, Feelings, and Situations (1980)', blurb:'Popularized the idea that a situation, a thought about it, and the feeling that follows are related but distinct — noticing which is which is often the first step to understanding a reaction. Informs how this tool separates thoughts from feelings from what actually happened.', book:'Feeling Good: The New Mood Therapy (David D. Burns, 1980)', url:'https://feelinggood.com/books/'}
 ];
 function renderReferences(){
   const box = document.getElementById('referenceList');
   box.innerHTML = REFERENCES.map(r =>
-    '<div class="ref-item"><div class="name">' + r.name + '</div><div>' + r.blurb + '</div></div>'
+    '<div class="ref-item"><div class="name">' + r.name + '</div><div>' + r.blurb + '</div>' +
+    (r.book ? '<div class="cause-note">' + r.book + (r.url ? ' — <a href="' + r.url + '" target="_blank" rel="noopener">source</a>' : '') + '</div>' : '') +
+    '</div>'
   ).join('');
 }
 
@@ -981,139 +1234,271 @@ function joinPhrases(arr){
 }
 
 /* ============================================================
-   SIMPLE MODE (young kids) — unchanged
+   SIMPLE MODE (young kids) — aligned to Full's core families
+   underneath, with its own kid-friendly words. Flow: Notice
+   (a feeling, "not sure", or "more than one") -> How big ->
+   What might help -> one recommended action (with fallbacks
+   and a way to try another) -> share. Every step stays
+   reachable from "Start over," and nothing here is forced —
+   "not sure" and "more than one" are first-class, not errors.
 ============================================================ */
-const TODDLER_FEELINGS = [
-  {id:'happy', label:'Happy', emoji:'😊', color:'#d9a441'},
-  {id:'sad', label:'Sad', emoji:'😢', color:'#4d6d9a'},
-  {id:'mad', label:'Mad', emoji:'😠', color:'#c2544c'},
-  {id:'scared', label:'Scared', emoji:'😨', color:'#7c5c9c'},
-  {id:'silly', label:'Silly', emoji:'🤪', color:'#c96fa0'}
+const SIMPLE_FEELINGS = [
+  {id:'happy', label:'Happy', emoji:'😊', color:'#d9a441', core:'happy'},
+  {id:'sad', label:'Sad', emoji:'😢', color:'#4d6d9a', core:'sad'},
+  {id:'mad', label:'Mad', emoji:'😠', color:'#c2544c', core:'angry'},
+  {id:'scared', label:'Scared', emoji:'😨', color:'#7c5c9c', core:'anxious'},
+  {id:'grossedout', label:'Grossed Out', emoji:'🤢', color:'#5c8c5a', core:'disgusted'},
+  {id:'surprised', label:'Surprised', emoji:'😲', color:'#3f9c9c', core:'surprised'},
+  {id:'calm', label:'Calm', emoji:'😌', color:'#7d9c5a', core:'calm'},
+  {id:'silly', label:'Silly', emoji:'🤪', color:'#c96fa0', core:'happy'},
+  {id:'shy', label:'Shy', emoji:'😳', color:'#d9a0b0', core:'anxious'}
 ];
-const KID_COPING_BY_FEELING = {
-  happy: {
-    primary: [
-      {label:'Happy Dance', emoji:'💃', phrase:'do a happy dance'},
-      {label:'Tell Someone', emoji:'💬', phrase:'tell someone about it'},
-      {label:'Keep Playing', emoji:'🧸', phrase:'keep playing'}
-    ],
-    more: [
-      {label:'Give a High Five', emoji:'✋', phrase:'give a high five'},
-      {label:'Sing a Silly Song', emoji:'🎶', phrase:'sing a silly song'},
-      {label:'Draw the Happy Feeling', emoji:'🎨', phrase:'draw the happy feeling'}
-    ]
-  },
-  sad: {
-    primary: [
-      {label:'Big Hug', emoji:'🤗', phrase:'get a big hug'},
-      {label:'Cozy Blanket', emoji:'🧸', phrase:'snuggle under a cozy blanket'},
-      {label:'Have a Cry', emoji:'😢', phrase:'have a cry'}
-    ],
-    more: [
-      {label:'Rock Gently', emoji:'🪑', phrase:'rock gently'},
-      {label:'Hold a Soft Toy', emoji:'🧸', phrase:'hold a soft toy'},
-      {label:'Ask for a Story', emoji:'📖', phrase:'hear a story'}
-    ]
-  },
-  mad: {
-    primary: [
-      {label:'Stomp It Out', emoji:'🦶', phrase:'stomp it out'},
-      {label:'Squeeze Something', emoji:'🤲', phrase:'squeeze something tight'},
-      {label:'Blow Bubbles', emoji:'🫧', phrase:'blow some bubbles'}
-    ],
-    more: [
-      {label:'Push Against a Wall', emoji:'🧱', phrase:'push against a wall'},
-      {label:'Tear Up Paper', emoji:'📄', phrase:'tear up some paper'},
-      {label:'Growl Like a Lion', emoji:'🦁', phrase:'growl like a lion'}
-    ]
-  },
-  scared: {
-    primary: [
-      {label:'Big Hug', emoji:'🤗', phrase:'get a big hug'},
-      {label:'Stay Close', emoji:'🧍', phrase:'stay close to you'},
-      {label:'Slow Breaths', emoji:'🫧', phrase:'take some slow breaths'}
-    ],
-    more: [
-      {label:'Hold a Flashlight', emoji:'🔦', phrase:'hold a flashlight'},
-      {label:'Sing Our Song', emoji:'🎵', phrase:'sing our song'},
-      {label:'Look at a Family Photo', emoji:'🖼️', phrase:'look at a family photo'}
-    ]
-  },
-  silly: {
-    primary: [
-      {label:'Dance It Out', emoji:'💃', phrase:'dance it out'},
-      {label:'Share the Giggles', emoji:'😄', phrase:'share the giggles'},
-      {label:'Keep Being Silly', emoji:'🤪', phrase:'keep being silly'}
-    ],
-    more: [
-      {label:'Make a Funny Face', emoji:'😜', phrase:'make a funny face'},
-      {label:'Tell a Silly Joke', emoji:'🤪', phrase:'tell a silly joke'},
-      {label:'Wiggle Like Jelly', emoji:'🫨', phrase:'wiggle like jelly'}
-    ]
-  }
+const SIMPLE_INTENSITY = [
+  {id:'little', label:'A Little', dots:1},
+  {id:'medium', label:'Medium', dots:2},
+  {id:'lot', label:'A Lot', dots:3},
+  {id:'unknown', label:"I Don't Know", dots:0}
+];
+const SIMPLE_PATHWAYS = [
+  {id:'body', label:'Help My Body', emoji:'🧘'},
+  {id:'connect', label:'Have Someone With Me', emoji:'🤗'},
+  {id:'space', label:'Get Space Or Quiet', emoji:'🚪'},
+  {id:'solve', label:'Fix Or Talk About It', emoji:'💬'},
+  {id:'unsure', label:"I Don't Know — Show Me Ideas", emoji:'❓'}
+];
+const SIMPLE_ACTIONS = {
+  happy: [
+    {label:'Happy Dance', emoji:'💃', phrase:'do a happy dance', pathway:'body'},
+    {label:'Tell Someone', emoji:'💬', phrase:'tell someone about it', pathway:'connect'},
+    {label:'Keep Playing', emoji:'🧸', phrase:'keep playing', pathway:'space'},
+    {label:'Draw The Feeling', emoji:'🎨', phrase:'draw the happy feeling', pathway:'solve'}
+  ],
+  sad: [
+    {label:'Rock Gently', emoji:'🪑', phrase:'rock gently', pathway:'body'},
+    {label:'Big Hug', emoji:'🤗', phrase:'get a big hug', pathway:'connect'},
+    {label:'Cozy Blanket', emoji:'🛏️', phrase:'snuggle under a cozy blanket for a bit', pathway:'space', intensity:'big'},
+    {label:'Talk About It', emoji:'💬', phrase:'talk about what happened', pathway:'solve'}
+  ],
+  mad: [
+    {label:'Stomp It Out', emoji:'🦶', phrase:'stomp it out', pathway:'body', intensity:'big'},
+    {label:"Tell Someone I'm Mad", emoji:'🗣️', phrase:"tell someone I'm mad", pathway:'connect'},
+    {label:'Go Somewhere Quiet', emoji:'🚪', phrase:'go somewhere quiet for a minute', pathway:'space'},
+    {label:"Talk About What's Not Fair", emoji:'💬', phrase:"talk about what's not fair", pathway:'solve'}
+  ],
+  scared: [
+    {label:'Slow Breaths', emoji:'🌬️', phrase:'take some slow breaths', pathway:'body'},
+    {label:'Stay Close', emoji:'🧍', phrase:'stay close to you', pathway:'connect'},
+    {label:'Hold A Flashlight', emoji:'🔦', phrase:'hold a flashlight', pathway:'space'},
+    {label:"Talk About What's Scary", emoji:'💬', phrase:"talk about what's scary", pathway:'solve'}
+  ],
+  grossedout: [
+    {label:'Wash My Hands', emoji:'🧼', phrase:'wash my hands', pathway:'body'},
+    {label:'Tell Someone', emoji:'🗣️', phrase:"tell someone it's gross", pathway:'connect'},
+    {label:'Move Away From It', emoji:'🚶', phrase:'move away from it', pathway:'space'},
+    {label:'Figure Out What To Do', emoji:'🧭', phrase:'figure out what to do about it', pathway:'solve'}
+  ],
+  surprised: [
+    {label:'Take A Breath', emoji:'🌬️', phrase:'take a breath', pathway:'body'},
+    {label:'Tell Someone', emoji:'💬', phrase:'tell someone what happened', pathway:'connect'},
+    {label:'Take A Minute', emoji:'⏳', phrase:'take a minute before doing anything else', pathway:'space'},
+    {label:'Figure Out What Happened', emoji:'🔍', phrase:'figure out what happened', pathway:'solve'}
+  ],
+  calm: [
+    {label:'Notice Your Body', emoji:'🖐️', phrase:'notice how relaxed my body feels', pathway:'body'},
+    {label:'Share This Moment', emoji:'💬', phrase:'share this good moment with someone', pathway:'connect'},
+    {label:'Stay With It', emoji:'😌', phrase:'just stay with this feeling a bit', pathway:'space'},
+    {label:'Remember What Helped', emoji:'📝', phrase:'remember what helped so I can do it again', pathway:'solve'}
+  ],
+  silly: [
+    {label:'Wiggle Like Jelly', emoji:'🫨', phrase:'wiggle like jelly', pathway:'body'},
+    {label:'Share The Giggles', emoji:'😄', phrase:'share the giggles', pathway:'connect'},
+    {label:'Keep Being Silly', emoji:'🤪', phrase:'keep being silly', pathway:'space'},
+    {label:'Make A Funny Face', emoji:'😜', phrase:'make a funny face', pathway:'solve'}
+  ],
+  shy: [
+    {label:'Take Warm-Up Time', emoji:'⏱️', phrase:'take warm-up time', pathway:'body'},
+    {label:'Hold My Hand', emoji:'🤝', phrase:'hold your hand', pathway:'connect'},
+    {label:'Peek And Wave', emoji:'👋', phrase:"peek and wave, when I'm ready", pathway:'space'},
+    {label:'Whisper First', emoji:'🤫', phrase:'whisper first', pathway:'solve'}
+  ]
 };
+const SIMPLE_UNIVERSAL = [
+  {label:'Take A Few Slow Breaths', emoji:'🌬️', phrase:'take a few slow breaths', pathway:'body'},
+  {label:'Have Someone Sit Nearby', emoji:'🧍', phrase:'have someone sit nearby', pathway:'connect'},
+  {label:'Wait A Minute', emoji:'⏳', phrase:'wait a minute before choosing anything', pathway:'space'},
+  {label:'Ask A Grown-Up For Ideas', emoji:'❓', phrase:'ask a grown-up for ideas', pathway:'solve'}
+];
 
-function renderToddlerGrid(){
-  const grid = document.getElementById('toddlerGrid');
+let simpleState = { feelings:[], multiMode:false, intensity:null, pathway:null, actionPool:[], orderedIdx:[0], actionIndex:0 };
+
+function renderSimpleGrid(){
+  const grid = document.getElementById('simpleFeelingGrid');
   grid.innerHTML = '';
-  TODDLER_FEELINGS.forEach(f => {
+  SIMPLE_FEELINGS.forEach(f => {
     const btn = document.createElement('button');
     btn.className = 'face-btn';
     btn.style.background = f.color;
+    btn.dataset.feelingId = f.id;
     btn.innerHTML = '<span class="emoji">'+f.emoji+'</span><span>'+f.label+'</span>';
-    btn.addEventListener('click', () => showToddlerResult(f));
+    btn.addEventListener('click', () => onSimpleFeelingClick(f));
     grid.appendChild(btn);
   });
 }
-function showToddlerResult(f){
-  document.getElementById('toddlerEmoji').textContent = f.emoji;
-  document.getElementById('toddlerWord').textContent = f.label;
-  document.getElementById('toddlerResult').classList.remove('hidden');
-  document.getElementById('toddlerAffirm').classList.add('hidden');
-  document.getElementById('toddlerAffirm').textContent = '';
-  document.getElementById('shareSimple').classList.remove('hidden');
-  shareSimple.update("I'm feeling " + f.label + ' ' + f.emoji + '.');
-
-  const copingGrid = document.getElementById('toddlerCoping');
-  const refreshBtn = document.getElementById('toddlerCopingRefresh');
-  const pool = KID_COPING_BY_FEELING[f.id] || {primary:[], more:[]};
-  let showingMore = false;
-
-  function buildToddlerCoping(options){
-    copingGrid.innerHTML = '';
-    options.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'coping-btn';
-      btn.innerHTML = '<span class="emoji">'+c.emoji+'</span><span>'+c.label+'</span>';
-      btn.addEventListener('click', () => {
-        copingGrid.querySelectorAll('.coping-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        const affirm = document.getElementById('toddlerAffirm');
-        affirm.textContent = "Let's " + c.phrase + ' together! 🎉';
-        affirm.classList.remove('hidden');
-        shareSimple.update("I'm feeling " + f.label + ' ' + f.emoji + ".\nI'd like to " + c.phrase + '.');
-      });
-      copingGrid.appendChild(btn);
+function onSimpleFeelingClick(f){
+  if(simpleState.multiMode){
+    const already = simpleState.feelings.find(x => x.id === f.id);
+    if(already){
+      simpleState.feelings = simpleState.feelings.filter(x => x.id !== f.id);
+    } else if(simpleState.feelings.length < 2){
+      simpleState.feelings.push(f);
+    }
+    document.querySelectorAll('#simpleFeelingGrid .face-btn').forEach(b => {
+      b.classList.toggle('selected', !!simpleState.feelings.find(x => x.id === b.dataset.feelingId));
     });
+    document.getElementById('simpleMultiContinue').classList.toggle('hidden', simpleState.feelings.length === 0);
+    return;
   }
-  buildToddlerCoping(pool.primary);
-  refreshBtn.textContent = '🔄 More options';
-  if(pool.more && pool.more.length){
-    refreshBtn.disabled = false;
-    refreshBtn.onclick = () => {
-      showingMore = !showingMore;
-      buildToddlerCoping(showingMore ? pool.more : pool.primary);
-      refreshBtn.textContent = showingMore ? '🔄 Back to first options' : '🔄 More options';
-    };
-  } else {
-    refreshBtn.disabled = true;
-    refreshBtn.onclick = null;
-  }
-
-  document.getElementById('toddlerResult').scrollIntoView({behavior:'smooth', block:'nearest'});
+  simpleState.feelings = [f];
+  document.querySelectorAll('#simpleFeelingGrid .face-btn').forEach(b => b.classList.toggle('selected', b.dataset.feelingId === f.id));
+  goToSimpleIntensity();
 }
-document.getElementById('toddlerReset').addEventListener('click', () => {
-  document.getElementById('toddlerResult').classList.add('hidden');
+document.getElementById('simpleNotSure').addEventListener('click', () => {
+  simpleState.feelings = [];
+  simpleState.multiMode = false;
+  document.querySelectorAll('#simpleFeelingGrid .face-btn').forEach(b => b.classList.remove('selected'));
+  goToSimpleIntensity();
+});
+document.getElementById('simpleMoreThanOne').addEventListener('click', () => {
+  simpleState.multiMode = true;
+  simpleState.feelings = [];
+  document.querySelectorAll('#simpleFeelingGrid .face-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('simpleMultiHint').classList.remove('hidden');
+  document.getElementById('simpleMultiContinue').classList.add('hidden');
+});
+document.getElementById('simpleMultiContinue').addEventListener('click', () => {
+  goToSimpleIntensity();
+});
+function goToSimpleIntensity(){
+  document.getElementById('simpleMultiHint').classList.add('hidden');
+  document.getElementById('simpleMultiContinue').classList.add('hidden');
+  document.getElementById('simpleStepIntensity').classList.remove('hidden');
+  document.getElementById('simpleStepPathway').classList.add('hidden');
+  document.getElementById('simpleResult').classList.add('hidden');
+  renderSimpleIntensity();
+}
+function renderSimpleIntensity(){
+  const row = document.getElementById('simpleIntensityRow');
+  row.innerHTML = '';
+  SIMPLE_INTENSITY.forEach(level => {
+    const btn = document.createElement('button');
+    btn.className = 'size-btn';
+    const dots = level.dots > 0 ? '<div class="dots">' + '●'.repeat(level.dots) + '○'.repeat(3 - level.dots) + '</div>' : '';
+    btn.innerHTML = dots + '<div>' + level.label + '</div>';
+    btn.addEventListener('click', () => {
+      row.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      simpleState.intensity = level.id;
+      goToSimplePathway();
+    });
+    row.appendChild(btn);
+  });
+}
+function goToSimplePathway(){
+  document.getElementById('simpleStepPathway').classList.remove('hidden');
+  document.getElementById('simpleResult').classList.add('hidden');
+  renderSimplePathway();
+}
+function renderSimplePathway(){
+  const grid = document.getElementById('simplePathwayGrid');
+  grid.innerHTML = '';
+  SIMPLE_PATHWAYS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'pathway-btn';
+    btn.innerHTML = '<span class="emoji">'+p.emoji+'</span><span>'+p.label+'</span>';
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.pathway-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      simpleState.pathway = p.id;
+      showSimpleAction();
+    });
+    grid.appendChild(btn);
+  });
+}
+function getSimpleActionPool(){
+  const primaryFeeling = simpleState.feelings[0];
+  const pool = primaryFeeling ? (SIMPLE_ACTIONS[primaryFeeling.id] || []) : SIMPLE_UNIVERSAL;
+  return pool.length ? pool : SIMPLE_UNIVERSAL;
+}
+function orderedSimpleActionIndexes(pool){
+  const wantBig = simpleState.intensity === 'lot';
+  let firstIdx = -1;
+  if(simpleState.pathway && simpleState.pathway !== 'unsure'){
+    if(wantBig){
+      firstIdx = pool.findIndex(a => a.pathway === simpleState.pathway && a.intensity === 'big');
+    }
+    if(firstIdx === -1) firstIdx = pool.findIndex(a => a.pathway === simpleState.pathway);
+  }
+  if(firstIdx === -1) firstIdx = 0;
+  const order = [firstIdx];
+  for(let i = 0; i < pool.length; i++){ if(i !== firstIdx) order.push(i); }
+  return order;
+}
+function showSimpleAction(){
+  const pool = getSimpleActionPool();
+  simpleState.actionPool = pool;
+  simpleState.orderedIdx = orderedSimpleActionIndexes(pool);
+  simpleState.actionIndex = 0;
+  document.getElementById('simpleResult').classList.remove('hidden');
+  renderCurrentSimpleAction();
+}
+function renderCurrentSimpleAction(){
+  const pool = simpleState.actionPool;
+  const idx = simpleState.orderedIdx[simpleState.actionIndex % simpleState.orderedIdx.length];
+  const action = pool[idx];
+  document.getElementById('simpleActionEmoji').textContent = action.emoji;
+  document.getElementById('simpleActionWord').textContent = action.label;
+  document.getElementById('simpleActionMaybe').textContent = 'This might help.';
+  document.getElementById('simpleAffirm').classList.add('hidden');
+  refreshSimpleShare(action);
+}
+document.getElementById('simpleTryAnother').addEventListener('click', () => {
+  simpleState.actionIndex++;
+  renderCurrentSimpleAction();
+});
+document.getElementById('simpleNothingRight').addEventListener('click', () => {
+  const affirm = document.getElementById('simpleAffirm');
+  affirm.textContent = "That's okay — not every idea fits every time.";
+  affirm.classList.remove('hidden');
+});
+document.getElementById('simpleWantAdult').addEventListener('click', () => {
+  const affirm = document.getElementById('simpleAffirm');
+  affirm.textContent = "Good idea — let's find a grown-up together.";
+  affirm.classList.remove('hidden');
+});
+function refreshSimpleShare(action){
+  const box = document.getElementById('shareSimple');
+  box.classList.remove('hidden');
+  let text;
+  if(simpleState.feelings.length === 0){
+    text = "I'm not sure what I feel yet.";
+  } else if(simpleState.feelings.length === 1){
+    text = 'I feel ' + simpleState.feelings[0].label + ' ' + simpleState.feelings[0].emoji + '.';
+  } else {
+    text = 'I feel ' + simpleState.feelings.map(f => f.label).join(' and ') + '.';
+  }
+  const intensityWord = SIMPLE_INTENSITY.find(i => i.id === simpleState.intensity);
+  if(intensityWord && intensityWord.id !== 'unknown') text += ' It feels like ' + intensityWord.label.toLowerCase() + '.';
+  if(action) text += "\nI'd like to " + action.phrase + '.';
+  shareSimple.update(text);
+}
+document.getElementById('simpleReset').addEventListener('click', () => {
+  simpleState = { feelings:[], multiMode:false, intensity:null, pathway:null, actionPool:[], orderedIdx:[0], actionIndex:0 };
+  document.querySelectorAll('#simpleFeelingGrid .face-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('simpleMultiHint').classList.add('hidden');
+  document.getElementById('simpleMultiContinue').classList.add('hidden');
+  document.getElementById('simpleStepIntensity').classList.add('hidden');
+  document.getElementById('simpleStepPathway').classList.add('hidden');
+  document.getElementById('simpleResult').classList.add('hidden');
   document.getElementById('shareSimple').classList.add('hidden');
 });
 
@@ -1123,7 +1508,8 @@ document.getElementById('toddlerReset').addEventListener('click', () => {
    Choose one action -> Done. No vocabulary drilling here by
    design; that lives in Explore.
 ============================================================ */
-let itmState = { core:null, intensity:null, intensityIndex:null, action:null };
+let itmState = { core:null, feelings:[], unresolved:false, intensity:null, intensityIndex:null, action:null, sensory:[], comm:[] };
+let qcMultiMode = false;
 
 function renderQCFeelingGrid(){
   const grid = document.getElementById('qcFeelingGrid');
@@ -1138,21 +1524,76 @@ function renderQCFeelingGrid(){
   });
 }
 function pickQCFeeling(id){
+  if(qcMultiMode){
+    const idx = itmState.feelings.indexOf(id);
+    if(idx > -1){ itmState.feelings.splice(idx, 1); }
+    else if(itmState.feelings.length < 3){ itmState.feelings.push(id); }
+    document.querySelectorAll('#qcFeelingGrid .chip-btn').forEach(b => b.classList.toggle('active', itmState.feelings.includes(b.dataset.feelingId)));
+    document.getElementById('qcMultiContinue').classList.toggle('hidden', itmState.feelings.length === 0);
+    return;
+  }
   document.querySelectorAll('#qcFeelingGrid .chip-btn').forEach(b => b.classList.toggle('active', b.dataset.feelingId === id));
   document.getElementById('qcFinder').classList.add('hidden');
-  itmState = { core:id, intensity:null, action:null };
-
+  itmState = { core:id, feelings:[id], unresolved:false, intensity:null, intensityIndex:null, action:null, sensory:itmState.sensory, comm:itmState.comm };
+  beginITMFromFeelings();
+}
+function beginITMFromFeelings(){
+  itmState.core = itmState.feelings[0] || null;
   document.getElementById('itmStep2').classList.remove('hidden');
-  renderIntensityStep(id);
+  renderIntensityStep(itmState.core);
   document.getElementById('itmStep3').classList.add('hidden');
   document.getElementById('itmStep4').classList.add('hidden');
   document.getElementById('qcAffirm').classList.add('hidden');
   document.getElementById('shareQuickBox').classList.add('hidden');
+  renderCombinationNote();
 }
+function renderCombinationNote(){
+  const box = document.getElementById('itmComboNote');
+  if(!box) return;
+  if(itmState.feelings.length < 2){ box.innerHTML = ''; return; }
+  const labels = itmState.feelings.map(id => (CORE_FULL.find(c => c.id === id) || {}).label).filter(Boolean);
+  let html = '<div class="need-card" style="margin-bottom:14px;">Noticing ' + joinPhrases(labels) + ' together. ';
+  const combo = COMBINATIONS.find(c => itmState.feelings.includes(c.a) && itmState.feelings.includes(c.b));
+  if(combo){
+    html += 'That combination can sometimes feel like ' + combo.result.toLowerCase() + ' — ' + combo.note + ' ';
+  }
+  html += 'Your combination may feel different than either one alone.</div>';
+  box.innerHTML = html;
+}
+document.getElementById('qcNoneFit').addEventListener('click', () => {
+  qcMultiMode = false;
+  itmState = { core:null, feelings:[], unresolved:true, intensity:null, intensityIndex:null, action:null, sensory:itmState.sensory, comm:itmState.comm };
+  document.querySelectorAll('#qcFeelingGrid .chip-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('qcFinder').classList.add('hidden');
+  document.getElementById('itmStep2').classList.remove('hidden');
+  renderIntensityStep(null);
+  document.getElementById('itmStep3').classList.add('hidden');
+  document.getElementById('itmStep4').classList.add('hidden');
+  document.getElementById('qcAffirm').classList.add('hidden');
+  document.getElementById('shareQuickBox').classList.add('hidden');
+  renderCombinationNote();
+});
+document.getElementById('qcFinderContinueUnsure').addEventListener('click', () => {
+  document.getElementById('qcNoneFit').click();
+});
+document.getElementById('qcMoreThanOne').addEventListener('click', () => {
+  qcMultiMode = true;
+  itmState = { core:null, feelings:[], unresolved:false, intensity:null, intensityIndex:null, action:null, sensory:itmState.sensory, comm:itmState.comm };
+  document.querySelectorAll('#qcFeelingGrid .chip-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('qcMultiHint').classList.remove('hidden');
+  document.getElementById('qcMultiContinue').classList.add('hidden');
+});
+document.getElementById('qcMultiContinue').addEventListener('click', () => {
+  qcMultiMode = false;
+  document.getElementById('qcMultiHint').classList.add('hidden');
+  document.getElementById('qcMultiContinue').classList.add('hidden');
+  beginITMFromFeelings();
+});
 function renderIntensityStep(coreId){
   const row = document.getElementById('itmIntensity');
   row.innerHTML = '';
-  INTENSITY[coreId].forEach((word, idx) => {
+  const words = coreId ? INTENSITY[coreId] : GENERIC_INTENSITY;
+  words.forEach((word, idx) => {
     const btn = document.createElement('button');
     btn.className = 'chip-btn';
     btn.textContent = word;
@@ -1169,8 +1610,37 @@ function renderIntensityStep(coreId){
 }
 function showNeedStep(){
   document.getElementById('itmStep3').classList.remove('hidden');
-  document.getElementById('itmNeed').textContent = NEEDS[itmState.core];
+  document.getElementById('itmNeed').textContent = itmState.core ? NEEDS[itmState.core] : GENERIC_NEED;
+  document.getElementById('itmThought').textContent = itmState.core ? THOUGHTS_PROMPT[itmState.core] : GENERIC_THOUGHT;
+  document.getElementById('itmUrge').textContent = 'Some people notice an urge ' + (itmState.core ? URGES[itmState.core] : GENERIC_URGE) + '.';
+  document.getElementById('itmDeeper').classList.add('hidden');
+  document.getElementById('itmDeeperToggle').textContent = 'Want to go deeper? (optional) ▾';
   showActionStep();
+}
+document.getElementById('itmDeeperToggle').addEventListener('click', function(){
+  const box = document.getElementById('itmDeeper');
+  box.classList.toggle('hidden');
+  this.textContent = box.classList.contains('hidden') ? 'Want to go deeper? (optional) ▾' : 'Want to go deeper? (optional) ▴';
+});
+function renderActionAffirm(key, action){
+  const affirm = document.getElementById('qcAffirm');
+  const aKey = actionKey(key, action);
+  const pref = actionPreferences[aKey];
+  affirm.innerHTML = '<div>' + (CATEGORY_ENCOURAGEMENT[key] || "Good call.") + '</div>' +
+    '<div style="margin-top:6px;font-weight:400;">' + action.emoji + ' ' + action.label + '</div>' +
+    '<div class="pref-row">' +
+      '<button type="button" class="pref-btn' + (pref === 'like' ? ' active' : '') + '" id="prefLikeBtn">👍 This usually helps</button>' +
+      '<button type="button" class="pref-btn' + (pref === 'avoid' ? ' active' : '') + '" id="prefAvoidBtn">🚫 Not right now</button>' +
+    '</div>';
+  affirm.classList.remove('hidden');
+  document.getElementById('prefLikeBtn').addEventListener('click', () => {
+    actionPreferences[aKey] = (actionPreferences[aKey] === 'like') ? undefined : 'like';
+    showActionStep();
+  });
+  document.getElementById('prefAvoidBtn').addEventListener('click', () => {
+    actionPreferences[aKey] = (actionPreferences[aKey] === 'avoid') ? undefined : 'avoid';
+    showActionStep();
+  });
 }
 function showActionStep(){
   document.getElementById('itmStep4').classList.remove('hidden');
@@ -1179,8 +1649,9 @@ function showActionStep(){
   row.innerHTML = '';
   itmState.action = null;
   document.getElementById('qcAffirm').classList.add('hidden');
+  const lookupId = itmState.core || 'all';
   ACTION_CATEGORIES.forEach(([key, title]) => {
-    const action = getPrimaryAction(key, itmState.core, itmState.intensityIndex);
+    const action = getPrimaryAction(key, lookupId, itmState.intensityIndex, itmState.sensory);
     const btn = document.createElement('button');
     btn.className = 'chip-btn';
     btn.innerHTML = '<b>' + title + ':</b> ' + action.emoji + ' ' + action.label;
@@ -1194,47 +1665,138 @@ function showActionStep(){
       row.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       itmState.action = action;
-      const affirm = document.getElementById('qcAffirm');
-      affirm.innerHTML = '<div>' + CATEGORY_ENCOURAGEMENT[key] + '</div>' +
-        '<div style="margin-top:6px;font-weight:400;">' + action.emoji + ' ' + action.label + '</div>';
-      affirm.classList.remove('hidden');
+      renderActionAffirm(key, action);
       refreshShareQuickBox();
     });
     row.appendChild(btn);
   });
   if(itmState.action){
-    const affirm = document.getElementById('qcAffirm');
     const key = itmState.action.tags ? Object.keys(CATEGORY_ENCOURAGEMENT).find(k => ACTIONS[k].includes(itmState.action)) : null;
-    affirm.innerHTML = '<div>' + (CATEGORY_ENCOURAGEMENT[key] || "Good call.") + '</div>' +
-      '<div style="margin-top:6px;font-weight:400;">' + itmState.action.emoji + ' ' + itmState.action.label + '</div>';
-    affirm.classList.remove('hidden');
+    renderActionAffirm(key, itmState.action);
     refreshShareQuickBox();
   }
 }
+document.getElementById('itmNothingFits').addEventListener('click', () => {
+  const affirm = document.getElementById('qcAffirm');
+  itmState.action = null;
+  affirm.textContent = "That's okay — none of these have to be it. You can try a different intensity above, or ask someone for help.";
+  affirm.classList.remove('hidden');
+  refreshShareQuickBox();
+});
+document.getElementById('itmAskForHelp').addEventListener('click', () => {
+  const affirm = document.getElementById('qcAffirm');
+  affirm.textContent = "Good call — let's find someone to help think this through.";
+  affirm.classList.remove('hidden');
+});
 function refreshShareQuickBox(){
   const box = document.getElementById('shareQuickBox');
-  if(!itmState.core){ box.classList.add('hidden'); return; }
-  const core = CORE_FULL.find(c => c.id === itmState.core);
-  let text = 'Feeling: ' + core.label + (itmState.intensity ? ' (' + itmState.intensity + ')' : '');
-  text += '\nNeed: ' + NEEDS[itmState.core];
-  if(itmState.action) text += '\nIt might help to ' + itmState.action.phrase + '.';
+  const started = itmState.feelings.length > 0 || itmState.unresolved;
+  if(!started){ box.classList.add('hidden'); return; }
+  let lean;
+  if(itmState.feelings.length === 0){
+    lean = "I'm not sure what I'm feeling yet.";
+  } else if(itmState.feelings.length === 1){
+    const core = CORE_FULL.find(c => c.id === itmState.feelings[0]);
+    lean = 'Feeling: ' + core.label + (itmState.intensity ? ' (' + itmState.intensity + ')' : '');
+  } else {
+    const labels = itmState.feelings.map(id => (CORE_FULL.find(c => c.id === id) || {}).label).filter(Boolean);
+    lean = 'Feeling: ' + labels.join(' and ') + (itmState.intensity ? ' (' + itmState.intensity + ')' : '');
+  }
+  lean += '\nNeed: ' + (itmState.core ? NEEDS[itmState.core] : GENERIC_NEED);
+  if(itmState.action) lean += '\nIt might help to ' + itmState.action.phrase + '.';
+  if(itmState.comm && itmState.comm.length){
+    lean += '\n' + joinPhrases(itmState.comm.map(id => (COMM_PREFS.find(c => c.id === id) || {}).sharePhrase).filter(Boolean)) + '.';
+  }
+  let detailed = lean;
+  const urgeText = itmState.core ? URGES[itmState.core] : GENERIC_URGE;
+  detailed += '\nI might feel an urge ' + urgeText + ' — noticing that doesn\'t mean I\'ll act on it.';
+  if(itmState.sensory && itmState.sensory.length){
+    const sensLabels = itmState.sensory.map(id => (SENSORY_CONTEXT.find(s => s.id === id) || {}).label).filter(Boolean);
+    if(sensLabels.length) detailed += '\nMight be adding to it: ' + joinPhrases(sensLabels) + '.';
+  }
   box.classList.remove('hidden');
-  shareQuickBox.update(text);
+  shareQuickBox.update(lean, detailed);
 }
 
 document.getElementById('qcFinderToggle').addEventListener('click', () => {
   document.getElementById('qcFinder').classList.toggle('hidden');
 });
+document.getElementById('qcSensoryToggle').addEventListener('click', () => {
+  document.getElementById('qcSensoryPanel').classList.toggle('hidden');
+});
+document.getElementById('qcCommToggle').addEventListener('click', () => {
+  document.getElementById('qcCommPanel').classList.toggle('hidden');
+});
+function renderSensoryChecklist(){
+  const row = document.getElementById('qcSensoryRow');
+  row.innerHTML = '';
+  SENSORY_CONTEXT.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = s.label;
+    btn.dataset.sensoryId = s.id;
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      itmState.sensory = Array.from(document.querySelectorAll('#qcSensoryRow .chip-btn.active')).map(b => b.dataset.sensoryId);
+      if(itmState.feelings.length || itmState.unresolved) showActionStep();
+      refreshShareQuickBox();
+    });
+    row.appendChild(btn);
+  });
+}
+function renderCommChecklist(){
+  const row = document.getElementById('qcCommRow');
+  row.innerHTML = '';
+  COMM_PREFS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = c.label;
+    btn.dataset.commId = c.id;
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      itmState.comm = Array.from(document.querySelectorAll('#qcCommRow .chip-btn.active')).map(b => b.dataset.commId);
+      refreshShareQuickBox();
+      if(helperMode) renderHelperPanel();
+    });
+    row.appendChild(btn);
+  });
+}
 document.getElementById('qcReset').addEventListener('click', () => {
-  itmState = { core:null, intensity:null, action:null };
+  qcMultiMode = false;
+  itmState = { core:null, feelings:[], unresolved:false, intensity:null, intensityIndex:null, action:null, sensory:[], comm:[] };
   document.querySelectorAll('#sub-quick .active').forEach(el => el.classList.remove('active'));
   document.getElementById('itmStep2').classList.add('hidden');
   document.getElementById('itmStep3').classList.add('hidden');
   document.getElementById('itmStep4').classList.add('hidden');
+  document.getElementById('itmDeeper').classList.add('hidden');
+  document.getElementById('itmComboNote').innerHTML = '';
   document.getElementById('qcFinder').classList.add('hidden');
+  document.getElementById('qcSensoryPanel').classList.add('hidden');
+  document.getElementById('qcCommPanel').classList.add('hidden');
+  document.getElementById('qcMultiHint').classList.add('hidden');
+  document.getElementById('qcMultiContinue').classList.add('hidden');
   updateFinderSuggestions();
   document.getElementById('qcAffirm').classList.add('hidden');
   document.getElementById('shareQuickBox').classList.add('hidden');
+});
+function switchToTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.target === tabId));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
+}
+document.getElementById('itmMakeSimpler').addEventListener('click', () => {
+  switchToTab('panel-little');
+  if(itmState.core){
+    const match = SIMPLE_FEELINGS.find(f => f.core === itmState.core);
+    if(match) onSimpleFeelingClick(match);
+  }
+});
+document.getElementById('simpleShowMore').addEventListener('click', () => {
+  switchToTab('panel-full');
+  document.querySelectorAll('.subtab-btn').forEach(b => b.classList.toggle('active', b.dataset.sub === 'sub-quick'));
+  document.querySelectorAll('.subtab-panel').forEach(p => p.classList.toggle('active', p.id === 'sub-quick'));
+  const coreId = simpleState.feelings[0] ? simpleState.feelings[0].core : null;
+  qcMultiMode = false;
+  if(coreId) pickQCFeeling(coreId);
 });
 
 /* ---- "I don't know" finder (shared entry point into Step 1) ---- */
@@ -1539,14 +2101,106 @@ function renderActionsReference(coreId){
 }
 
 /* ============================================================
+   HELPER MODE — an optional panel for a parent, teacher, or
+   other trusted adult who's helping someone use this tool. Off
+   by default and tucked behind its own toggle so a kid using
+   this alone never sees it. The adult is a helper, not an
+   interpreter: nothing here lets an adult pick or override the
+   child's own selections — it only adds context and phrasing
+   suggestions alongside what the child has already chosen.
+============================================================ */
+const HELPER_TIPS = [
+  'Offer choices; do not insist on an answer.',
+  'The child may point, type, nod, or choose nothing.',
+  'Reflect what they selected without correcting it.',
+  'Regulation may need to come before conversation.',
+  'Use fewer words when distress is high.',
+  'Ask before touching.',
+  'Do not require eye contact.',
+  'A child can change an answer.',
+  "It's okay if no emotion word fits yet."
+];
+const HELPER_PHRASES = [
+  'You do not have to explain everything.',
+  'Would you like choices, or should I wait?',
+  'I believe that this feels big.',
+  'Do you want me close, farther away, or out of the room?',
+  'Would you like help solving it, or do you only want me to listen?',
+  'You can show me instead of telling me.',
+  'We can come back to this later.',
+  'I will help keep everyone safe.'
+];
+let helperMode = false;
+function renderHelperPanel(){
+  const panel = document.getElementById('helperPanel');
+  let html = '';
+  if(itmState && itmState.comm && itmState.comm.length){
+    const labels = itmState.comm.map(id => (COMM_PREFS.find(c => c.id === id) || {}).label).filter(Boolean);
+    if(labels.length){
+      html += '<div class="helper-now">Right now, they\'ve told you: ' + joinPhrases(labels) + '.</div>';
+    }
+  }
+  html += '<h4>Keep in mind</h4><ul>' + HELPER_TIPS.map(t => '<li>' + t + '</li>').join('') + '</ul>' +
+    '<h4>Some phrases that can help</h4><ul>' + HELPER_PHRASES.map(p => '<li>“' + p + '”</li>').join('') + '</ul>' +
+    '<p class="hint" style="margin:0;">This tool can help start a conversation. It cannot determine what another person feels.</p>';
+  panel.innerHTML = html;
+}
+document.getElementById('helperModeToggle').addEventListener('click', () => {
+  helperMode = !helperMode;
+  document.getElementById('helperModeToggle').textContent = helperMode ? 'Hide helper tips' : 'Helping someone else?';
+  const panel = document.getElementById('helperPanel');
+  panel.classList.toggle('hidden', !helperMode);
+  if(helperMode) renderHelperPanel();
+});
+
+/* ============================================================
+   SAFETY — a rare, explicit interrupt. This never fires from
+   intensity ("Furious" or "A lot" alone says nothing about
+   safety) — only from someone actively tapping this specific
+   link. It doesn't try to assess risk; it points toward a human
+   and toward real crisis resources, and stops there.
+============================================================ */
+function showSafetyCard(mode){
+  const overlay = document.createElement('div');
+  overlay.className = 'safety-overlay';
+  let html = '<div class="safety-card">';
+  if(mode === 'simple'){
+    html +=
+      '<h2>If you don\'t feel safe</h2>' +
+      '<p>Go find a grown-up right now. Tell them you don\'t feel safe. Don\'t stay alone with this.</p>' +
+      '<p>If you can\'t find a grown-up, you can call or text <b>988</b>, or call <b>911</b>.</p>';
+  } else {
+    html +=
+      '<h2>If you\'re not safe right now</h2>' +
+      '<ul>' +
+        '<li>Move toward a trusted adult or safe person now.</li>' +
+        '<li>Tell them clearly that you may not be safe.</li>' +
+        '<li>Don\'t stay alone with the problem.</li>' +
+        '<li>Contact emergency or crisis support when immediate help is needed — call or text <b>988</b> (Suicide &amp; Crisis Lifeline), text HOME to <b>741741</b> (Crisis Text Line), or call <b>911</b>.</li>' +
+      '</ul>';
+  }
+  html +=
+    '<p class="safety-parent-note">For the adult: strong emotions alone do not mean a child is dangerous. Take statements about being unsafe or wanting to cause harm seriously, and seek appropriate human help.</p>' +
+    '<button type="button" class="close-btn">Close</button>' +
+    '</div>';
+  overlay.innerHTML = html;
+  overlay.querySelector('.close-btn').addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
+}
+document.getElementById('simpleSafetyLink').addEventListener('click', () => showSafetyCard('simple'));
+document.getElementById('fullSafetyLink').addEventListener('click', () => showSafetyCard('full'));
+
+/* ============================================================
    INIT
 ============================================================ */
 const shareSimple = createShareBlock(document.getElementById('shareSimple'));
 const shareQuickBox = createShareBlock(document.getElementById('shareQuickBox'));
 
-renderToddlerGrid();
+renderSimpleGrid();
 renderQCFeelingGrid();
 renderFinder();
+renderSensoryChecklist();
+renderCommChecklist();
 renderReferences();
 drawWheel(document.getElementById('wheelFull'), CORE_FULL, selectExploreCore);
 </script>
