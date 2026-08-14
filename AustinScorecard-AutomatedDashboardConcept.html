@@ -217,10 +217,24 @@
     padding: 12px 10px; text-align: center;
   }
   .glance-card.flag { background: rgba(216,72,60,0.06); border-color: rgba(216,72,60,0.25); }
+  .glance-card.flag { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+  .glance-card.flag:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .glance-card.active { border-color: var(--bad); background: rgba(216,72,60,0.13); box-shadow: 0 0 0 1px var(--bad) inset; }
   .glance-value { font-family: "Poppins", sans-serif; font-size: 22px; font-weight: 700; color: var(--muted); }
   .glance-card.flag .glance-value { color: var(--bad); }
   .glance-label { font-size: 11px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
   .glance-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .exc-filter-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: rgba(216,72,60,0.07); border: 1px solid rgba(216,72,60,0.25); border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 12px; font-size: 12.5px; font-weight: 600; color: var(--bad);
+  }
+  .exc-filter-clear {
+    background: none; border: 1px solid rgba(216,72,60,0.4); border-radius: 20px; color: var(--bad);
+    font-family: inherit; font-size: 11.5px; font-weight: 700; padding: 3px 10px; cursor: pointer;
+  }
+  .exc-filter-clear:hover { background: rgba(216,72,60,0.12); }
 
   .exc-district {
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -420,18 +434,22 @@
   <!-- ===================== EXCEPTIONS ===================== -->
   <div class="view" id="view-exceptions">
     <div class="panel">
-      <h2>Exceptions at a Glance <span>sites currently outside standard, by category, for the selected range</span></h2>
+      <h2>Exceptions at a Glance <span>sites currently outside standard, by category, for the selected range — click a card to see which sites</span></h2>
       <div class="glance-grid" id="exceptions-glance"></div>
     </div>
 
     <div class="panel">
       <h2>By District &amp; Site <span>expand a district, then a site, to see what's flagged</span></h2>
       <p class="stat-line" id="exceptions-summary" style="margin-bottom:12px;"></p>
+      <div class="exc-filter-bar" id="exceptions-filter-bar" style="display:none;">
+        <span class="exc-filter-label"></span>
+        <button type="button" class="exc-filter-clear" id="exceptions-filter-clear">Clear ×</button>
+      </div>
       <div id="exceptions-tree"></div>
     </div>
 
     <div class="note">
-      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites and grouped by district so nobody has to click into every site to find what needs attention. "Duration" tracks how many consecutive weeks a metric has been out of standard, independent of the date range selected above, so a short-term dip and a persistent problem don't look the same. Logging-compliance flags use each employee's most recent tracked month instead of a weekly streak. Click any row inside a site to jump to that site's detail view.
+      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites and grouped by district so nobody has to click into every site to find what needs attention. Click a card above to filter the list to just that category, or expand districts and sites manually to browse everything. "Duration" tracks how many consecutive weeks a metric has been out of standard, independent of the date range selected above, so a short-term dip and a persistent problem don't look the same. Click any row inside a site to jump to that site's detail view.
     </div>
   </div>
 
@@ -1069,16 +1087,6 @@ function computeExceptions(idxs) {
       const streak = computeStreak(RECAP[code][def.key], v => def.isBad(v, code));
       rows.push({ code, name: SITE_META[code], district: DISTRICTS[code], category: def.label, actual: row.actual, standard: row.standard, streak, type: "standard" });
     });
-
-    const real = REPORTING_ACCURACY[code];
-    const acc = real || illustrativeAccuracy(code);
-    const isIllustrative = !real;
-    if (acc.length) {
-      const maxMonth = acc.reduce((max, r) => MONTH_ORDER.indexOf(r.month) > MONTH_ORDER.indexOf(max) ? r.month : max, acc[0].month);
-      acc.filter(r => r.month === maxMonth && r.type === "under" && r.value !== null && r.value >= 20).forEach(r => {
-        rows.push({ code, name: SITE_META[code], district: DISTRICTS[code], category: "Logging Compliance — " + r.name, actual: "Under by " + r.value, standard: "0 variance", streak: null, type: "compliance", illustrative: isIllustrative, month: r.month });
-      });
-    }
   });
   rows.sort((a, b) => {
     const as = a.streak === null ? -1 : a.streak, bs = b.streak === null ? -1 : b.streak;
@@ -1124,52 +1132,70 @@ function buildExceptionTable(siteRows) {
   return tableWrap;
 }
 
+let exceptionsFilter = null;
+document.getElementById("exceptions-filter-clear").addEventListener("click", () => {
+  exceptionsFilter = null;
+  renderExceptions();
+});
+
 function renderExceptions() {
   const idxs = currentIndices();
   const rows = computeExceptions(idxs);
   const sitesAffected = new Set(rows.map(r => r.code)).size;
-  const standardCount = rows.filter(r => r.type === "standard").length;
-  const complianceCount = rows.filter(r => r.type === "compliance").length;
 
   document.getElementById("exceptions-summary").innerHTML =
     rows.length === 0
       ? "No active exceptions for the selected range — every site is within standard."
-      : `<b>${rows.length}</b> active exceptions across <b>${sitesAffected}</b> of 14 sites for the selected range — ${standardCount} operating-standard misses, ${complianceCount} logging-compliance flags.`;
+      : `<b>${rows.length}</b> active exceptions across <b>${sitesAffected}</b> of 14 sites for the selected range.`;
 
-  // ---------- At a glance ----------
+  // ---------- At a glance (click a card to filter the tree below) ----------
   const glance = document.getElementById("exceptions-glance");
   glance.innerHTML = "";
-  const glanceDefs = METRIC_DEFS.map(d => ({ label: d.label, type: "standard" }))
-    .concat([{ label: "Logging Compliance", type: "compliance" }]);
-  glanceDefs.forEach(def => {
-    const matching = def.type === "standard"
-      ? rows.filter(r => r.type === "standard" && r.category === def.label)
-      : rows.filter(r => r.type === "compliance");
+  if (exceptionsFilter && !METRIC_DEFS.some(d => d.label === exceptionsFilter)) exceptionsFilter = null;
+  METRIC_DEFS.forEach(def => {
+    const matching = rows.filter(r => r.category === def.label);
     const siteCount = new Set(matching.map(r => r.code)).size;
+    const isActive = exceptionsFilter === def.label;
     const card = document.createElement("div");
-    card.className = "glance-card" + (siteCount > 0 ? " flag" : "");
-    const subText = def.type === "compliance" && matching.length
-      ? `${matching.length} employee${matching.length === 1 ? "" : "s"}`
-      : (siteCount === 1 ? "site" : "sites");
+    card.className = "glance-card" + (siteCount > 0 ? " flag" : "") + (isActive ? " active" : "");
     card.innerHTML = `
       <div class="glance-value">${siteCount}</div>
       <div class="glance-label">${def.label}</div>
-      <div class="glance-sub">${subText}</div>
+      <div class="glance-sub">${siteCount === 1 ? "site" : "sites"}</div>
     `;
+    if (siteCount > 0) {
+      card.addEventListener("click", () => {
+        exceptionsFilter = exceptionsFilter === def.label ? null : def.label;
+        renderExceptions();
+      });
+    }
     glance.appendChild(card);
   });
+
+  // ---------- Filter bar ----------
+  const filterBar = document.getElementById("exceptions-filter-bar");
+  if (exceptionsFilter) {
+    filterBar.style.display = "flex";
+    filterBar.querySelector(".exc-filter-label").textContent = "Showing sites flagged for: " + exceptionsFilter;
+  } else {
+    filterBar.style.display = "none";
+  }
+
+  const filteredRows = exceptionsFilter ? rows.filter(r => r.category === exceptionsFilter) : rows;
 
   // ---------- District > Site tree ----------
   const tree = document.getElementById("exceptions-tree");
   tree.innerHTML = "";
   DISTRICT_ORDER.forEach(dname => {
     const districtSiteCodes = SITE_CODES.filter(c => DISTRICTS[c] === dname).sort((a, b) => +a - +b);
-    const districtRows = rows.filter(r => r.district === dname);
+    const districtRows = filteredRows.filter(r => r.district === dname);
 
     if (districtRows.length === 0) {
       const clean = document.createElement("div");
       clean.className = "exc-district-clean";
-      clean.innerHTML = `<span>${dname}</span><span class="exc-clean-note">No active exceptions across ${districtSiteCodes.length} sites</span>`;
+      clean.innerHTML = exceptionsFilter
+        ? `<span>${dname}</span><span class="exc-clean-note">No sites flagged for ${exceptionsFilter}</span>`
+        : `<span>${dname}</span><span class="exc-clean-note">No active exceptions across ${districtSiteCodes.length} sites</span>`;
       tree.appendChild(clean);
       return;
     }
@@ -1180,6 +1206,7 @@ function renderExceptions() {
 
     const details = document.createElement("details");
     details.className = "exc-district";
+    if (exceptionsFilter) details.open = true;
     const summary = document.createElement("summary");
     summary.innerHTML = `<span class="exc-summary-title">${dname}</span><span class="exc-badge">${districtRows.length} exception${districtRows.length === 1 ? "" : "s"} · ${siteOrder.length} of ${districtSiteCodes.length} sites</span>`;
     details.appendChild(summary);
@@ -1188,6 +1215,7 @@ function renderExceptions() {
       const siteRows = bySite[code];
       const siteDetails = document.createElement("details");
       siteDetails.className = "exc-site";
+      if (exceptionsFilter) siteDetails.open = true;
       const siteSummary = document.createElement("summary");
       siteSummary.innerHTML = `<span class="exc-summary-title">${SITE_META[code]} <span class="site-code">${code}</span></span><span class="exc-badge">${siteRows.length} exception${siteRows.length === 1 ? "" : "s"}</span>`;
       siteDetails.appendChild(siteSummary);
