@@ -211,6 +211,48 @@
     text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13px; line-height: 1.6;
   }
 
+  .glance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  .glance-card {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 10px; text-align: center;
+  }
+  .glance-card.flag { background: rgba(216,72,60,0.06); border-color: rgba(216,72,60,0.25); }
+  .glance-value { font-family: "Poppins", sans-serif; font-size: 22px; font-weight: 700; color: var(--muted); }
+  .glance-card.flag .glance-value { color: var(--bad); }
+  .glance-label { font-size: 11px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
+  .glance-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .exc-district {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px; overflow: hidden;
+  }
+  .exc-district > summary, .exc-site > summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; font-weight: 700; font-family: "Poppins", sans-serif; font-size: 13px;
+  }
+  .exc-district > summary::-webkit-details-marker, .exc-site > summary::-webkit-details-marker { display: none; }
+  .exc-district > summary::before, .exc-site > summary::before {
+    content: "▸"; margin-right: 8px; color: var(--accent); display: inline-block; transition: transform 0.15s;
+  }
+  .exc-district[open] > summary::before, .exc-site[open] > summary::before { transform: rotate(90deg); }
+  .exc-district[open] > summary { border-bottom: 1px solid var(--border); }
+  .exc-site {
+    margin: 0 12px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2);
+  }
+  .exc-district > .exc-site:first-of-type { margin-top: 12px; }
+  .exc-site > summary { font-size: 12.5px; padding: 10px 12px; font-weight: 600; }
+  .exc-site > summary::before { color: var(--accent-dark); }
+  .exc-site .table-scroll { padding: 0 12px 12px; }
+  .exc-badge { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .exc-summary-title { display: flex; align-items: center; gap: 8px; }
+  .exc-district-clean {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px; background: rgba(14,169,104,0.04); font-size: 12.5px; font-weight: 700;
+    font-family: "Poppins", sans-serif;
+  }
+  .exc-clean-note { color: var(--good); font-weight: 600; font-size: 11.5px; font-family: "Inter", sans-serif; }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 860px) {
     .charts, .two-col { grid-template-columns: 1fr; }
@@ -378,23 +420,18 @@
   <!-- ===================== EXCEPTIONS ===================== -->
   <div class="view" id="view-exceptions">
     <div class="panel">
-      <h2>Active Exceptions <span>every site currently outside an operating standard, for the selected range</span></h2>
+      <h2>Exceptions at a Glance <span>sites currently outside standard, by category, for the selected range</span></h2>
+      <div class="glance-grid" id="exceptions-glance"></div>
+    </div>
+
+    <div class="panel">
+      <h2>By District &amp; Site <span>expand a district, then a site, to see what's flagged</span></h2>
       <p class="stat-line" id="exceptions-summary" style="margin-bottom:12px;"></p>
-      <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Site</th><th>District</th><th>Category</th>
-            <th class="num">Actual</th><th class="num">Standard</th><th>Duration</th>
-          </tr>
-        </thead>
-        <tbody id="exceptions-body"></tbody>
-      </table>
-      </div>
+      <div id="exceptions-tree"></div>
     </div>
 
     <div class="note">
-      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites so nobody has to click into every site to find what needs attention. "Duration" tracks how many consecutive weeks a metric has been out of standard, independent of the date range selected above, so a short-term dip and a persistent problem don't look the same. Logging-compliance flags use each employee's most recent tracked month instead of a weekly streak. Click any row to jump to that site's detail view.
+      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites and grouped by district so nobody has to click into every site to find what needs attention. "Duration" tracks how many consecutive weeks a metric has been out of standard, independent of the date range selected above, so a short-term dip and a persistent problem don't look the same. Logging-compliance flags use each employee's most recent tracked month instead of a weekly streak. Click any row inside a site to jump to that site's detail view.
     </div>
   </div>
 
@@ -1051,24 +1088,22 @@ function computeExceptions(idxs) {
   return rows;
 }
 
-function renderExceptions() {
-  const idxs = currentIndices();
-  const rows = computeExceptions(idxs);
-  const sitesAffected = new Set(rows.map(r => r.code)).size;
-  const standardCount = rows.filter(r => r.type === "standard").length;
-  const complianceCount = rows.filter(r => r.type === "compliance").length;
-  document.getElementById("exceptions-summary").innerHTML =
-    rows.length === 0
-      ? "No active exceptions for the selected range — every site is within standard."
-      : `<b>${rows.length}</b> active exceptions across <b>${sitesAffected}</b> of 14 sites for the selected range — ${standardCount} operating-standard misses, ${complianceCount} logging-compliance flags.`;
+function exceptionRowClickHandler(code) {
+  return () => {
+    siteSelect.value = code;
+    renderSiteDetail(code);
+    renderStaffView(code);
+    document.querySelector('.tabbtn[data-view="detail"]').click();
+  };
+}
 
-  const tbody = document.getElementById("exceptions-body");
-  tbody.innerHTML = "";
-  if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No active exceptions for the selected range — every site is within standard.</div></td></tr>`;
-    return;
-  }
-  rows.forEach(r => {
+function buildExceptionTable(siteRows) {
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "table-scroll";
+  const table = document.createElement("table");
+  table.innerHTML = `<thead><tr><th>Category</th><th class="num">Actual</th><th class="num">Standard</th><th>Duration</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+  siteRows.forEach(r => {
     const tr = document.createElement("tr");
     tr.classList.add("flag-row-bad");
     tr.style.cursor = "pointer";
@@ -1076,20 +1111,91 @@ function renderExceptions() {
       ? (r.illustrative ? `${r.month} · illustrative` : r.month)
       : (r.streak <= 1 ? "New this week" : `${r.streak} consecutive weeks`);
     tr.innerHTML = `
-      <td><div class="site-name">${r.name}</div><div class="site-code">${r.code}</div></td>
-      <td>${r.district}</td>
       <td>${r.category}</td>
       <td class="num">${r.actual}</td>
       <td class="num">${r.standard}</td>
       <td>${duration}</td>
     `;
-    tr.addEventListener("click", () => {
-      siteSelect.value = r.code;
-      renderSiteDetail(r.code);
-      renderStaffView(r.code);
-      document.querySelector('.tabbtn[data-view="detail"]').click();
-    });
+    tr.addEventListener("click", exceptionRowClickHandler(r.code));
     tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  return tableWrap;
+}
+
+function renderExceptions() {
+  const idxs = currentIndices();
+  const rows = computeExceptions(idxs);
+  const sitesAffected = new Set(rows.map(r => r.code)).size;
+  const standardCount = rows.filter(r => r.type === "standard").length;
+  const complianceCount = rows.filter(r => r.type === "compliance").length;
+
+  document.getElementById("exceptions-summary").innerHTML =
+    rows.length === 0
+      ? "No active exceptions for the selected range — every site is within standard."
+      : `<b>${rows.length}</b> active exceptions across <b>${sitesAffected}</b> of 14 sites for the selected range — ${standardCount} operating-standard misses, ${complianceCount} logging-compliance flags.`;
+
+  // ---------- At a glance ----------
+  const glance = document.getElementById("exceptions-glance");
+  glance.innerHTML = "";
+  const glanceDefs = METRIC_DEFS.map(d => ({ label: d.label, type: "standard" }))
+    .concat([{ label: "Logging Compliance", type: "compliance" }]);
+  glanceDefs.forEach(def => {
+    const matching = def.type === "standard"
+      ? rows.filter(r => r.type === "standard" && r.category === def.label)
+      : rows.filter(r => r.type === "compliance");
+    const siteCount = new Set(matching.map(r => r.code)).size;
+    const card = document.createElement("div");
+    card.className = "glance-card" + (siteCount > 0 ? " flag" : "");
+    const subText = def.type === "compliance" && matching.length
+      ? `${matching.length} employee${matching.length === 1 ? "" : "s"}`
+      : (siteCount === 1 ? "site" : "sites");
+    card.innerHTML = `
+      <div class="glance-value">${siteCount}</div>
+      <div class="glance-label">${def.label}</div>
+      <div class="glance-sub">${subText}</div>
+    `;
+    glance.appendChild(card);
+  });
+
+  // ---------- District > Site tree ----------
+  const tree = document.getElementById("exceptions-tree");
+  tree.innerHTML = "";
+  DISTRICT_ORDER.forEach(dname => {
+    const districtSiteCodes = SITE_CODES.filter(c => DISTRICTS[c] === dname).sort((a, b) => +a - +b);
+    const districtRows = rows.filter(r => r.district === dname);
+
+    if (districtRows.length === 0) {
+      const clean = document.createElement("div");
+      clean.className = "exc-district-clean";
+      clean.innerHTML = `<span>${dname}</span><span class="exc-clean-note">No active exceptions across ${districtSiteCodes.length} sites</span>`;
+      tree.appendChild(clean);
+      return;
+    }
+
+    const bySite = {};
+    districtRows.forEach(r => { (bySite[r.code] = bySite[r.code] || []).push(r); });
+    const siteOrder = Object.keys(bySite).sort((a, b) => bySite[b].length - bySite[a].length || (+a - +b));
+
+    const details = document.createElement("details");
+    details.className = "exc-district";
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<span class="exc-summary-title">${dname}</span><span class="exc-badge">${districtRows.length} exception${districtRows.length === 1 ? "" : "s"} · ${siteOrder.length} of ${districtSiteCodes.length} sites</span>`;
+    details.appendChild(summary);
+
+    siteOrder.forEach(code => {
+      const siteRows = bySite[code];
+      const siteDetails = document.createElement("details");
+      siteDetails.className = "exc-site";
+      const siteSummary = document.createElement("summary");
+      siteSummary.innerHTML = `<span class="exc-summary-title">${SITE_META[code]} <span class="site-code">${code}</span></span><span class="exc-badge">${siteRows.length} exception${siteRows.length === 1 ? "" : "s"}</span>`;
+      siteDetails.appendChild(siteSummary);
+      siteDetails.appendChild(buildExceptionTable(siteRows));
+      details.appendChild(siteDetails);
+    });
+
+    tree.appendChild(details);
   });
 }
 
