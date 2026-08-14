@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GO Car Wash — Austin Market Scorecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f9fa;
+    --panel: #ffffff;
+    --panel2: #eaf6fb;
+    --border: #dde8ec;
+    --text: #12181a;
+    --muted: #667479;
+    --accent: #17a9d6;
+    --accent-dark: #0f86ac;
+    --accent-tint: rgba(23,169,214,0.10);
+    --brand-orange: #f1521e;
+    --brand-orange-dark: #d8420f;
+    --good: #16924c;
+    --warn: #f1521e;
+    --bad: #d8483c;
+    --gold: #c99a1e;
+    --silver: #8b96a0;
+    --bronze: #b3703f;
+    --shadow: 0 1px 2px rgba(18,24,26,0.04), 0 4px 14px rgba(18,24,26,0.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 28px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .brand { display: flex; align-items: center; gap: 13px; }
+  h1 { font-family: "Poppins", sans-serif; font-size: 21px; margin: 0 0 3px; font-weight: 800; letter-spacing: -0.01em; }
+  .subtitle { color: var(--muted); font-size: 13px; margin: 0; }
+  .badge-mock {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: rgba(241,82,30,0.10);
+    color: var(--brand-orange-dark);
+    border: 1px solid rgba(241,82,30,0.28);
+    padding: 2px 7px;
+    border-radius: 5px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .sources { display: flex; gap: 8px; flex-wrap: wrap; }
+  .source-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 7px 11px;
+    font-size: 11.5px;
+    min-width: 138px;
+    box-shadow: var(--shadow);
+  }
+  .source-chip .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .source-chip .status { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-weight: 600; color: var(--text); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 5px rgba(14,169,104,0.6); }
+  .sync-time { color: var(--muted); font-weight: 400; font-size: 10.5px; margin-top: 1px; }
+
+  .range-bar {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 16px; box-shadow: var(--shadow);
+  }
+  .range-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .range-pill {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 20px;
+    padding: 7px 14px; font-size: 12.5px; font-weight: 600; color: var(--muted);
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .range-pill:hover:not(.active) { background: var(--accent-tint); color: var(--text); }
+  .range-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .range-custom { display: none; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .range-custom.show { display: flex; }
+  .range-custom label { font-size: 12px; color: var(--muted); }
+  .range-custom select {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 9px; font-size: 12.5px; font-family: inherit;
+  }
+  .range-label { color: var(--muted); font-size: 12px; margin-top: 9px; }
+  .range-label b { color: var(--text); }
+
+  .tabbar {
+    display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 22px;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tabbtn {
+    background: transparent; border: none; color: var(--muted);
+    font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    font-family: inherit; white-space: nowrap;
+  }
+  .tabbtn:hover { color: var(--text); }
+  .tabbtn.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+
+  .site-toolbar {
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+    box-shadow: var(--shadow);
+  }
+  .site-toolbar.show { display: flex; }
+  .site-toolbar label { font-size: 12px; color: var(--muted); }
+  .site-toolbar select {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 15px 16px; box-shadow: var(--shadow); border-left: 3px solid var(--border);
+  }
+  .kpi .k-label { color: var(--muted); font-size: 11.5px; margin-bottom: 6px; font-weight: 500; }
+  .kpi .k-value { font-family: "Poppins", sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .kpi .k-sub { font-size: 11px; color: var(--accent-dark); margin-top: 4px; font-weight: 500; }
+  .kpi.flag-bad { border-left-color: var(--bad); }
+  .kpi.flag-bad .k-value { color: var(--bad); }
+  .kpi.flag-bad .k-sub { color: var(--bad); }
+  .kpi.flag-good { border-left-color: var(--good); }
+  .kpi.flag-good .k-value { color: var(--accent-dark); }
+
+  .charts { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; margin-bottom: 22px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .panel h2 { font-family: "Poppins", sans-serif; font-size: 13.5px; margin: 0 0 4px; font-weight: 700; }
+  .panel h2 span { color: var(--muted); font-weight: 400; font-size: 11.5px; font-family: "Inter", sans-serif; }
+  .panel .stat-line { color: var(--muted); font-size: 11.5px; margin: 0 0 12px; }
+  .panel .stat-line b { color: var(--text); }
+
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 460px; }
+  thead th {
+    text-align: left; color: var(--muted); font-weight: 600; font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.03em; padding: 8px 10px;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  tbody td { padding: 9px 10px; border-bottom: 1px solid var(--panel2); }
+  tbody tr:hover { background: var(--panel2); }
+  .rank-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 23px; height: 23px; border-radius: 50%; font-weight: 700; font-size: 11.5px;
+    background: var(--panel2); color: var(--text);
+  }
+  .rank-1 { background: rgba(201,154,30,0.14); color: var(--gold); }
+  .rank-2 { background: rgba(139,150,160,0.16); color: var(--silver); }
+  .rank-3 { background: rgba(179,112,63,0.14); color: var(--bronze); }
+  .site-name { font-weight: 600; }
+  .site-code { color: var(--muted); font-size: 10.5px; }
+  .cap-cell { display: flex; align-items: center; gap: 8px; }
+  .cap-bar-track { flex: 1; height: 5px; background: var(--panel2); border-radius: 3px; overflow: hidden; min-width: 50px; }
+  .cap-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #4fd393); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .flag-row-bad td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+  .flag-row-good td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .status-bad { background: rgba(216,72,60,0.10); color: var(--bad); }
+  .status-good { background: rgba(14,169,104,0.10); color: var(--accent-dark); }
+  .status-neutral { background: rgba(107,123,117,0.10); color: var(--muted); }
+  .status-warn { background: rgba(241,82,30,0.10); color: var(--warn); }
+
+  .note {
+    margin-top: 8px; padding: 15px 17px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--border);
+    font-size: 12px; color: var(--muted); line-height: 1.6; box-shadow: var(--shadow);
+  }
+  .note b { color: var(--text); }
+  .note.warn-note { border-color: rgba(241,82,30,0.30); background: rgba(241,82,30,0.04); }
+  footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: center; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .illustrative-badge {
+    display: inline-block; font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--muted); background: var(--panel2);
+    border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; margin-left: 6px;
+  }
+  .empty-state {
+    text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13px; line-height: 1.6;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px) {
+    .charts, .two-col { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    body { padding: 14px; }
+    .wrap { max-width: 100%; }
+    header { gap: 12px; margin-bottom: 16px; }
+    h1 { font-size: 17px; }
+    .subtitle { font-size: 12px; }
+    .badge-mock { display: block; width: fit-content; margin: 4px 0 0; }
+    .sources { width: 100%; }
+    .source-chip { flex: 1; min-width: 0; padding: 6px 9px; }
+    .source-chip .label { font-size: 9px; }
+    .source-chip .status { font-size: 11px; }
+    .sync-time { display: none; }
+    .range-pill { padding: 6px 11px; font-size: 11.5px; }
+    .tabbtn { padding: 9px 12px; font-size: 12.5px; }
+    .site-toolbar { padding: 9px 12px; }
+    .kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .kpi { padding: 12px 12px; }
+    .kpi .k-value { font-size: 18px; }
+    .kpi .k-label { font-size: 10.5px; }
+    .panel { padding: 13px; }
+    .panel h2 { font-size: 13px; }
+    table { font-size: 12px; }
+    thead th, tbody td { padding: 7px 8px; }
+    .note { font-size: 11.5px; padding: 12px 14px; }
+    footer { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div>
+        <h1>Austin Market Scorecard <span class="badge-mock">Proof of Concept</span></h1>
+        <p class="subtitle">14 sites · live, connected performance dashboard</p>
+      </div>
+    </div>
+    <div class="sources">
+      <div class="source-chip">
+        <div class="label">UKG (Labor)</div>
+        <div class="status"><span class="dot"></span>Connected</div>
+        <div class="sync-time">synced 4 min ago</div>
+      </div>
+      <div class="source-chip">
+        <div class="label">POS / Wash Sales</div>
+        <div class="status"><span class="dot"></span>Connected</div>
+        <div class="sync-time">synced 4 min ago</div>
+      </div>
+      <div class="source-chip">
+        <div class="label">ARM / Membership</div>
+        <div class="status"><span class="dot"></span>Connected</div>
+        <div class="sync-time">synced 4 min ago</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="range-bar">
+    <div class="range-pills" id="rangePills">
+      <button class="range-pill" data-range="previous_week">Previous Week</button>
+      <button class="range-pill" data-range="current_month">Current Month</button>
+      <button class="range-pill" data-range="previous_month">Previous Month</button>
+      <button class="range-pill" data-range="ytd">YTD</button>
+      <button class="range-pill" data-range="custom">Custom</button>
+    </div>
+    <div class="range-custom" id="rangeCustom">
+      <label for="customFrom">From week ending</label>
+      <select id="customFrom"></select>
+      <label for="customTo">to</label>
+      <select id="customTo"></select>
+    </div>
+    <div class="range-label" id="rangeLabel"></div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tabbtn active" data-view="overview">Market Overview</button>
+    <button class="tabbtn" data-view="exceptions">Exceptions</button>
+    <button class="tabbtn" data-view="detail">Site Detail</button>
+    <button class="tabbtn" data-view="staff">Staff &amp; Compliance</button>
+  </div>
+
+  <div class="site-toolbar" id="siteToolbar">
+    <label for="siteSelect">Site:</label>
+    <select id="siteSelect"></select>
+    <span id="siteRankNote" style="color:var(--muted); font-size:12px;"></span>
+  </div>
+
+  <!-- ===================== DISTRICT OVERVIEW ===================== -->
+  <div class="view active" id="view-overview">
+    <div class="kpis">
+      <div class="kpi">
+        <div class="k-label">Market Net Carwash Sales</div>
+        <div class="k-value" id="kpi-sales">—</div>
+        <div class="k-sub">across 14 sites</div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Total Wash Volume (Cars)</div>
+        <div class="k-value" id="kpi-cars">—</div>
+        <div class="k-sub" id="kpi-cars-sub"></div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">Market Avg Capture Rate</div>
+        <div class="k-value" id="kpi-capture">—</div>
+        <div class="k-sub" id="kpi-capture-sub"></div>
+      </div>
+      <div class="kpi">
+        <div class="k-label">ARM Plans Sold</div>
+        <div class="k-value" id="kpi-arm">—</div>
+        <div class="k-sub">membership growth</div>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="panel">
+        <h2>Net Carwash Sales by Site <span>($, selected range)</span></h2>
+        <canvas id="salesChart" height="230"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Capture Rate by Site <span>(%, vs market avg)</span></h2>
+        <canvas id="captureChart" height="230"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Leaderboard <span>ranked by capture rate for the selected range — auto-updates on refresh. Tap a site to open Site Detail.</span></h2>
+      <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th><th>Site</th><th>District</th><th class="num">Wash Sales (cars)</th>
+            <th class="num">Net Revenue</th><th>Capture Rate</th>
+            <th class="num">ARM Sold</th><th class="num">RPC</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>District Comparison <span>Austin market · 3 districts, for the selected range</span></h2>
+      <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>District</th><th class="num">Sites</th><th class="num">Net Revenue</th>
+            <th>Avg Capture Rate</th><th class="num">ARM Sold</th><th class="num">Avg RPC</th>
+          </tr>
+        </thead>
+        <tbody id="district-body"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>How this is different from the current process:</b> today, weekly numbers get manually re-keyed from UKG and the POS into per-site trackers, then ranked by hand. Here, the same fields — wash sales, net revenue, capture rate, ARM plans sold, RPC — are pulled directly from those systems, so the leaderboard rank, charts, and KPI cards recompute themselves on every refresh instead of waiting on the next manual update.
+    </div>
+  </div>
+
+  <!-- ===================== EXCEPTIONS ===================== -->
+  <div class="view" id="view-exceptions">
+    <div class="panel">
+      <h2>Active Exceptions <span>every site currently outside an operating standard, for the selected range</span></h2>
+      <p class="stat-line" id="exceptions-summary" style="margin-bottom:12px;"></p>
+      <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Site</th><th>District</th><th>Category</th>
+            <th class="num">Actual</th><th class="num">Standard</th><th>Duration</th>
+          </tr>
+        </thead>
+        <tbody id="exceptions-body"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites so nobody has to click into every site to find what needs attention. "Duration" tracks how many consecutive weeks a metric has been out of standard, independent of the date range selected above, so a short-term dip and a persistent problem don't look the same. Logging-compliance flags use each employee's most recent tracked month instead of a weekly streak. Click any row to jump to that site's detail view.
+    </div>
+  </div>
+
+  <!-- ===================== SITE DETAIL ===================== -->
+  <div class="view" id="view-detail">
+    <div class="kpis" id="detail-kpis"></div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h2>Actual vs. Standard <span>flags metrics that miss target, for the selected range</span></h2>
+        <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th class="num">Actual</th><th class="num">Standard</th><th>Status</th></tr>
+          </thead>
+          <tbody id="detail-metrics-body"></tbody>
+        </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Weekly Labor Hours <span>actual vs. target, last 28 weeks</span></h2>
+        <canvas id="laborChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h2>Capture Rate Trend <span>real weekly data, last 28 weeks</span></h2>
+        <p class="stat-line" id="captureTrendStat"></p>
+        <canvas id="captureTrendChart" height="200"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Customer NPS Trend <span>real weekly data, last 28 weeks</span></h2>
+        <p class="stat-line" id="npsTrendStat"></p>
+        <canvas id="npsTrendChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="note warn-note">
+      <b>Data note:</b> capture rate does run against a real monthly target site-by-site, but that target data isn't available in this concept — so 12% is used here as a flat, generalized stand-in standard (labeled below) to demonstrate how the flagging would work. Swap in the real monthly targets and this becomes exact. RPC uses the market average as its stand-in standard. The trend charts above always show the full 28-week history for context; the date-range control above affects the summary figures and standards table.
+    </div>
+  </div>
+
+  <!-- ===================== STAFF & COMPLIANCE ===================== -->
+  <div class="view" id="view-staff">
+    <div class="panel">
+      <h2>Staff Leaderboard <span>site-scoped ranking, 2026 YTD, real data</span></h2>
+      <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th><th>Employee</th><th class="num">Wash Sales (cars)</th>
+            <th class="num">ARM Sold</th><th>Capture Rate</th><th class="num">RPC</th>
+            <th class="num">Level</th><th class="num">Needed for Next</th>
+            <th class="num">Total %</th><th class="num">Retail %</th>
+          </tr>
+        </thead>
+        <tbody id="staff-leaderboard-body"></tbody>
+      </table>
+      </div>
+      <p class="stat-line" style="margin-top:10px;">Wash Sales / ARM Sold / Capture Rate / RPC are 2026 YTD. Level, Needed for Next, Total %, and Retail % are each employee's most recent monthly snapshot and aren't affected by the date-range control above — individual performance is tracked monthly, not weekly, in the source data.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Logging Compliance <span id="complianceSubtitle">memberships sold vs. memberships logged</span></h2>
+      <div id="compliance-content"></div>
+    </div>
+
+    <div class="note">
+      <b>Why this matters:</b> reconciling memberships an employee is credited with selling against what the POS actually logged under their name catches under-reporting or misattributed sales before it becomes a payroll or capture-rate accuracy problem — without anyone eyeballing rows every week. Today this check only happens at 2 of the 14 sites, and only for three months of the year. A live version would run it for every site, every period, automatically. The other 12 sites below show illustrative figures so you can see what full coverage would look like.
+    </div>
+  </div>
+
+  <footer>Site figures respond to the date range selected above · staff figures are 2026 YTD actuals · concept prototype for internal discussion, not a live production system</footer>
+</div>
+
+<script>
+const SITE_META = {"319": "Copperas Cove", "341": "Lakeline", "342": "Parmer", "343": "Old Leander", "344": "620", "345": "Pflugerville", "346": "Round Rock", "347": "N. Leander", "348": "Ronald Reagan", "349": "Mayfield Ranch", "352": "Cannon", "354": "Rockdale", "358": "Jarrell", "359": "Woodall"};
+const BH_STANDARD = {"319": 173.0, "341": 413.9, "342": 328.1, "343": 328.1, "344": 328.1, "345": 413.9, "346": 369.4, "347": 328.1, "348": 328.1, "349": 328.1, "352": 250.9, "354": 173.0, "358": 328.1, "359": 369.4};
+const WEEKS = [{"from": "2025-12-31", "to": "2026-01-06"}, {"from": "2026-01-07", "to": "2026-01-13"}, {"from": "2026-01-14", "to": "2026-01-20"}, {"from": "2026-01-21", "to": "2026-01-27"}, {"from": "2026-01-28", "to": "2026-02-03"}, {"from": "2026-02-04", "to": "2026-02-10"}, {"from": "2026-02-11", "to": "2026-02-17"}, {"from": "2026-02-18", "to": "2026-02-24"}, {"from": "2026-02-25", "to": "2026-03-03"}, {"from": "2026-03-04", "to": "2026-03-10"}, {"from": "2026-03-11", "to": "2026-03-17"}, {"from": "2026-03-18", "to": "2026-03-24"}, {"from": "2026-03-25", "to": "2026-03-31"}, {"from": "2026-04-01", "to": "2026-04-07"}, {"from": "2026-04-08", "to": "2026-04-14"}, {"from": "2026-04-15", "to": "2026-04-21"}, {"from": "2026-04-22", "to": "2026-04-28"}, {"from": "2026-04-29", "to": "2026-05-05"}, {"from": "2026-05-06", "to": "2026-05-12"}, {"from": "2026-05-13", "to": "2026-05-19"}, {"from": "2026-05-20", "to": "2026-05-26"}, {"from": "2026-05-27", "to": "2026-06-02"}, {"from": "2026-06-03", "to": "2026-06-09"}, {"from": "2026-06-10", "to": "2026-06-16"}, {"from": "2026-06-17", "to": "2026-06-23"}, {"from": "2026-06-24", "to": "2026-06-30"}, {"from": "2026-07-01", "to": "2026-07-07"}, {"from": "2026-07-08", "to": "2026-07-14"}];
+const RECAP = {"319": {"hours": [181.58, 218.92, 208.45, 85.63, 219.62, 194.78, 197.22, 209.8, 217, 0, 222.35, 234.93, 236.08, 227.45, 195.1, 208.02, 227.98, 195.45, 216.48, 226.6, 206.78, 230.78, 189.5, 253.48, 263, 238, 196, 178.9], "overtime": [8.6, 6, 7.72, 0, 0, 0, 3.6, 2.22, 3.36, 0, 1.27, 6.83, 6.25, 8.92, 2.28, 5.28, 3.83, 6.67, 5.92, 13.13, 0.97, 6.05, 1, 3.38, 1, 4.43, 1, 4.87], "goLearn": [44.0, 80.0, 100, 90.0, 90.0, 90.0, 90.0, 90.0, 90.0, 78.0, 80.0, 70.0, 75.0, 90.0, 90.0, 90.0, 91.0, 93.0, 83.0, 83.0, 81.0, 57.0, 80.0, 80.0, 85.0, 90.0, 95.0, 100], "reviewCount": [9, 2, 6, 3, 6, 13, 5, 18, 9, 8, 10, 8, 7, 6, 8, 18, 8, 7, 13, 10, 9, 14, 12, 18, 13, 11, 14, 10], "reviewStars": [5, 5, 5, 5, 5, 5, 4.4, 5, 5, 5, 5, 5, 5, 4.1, 5, 4.95, 5, 5, 4.69, 5, 5, 4.69, 5, 4.78, 5, 5, 5, 5], "nps": [50, 88.2, 71.4, 90, 100, 90, 33.3, 60, 93.8, 50, 76.9, 94.1, 65.2, 100, 62.5, 100, 80, 75.1, 75.3, 88.9, 87.5, 90, 55.6, 100, 69.2, 100, 78.9, 84.6], "captureRate": [10.3, 10.6, 11.2, 16.5, 8.1, 11.3, 12.3, 17.7, 17.4, 17.8, 16.3, 14.0, 14.1, 14.3, 16.8, 14.6, 15.8, 14.0, 10.9, 11.1, 10.0, 10.6, 8.6, 12.1, 13.8, 12.5, 15.2, 12.5], "netGains": [38, 27, 0, -34, 9, 22, 23, 8, 61, 18, 23, 44, 65, -9, -13, 0, 0, 0, -33, -4, -47, 15, -5, 1, 1, -3, 34, 4]}, "341": {"hours": [331, 401.54, 430.86, 280, 285, 456, 421, 421, 429.13, 384, 398, 418.63, 467.48, 400, 401, 401, 332, 347, 313, 233, 211, 382, 337, 341, 355, 447, 384, 380.39], "overtime": [3.75, 6.57, 6.45, 0.05, 0, 22.96, 3.01, 3.57, 4, 11, 38, 31.54, 17.7, 18, 5.53, 0, 0, 5.5, 5.53, 10.53, 0, 28.69, 6.15, 16.59, 10, 19.31, 7.87, 48.16], "goLearn": [16.0, 16.5, 35.5, 35.5, 40.3, 42.5, 42.0, 41.7, 41.7, 41.7, 32.0, 32.0, 0, 0, 60.0, 69.0, 38.0, 63.0, 63.0, 67.0, 58.2, 65.0, 69.0, 72.0, 60.0, 53.0, 0, 60.0], "reviewCount": [0, 1, 3, 0, 0, 3, 4, 4, 3, 3, 4, 6, 7, 4, 0, 2, 2, 0, 1, 21, 11, 17, 11, 9, 10, 5, 5, 13], "reviewStars": [0, 4, 4.6, 0, 0, 5, 3, 4, 5, 5, 4, 3.5, 3.5, 4, 0, 5, 5, 0, 5, 4.8, 4.27, 4.8, 5, 5, 4.6, 5, 4.2, 4.6], "nps": [35.3, 53.8, 65, 63.6, 61.3, 62.1, 63.9, 63, 60.2, 59.6, 58.1, 49.5, 47.5, 16.7, -50, 27.3, 21.1, 25, 25, 25, 38.5, 40, 72.7, 37.5, 0, 81.8, 50, 54.5], "captureRate": [11.2, 10.5, 11.9, 14.6, 11.9, 10.1, 11.9, 10.9, 13.9, 15.8, 9.7, 13.5, 15.1, 10.9, 12.6, 11.6, 14.5, 13.5, 11.3, 12.9, 11.0, 13.7, 14.9, 14.3, 15.4, 13.9, 19.4, 19.1], "netGains": [9, -40, -13, -108, 9, 25, -35, -12, -10, -22, -34, 83, 126, -4, -9, 0, 0, -239, -20, -26, -46, -19, -13, -6, -16, -13, 64, 25]}, "342": {"hours": [306, 361.03, 374.72, 180.6, 365.78, 391, 372.9, 372, 382.52, 359.92, 429, 385, 0, 411.5, 399, 413, 386, 352, 401, 404, 439, 411, 393, 407, 381, 371, 308, 387], "overtime": [7.08, 8.12, 11.87, 0, 6.8, 11, 2.15, 4.5, 7.83, 9.98, 15.72, 29, 0, 22, 17, 15, 14, 9, 23.88, 14, 39.48, 33, 32, 31.78, 30.87, 13.73, 14, 9], "goLearn": [83.0, 57.0, 67.0, 72.0, 64.0, 71.0, 71.0, 71.0, 73.2, 81.0, 82.0, 84.0, 79.0, 79.0, 96.5, 0, 0, 0, 0, 66.0, 0, 63.0, 72.0, 85.0, 96.0, 96.0, 88.0, 93.0], "reviewCount": [1, 1, 1, 1, 2, 4, 4, 9, 5, 4, 2, 3, 3, 2, 2, 1, 4, 3, 12, 9, 6, 5, 4, 3, 8, 2, 5, 1], "reviewStars": [5, 2, 5, 5, 5, 5, 5, 5, 4.2, 3, 4.5, 3, 4.58, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4.5, 5, 5, 5], "nps": [33.3, 71.4, 75, 33.3, 66.7, 75, 72.7, 61.5, 54.5, 40, 40, 52, 40, 66.7, 100, 57.1, 60, 50, -11, 75, 63.6, 100, 66.7, 66.7, 75, 54.5, 16.7, 78], "captureRate": [10.1, 16.6, 13.2, 20.0, 14.7, 13.8, 15.2, 16.2, 17.4, 21.5, 15.2, 10.5, 13.4, 18.6, 15.2, 17.8, 15.3, 15.3, 13.7, 16.8, 14.3, 16.4, 10.0, 13.7, 17.5, 11.3, 13.3, 14.5], "netGains": [18, 13, 28, -55, 33, 41, 17, 7, 35, -15, 19, 29, 61, 13, -13, 0, 0, -142, 73, 0, 0, -10, -36, -21, 24, -14, 1, 30]}, "343": {"hours": [299, 336.45, 318, 160.74, 344, 346.71, 296, 353.67, 323.51, 314, 376.11, 374, 413, 436.79, 424, 363, 0, 320.64, 255, 378.13, 388.93, 401.57, 390.55, 417.57, 435.67, 401, 388, 398.83], "overtime": [7, 5.55, 11, 0, 0, 0.5, 6, 3.87, 1.75, 7, 16.91, 5.48, 26.98, 29.14, 14, 17.71, 15.32, 0, 21, 20.42, 11.87, 20.42, 0, 3, 0, 1.72, 0.37, 8], "goLearn": [55.0, 70.0, 55.0, 58.0, 55.0, 53.0, 47.0, 61.4, 54.0, 47.0, 25.0, 36.0, 25.0, 0, 0, 0, 79.0, 79.0, 85.0, 85.0, 87.0, 0, 79.0, 81.0, 81.0, 83.0, 83.0, 73.0], "reviewCount": [5, 3, 6, 0, 5, 4, 1, 4, 17, 24, 20, 13, 12, 4, 10, 4, 5, 5, 20, 11, 19, 1, 0, 19, 10, 11, 7, 9], "reviewStars": [5, 5, 5, 0, 4.5, 4.8, 5, 3, 4.58, 5, 4.8, 5, 4.5, 4.25, 5, 5, 5, 5, 5, 5, 4.9, 5, 0, 5, 4.9, 5, 5, 5], "nps": [18.4, 18.2, 18.2, 100, 20, 28.2, -50, 33.3, 0, 40, 0, -14.3, 33.33, 66.7, 16.7, 50, 43.3, 21.9, 22, 22.1, 21.9, 54.5, 66.7, 28.6, 42.9, 69.2, 36.4, 85.7], "captureRate": [10.8, 9.8, 11.7, 11.6, 9.6, 12.2, 8.0, 11.2, 14.6, 13.8, 10.9, 10.1, 11.8, 10.7, 8.0, 14.1, 9.4, 11.1, 16.4, 9.2, 17.4, 8.4, 10.8, 13.2, 8.7, 14.7, 10.9, 10.2], "netGains": [12, -39, 7, -48, 81, 33, -13, -9, -4, -20, -11, 38, -18, -25, -13, 23, -23, -37, -112, -11, -20, -17, -34, -16, -22, -3, 101, -100]}, "344": {"hours": [287, 256, 319, 127, 281, 341, 332, 329, 334, 349, 356, 345, 383, 305, 286, 277, 379.93, 317, 310, 315, 312, 325, 297, 314.19, 339, 342, 328, 389], "overtime": [14, 12, 13, 0, 20, 14, 7, 9, 10, 15, 35, 29, 36, 20, 20, 20, 15, 10, 0, 30, 28, 30, 20, 18, 13, 30, 10, 20], "goLearn": [34.0, 30.0, 29.0, 31.0, 33.0, 28.0, 38.0, 41.0, 36.0, 68.0, 70.0, 70.0, 79.0, 89.0, 91.0, 74.0, 50.0, 58.0, 54.0, 47.5, 46.0, 32.0, 23.0, 44.0, 62.0, 61.0, 60.0, 83.0], "reviewCount": [0, 0, 1, 0, 0, 4, 6, 2, 3, 2, 4, 9, 2, 0, 0, 3, 4, 1, 0, 1, 2, 1, 0, 0, 6, 3, 3, 3], "reviewStars": [0, 0, 5, 0, 0, 4.75, 4.5, 4, 5, 5, 4.75, 4.44, 4, 0, 0, 5, 5, 5, 0, 5, 2.5, 1, 0, 0, 4.5, 5, 4.8, 5], "nps": [-100, -77.8, -26.7, -17, 11.5, 20, 29.4, 26.2, 37.5, 36, 39.3, 56.3, 42.4, 62.5, 50, 57.1, 87.5, -16.7, 16.7, 100, 16.7, 72, -100, 16.7, 14.3, 50, 57.1, 100], "captureRate": [-5.4, 12.7, 13.1, 22.0, 8.9, 7.2, 6.3, 17.6, 0, 17.5, 10.7, 11.9, 10.6, 15.2, 21.1, 9.1, 9.0, 10.3, 8.7, 8.8, 0, 10.2, 10.4, 13.7, 11.2, 12.3, 10.7, 8.1], "netGains": [16, -16, -19, -45, -8, 7, -20, -4, 8, -8, 13, 39, 38, -16, -13, 0, 0, 0, 0, -28, -53, 0, 0, -16, -3, -7, 15, -25]}, "345": {"hours": [331, 428, 427, 233, 348, 450, 384, 420, 429, 449, 429, 406, 531, 507, 476, 426.92, 434, 356, 394, 388, 375, 503, 557, 522, 465, 551, 477, 472], "overtime": [0, 0, 0, 0, 0, 1, 0, 0.57, 0.17, 3, 12, 9.85, 18, 0, 1, 10, 0, 7.32, 2, 2, 2.52, 3, 8.63, 13, 4, 3, 13, 7], "goLearn": [50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 48.0, 57.0, 95.0, 99.0, 95.0, 90.0, 99.0, 99.0, 99.0, 96.0, 90.0, 81.0, 81.0, 81.0, 82.0, 85.0, 88.0, 91.0, 95.0, 99.0, 99.0], "reviewCount": [1, 2, 32, 1, 8, 1, 6, 15, 23, 9, 2, 19, 19, 8, 16, 16, 24, 2, 1, 2, 1, 4, 12, 8, 14, 8, 13, 6], "reviewStars": [4, 5, 4.96, 5, 4.8, 5, 4.8, 4.8, 4.95, 5, 5, 4.86, 4.8, 5, 4.5, 4.7, 5, 5, 5, 5, 5, 4.75, 4.91, 5, 4.28, 4.3, 4.38, 5], "nps": [11.1, 54.5, 0, 42.9, 15.8, 0, 40, 57.9, 29.4, 11.1, 0, 42.9, 4.5, -20, -14.3, 62.5, 61.5, -9.1, -12.5, 44.4, 44.4, 30, 60, 81.8, 41.9, 40, 28.6, 66.7], "captureRate": [11.4, 4.6, 11.8, 13.6, 9.3, 9.3, 12.8, 12.8, 16.8, 20.6, 18.0, 15.2, 16.7, 16.4, 17.4, 16.4, 17.4, 13.2, 14.8, 16.4, 18.6, 17.1, 17.9, 21.7, 18.4, 17.9, 17.3, 16.2], "netGains": [32, 116, 10, -73, 24, 0, 8, -1, 43, -17, 62, 83, 115, -11, -41, -38, -15, -19, -34, 16, -6, 5, -21, 19, -42, 30, 55, 2]}, "346": {"hours": [357.43, 452, 476.78, 202.72, 322.43, 432.15, 436.87, 441.67, 443.5, 437, 471.73, 446.5, 496, 442.65, 462, 481.28, 430.28, 379.68, 402.6, 475, 434.45, 365.37, 441, 411, 406, 460.2, 338, 362.33], "overtime": [2.68, 5.83, 17.77, 0, 0.27, 3.45, 8.7, 42.4, 18.4, 18.42, 7.53, 16.5, 13.83, 0, 0, 1.38, 0, 0, 11.35, 5.58, 14.68, 11, 8.8, 0.93, 8.85, 4.82, 10, 4.92], "goLearn": [33.5, 41.6, 78.0, 79.2, 78.7, 76.0, 79.0, 75.0, 87.0, 86.0, 90.0, 85.0, 89.0, 95.0, 81.0, 84.0, 84.0, 85.0, 85.0, 88.0, 89.0, 87.0, 87.0, 95.0, 95.0, 95.0, 95.0, 95.0], "reviewCount": [1, 0, 3, 0, 3, 27, 6, 1, 0, 3, 1, 5, 13, 0, 1, 0, 0, 1, 11, 1, 9, 6, 0, 18, 2, 7, 13, 5], "reviewStars": [4, 0, 5, 0, 2.3, 5, 5, 2, 0, 5, 5, 4.9, 5, 0, 5, 0, 0, 5, 5, 5, 5, 5, 0, 5, 3, 3.8, 4.61, 4.2], "nps": [0, 20, 39.7, 75, 73.3, 100, -16.7, 33.3, 25, 66.7, 40, 0.01, 58.3, 60, 100, 40, 51.7, 20, 37.5, 41.5, 50, 50, 50, 62.5, 66.73, 31.4, 75, 40], "captureRate": [8.8, 14.7, 16.3, 17.5, 14.3, 14.4, 16.7, 14.5, 15.8, 20.3, 14.0, 14.5, 16.7, 20.2, 16.4, 14.6, 13.9, 15.3, 15.7, 17.3, 22.5, 23.2, 15.7, 16.2, 18.1, 19.4, 18.8, 16.9], "netGains": [15, -41, -13, -62, 24, 5, -22, -26, 6, -14, 15, 20, 54, -49, -4, 0, -98, -46, 11, -23, -19, -3, -38, -22, -37, 17, 28, -13]}, "347": {"hours": [383.12, 391.29, 383.16, 193.27, 393.16, 392.05, 376.87, 377.55, 365.87, 354.55, 405.94, 398.71, 428.58, 372.19, 375.52, 362.12, 418.68, 332.24, 397.02, 401.23, 374.84, 406.18, 428.84, 430.18, 411, 432.57, 384.44, 393.9], "overtime": [2.12, 1.48, 2.55, 0, 0, 5.5, 4.43, 7.15, 5.4, 9.23, 6.58, 10, 14.74, 1.08, 0.1, 3.6, 2.19, 0.5, 5.92, 2.05, 0, 12.76, 5.81, 6.02, 1.12, 0, 1.1, 0], "goLearn": [70.0, 70.0, 75.0, 78.0, 75.0, 75.0, 80.0, 80.0, 80.0, 70.0, 71.0, 76.0, 71.0, 89.0, 86.0, 90.0, 85.0, 86.0, 88.0, 91.0, 92.0, 92.0, 93.0, 93.0, 93.0, 93.0, 93.0, 95.0], "reviewCount": [1, 4, 3, 0, 2, 5, 3, 10, 1, 1, 8, 2, 2, 5, 3, 3, 6, 4, 6, 3, 2, 2, 3, 4, 4, 4, 6, 3], "reviewStars": [1, 5, 3.33, 0, 3.5, 5, 3, 4.5, 5, 5, 5, 5, 5, 4.2, 5, 5, 5, 5, 4.5, 3.6, 3, 5, 3.66, 5, 5, 5, 4.3, 5], "nps": [66.7, 50, 47.8, 42.9, 56.3, 100, 60, 44, 40.3, 35.9, 37, 36, 37.5, 69.8, 50, 70, 66.7, 51.4, 48.7, 46.8, 46.2, -20, -33.3, 42.9, 37.5, 62.5, 37.5, 60], "captureRate": [10.5, 9.9, 11.7, 13.8, 10.0, 8.5, 8.5, 14.0, 12.4, 14.7, 11.6, 9.9, 8.9, 13.5, 17.3, 16.9, 14.4, 15.2, 17.6, 12.4, 13.5, 11.5, 14.3, 13.4, 12.7, 11.5, 9.9, 11.1], "netGains": [132, -116, 106, -49, 57, 30, -15, 5, 20, 0, 5, 52, 41, -8, -19, -12, -8, -11, 31, 7, -10, -27, -13, 1, -7, 22, 13, -9]}, "348": {"hours": [295.26, 291.3, 347, 160.53, 376.29, 371.22, 298.8, 364.57, 357.28, 332.26, 418.19, 384.36, 404, 399.13, 378.95, 332.68, 303.5, 305.85, 329.86, 320, 353.38, 389.07, 395.27, 387.83, 367.38, 401, 366.58, 349.67], "overtime": [11.75, 1.95, 0, 0, 0, 10.86, 4.98, 5.15, 3.06, 2.03, 1.1, 11.67, 10.8, 2.48, 0.73, 4.33, 0.9, 1.75, 11.61, 9, 18.57, 34.56, 7.88, 3.42, 4, 2.75, 4.75, 7.49], "goLearn": [24.0, 29.0, 31.0, 35.0, 35.5, 35.0, 35.0, 42.0, 47.0, 55.0, 53.0, 47.0, 36.0, 27.0, 28.0, 52.0, 37.0, 44.0, 59.0, 74.0, 82.0, 82.0, 71.0, 79.0, 96.0, 95.0, 99.0, 99.0], "reviewCount": [1, 0, 2, 1, 1, 0, 5, 4, 6, 0, 8, 25, 9, 5, 8, 8, 11, 6, 8, 13, 6, 8, 1, 9, 23, 14, 13, 25], "reviewStars": [4, 0, 3, 1, 2, 0, 4.8, 4, 3.83, 0, 5, 4.96, 5, 5, 5, 4.625, 4.36, 4.3333, 5, 5, 5, 5, 5, 5, 5, 5, 4.15, 4.92], "nps": [42.9, 50, 66.7, 100, 55.6, 0, 25, 55.6, 18.2, 66.7, 50, 44.4, 61.5, 55.6, 28, -16.7, 37.5, 0, 66.7, 50, 16.7, -28.6, 0, 20, 75, 50, 13.3, 0], "captureRate": [10.5, 10.3, 10.0, 9.6, 8.7, 6.4, 14.5, 14.8, 15.1, 16.5, 15.7, 12.9, 13.6, 14.0, 12.3, 9.9, 16.9, 16.8, 12.9, 11.3, 15.2, 14.3, 17.7, 17.3, 15.4, 20.6, 11.2, 17.6], "netGains": [3, -8, 35, -36, 4, -1, 20, 14, 10, 11, 51, 55, 61, -9, 18, -69, 4, -9, 2, -8, -13, -15, 0, 4, -7, 19, 3, 14]}, "349": {"hours": [192, 243, 265, 120, 287, 258, 247, 275, 255, 259, 296, 337, 383, 351, 313, 328, 362.8, 334.94, 388, 388.19, 343.85, 312.08, 365.8, 368, 351, 383.25, 348, 342.6], "overtime": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.98, 0, 12.17, 0, 0, 0.38, 0, 0, 0, 0, 0], "goLearn": [45.0, 45.3, 67.4, 72.3, 74.0, 75.5, 83.6, 84.1, 86.7, 85.5, 71.5, 75.6, 81.2, 91.8, 92.7, 93.4, 85.7, 86.3, 88.7, 92.5, 90.6, 92.3, 90.1, 93.4, 94.3, 94.5, 94.6, 94.6], "reviewCount": [1, 7, 10, 1, 0, 6, 1, 0, 9, 0, 3, 1, 2, 1, 2, 1, 4, 11, 16, 10, 12, 10, 10, 10, 5, 3, 8, 9], "reviewStars": [5, 5, 5, 5, 0, 4.8, 3, 0, 5, 0, 5, 5, 4.5, 5, 5, 5, 5, 5, 4.9, 5, 5, 5, 4.8, 5, 5, 5, 4.87, 5], "nps": [50, 100, 50, 100, 28.6, 100, 66.7, 0, 100, 100, 60, 83.3, 27.3, 100, 0, 75, 60, 100, 30, 100, 75, 33.3, 100, 83.3, 20, 60, 50, 40], "captureRate": [7.4, 7.4, 5.4, 11.7, 6.1, 5.0, 8.7, 8.8, 4.4, 10.9, 11.6, 10.4, 9.2, 12.2, 18.0, 8.5, 13.5, 12.2, 11.0, 12.7, 12.1, 12.3, 10.6, 13.1, 14.4, 12.6, 9.1, 9.4], "netGains": [23, 12, 2, -14, 9, 11, -1, -8, -11, -20, 27, 36, 45, 13, -5, 0, -38, 9, 13, 1, 4, -8, 0, -2, 2, 22, 10, -5]}, "352": {"hours": [240.22, 331.12, 305, 166.45, 323, 320, 301, 323, 291.54, 327, 320, 319, 290, 283.52, 282.31, 271.78, 277.35, 222.47, 258.06, 245.97, 216, 298, 330, 294, 300, 290.89, 223, 247], "overtime": [6, 2.04, 6, 0, 1.08, 2, 1.12, 4.78, 3.3, 2, 20.83, 5, 6.28, 3.28, 3.27, 1.32, 0.2, 0, 11, 9.48, 8.26, 4, 0, 5.7, 18.4, 20.12, 2.17, 1.72], "goLearn": [58.0, 60.0, 60.0, 60.0, 60.0, 60.0, 60.0, 60.0, 60.0, 72.0, 72.0, 72.0, 69.0, 70.0, 72.0, 72.0, 68.0, 68.0, 50.0, 42.0, 56.0, 49.0, 39.0, 37.0, 40.0, 40.0, 40.0, 41.0], "reviewCount": [2, 8, 8, 0, 6, 5, 5, 5, 5, 6, 15, 8, 3, 0, 2, 3, 5, 3, 3, 7, 5, 6, 31, 19, 38, 16, 6, 13], "reviewStars": [5, 4.25, 4.75, 0, 4.5, 3.6, 3.8, 4, 5, 5, 4.64, 2.1, 3.67, 0, 5, 5, 5, 5, 5, 4.7, 5, 4.3333, 5, 4.7, 4.9, 4.9, 4.67, 4.4], "nps": [42.9, 57.1, 69.2, -100, 50, 50, 53.7, 22.2, 45.5, 0, 75, 54.5, 27.3, 80, 50, 55.6, 45.5, 50, 60, 20, 60, 100, 100, 60, 75, 50, 33, 66.7], "captureRate": [6.6, 8.9, 8.0, 9.9, 6.7, 8.4, 9.3, 9.4, 8.0, 13.7, 7.4, 8.6, 7.4, 7.9, 9.1, 11.3, 10.0, 7.1, 7.2, 8.3, 8.2, 13.8, 21.3, 14.2, 12.9, 11.2, 9.9, 9.4], "netGains": [4, -133, 5, -69, 18, 18, 20, 7, 128, 14, 6, 51, 25, -32, -64, -140, -31, -21, 78, -18, -11, 15, 40, 4, 10, 17, 43, 1]}, "354": {"hours": [134.84, 154.38, 147.7, 83.85, 169.11, 139.36, 148.53, 168.74, 139.47, 161.93, 212, 254.05, 255.15, 178, 175.5, 193.81, 185.04, 191.11, 195.7, 207.44, 180.97, 243.14, 239.56, 230.43, 232.51, 239.61, 195.41, 234.97], "overtime": [8.9, 13.55, 7.5, 0, 0, 5.99, 17.79, 0, 8.85, 6.33, 9.53, 10.38, 28.33, 7.8, 5.68, 5.63, 13.7, 11.08, 12.92, 11.15, 8.02, 18.46, 5.17, 4.13, 5.92, 7.73, 0, 15.92], "goLearn": [77.9, 83.1, 80.5, 80.3, 80.8, 80.8, 80.0, 78.6, 79.4, 56.5, 59.4, 46.9, 46.9, 50.0, 96.7, 100, 93.5, 97.7, 100, 76.2, 79.4, 92.8, 90.7, 90.5, 93.5, 95.6, 95.6, 95.5], "reviewCount": [2, 2, 1, 0, 1, 2, 0, 2, 1, 1, 0, 0, 4, 1, 0, 13, 13, 13, 14, 14, 13, 13, 10, 14, 12, 13, 10, 11], "reviewStars": [5, 5, 5, 0, 5, 5, 0, 5, 1, 5, 0, 0, 5, 5, 0, 4.5, 4.92, 5, 5, 5, 4.76, 4.92, 5, 5, 4.9, 4.69, 5, 5], "nps": [66.7, 55.6, 57.1, 0, 100, 83.3, 100, 44.4, 75, 87.5, 100, 71.4, 40, 0, 66.7, 25, 83.3, 85.7, 100, 50, 100, 40, 33.3, 30, 60, 100, 57.1, 42.9], "captureRate": [4.8, 6.7, 10.7, 11.3, 8.4, 8.4, 4.9, 6.5, 7.2, 4.0, 10.2, 8.2, 7.1, 10.1, 7.9, 7.1, 7.5, 10.6, 12.0, 4.3, 8.0, 7.3, 12.1, 9.7, 9.3, 13.2, 11.4, 15.9], "netGains": [-3, -8, 19, -18, 12, 20, -10, 0, 18, -5, 11, 20, -48, 63, -5, 0, 0, -94, 87, 3, -10, -5, -7, 15, -12, 18, 32, 24]}, "358": {"hours": [235.05, 223.68, 207.48, 104.29, 257.83, 231.56, 214.43, 222, 244.81, 234.01, 284, 279.37, 265.6, 295, 251, 239.93, 245, 245.83, 255, 250, 227.23, 200, 243, 271, 248, 218.87, 226.7, 241], "overtime": [1.75, 7.3, 12.38, 0, 0, 13.85, 11.4, 12.41, 4.98, 4, 13.5, 13.92, 5.12, 17, 3.77, 4.77, 4.77, 4.77, 3.55, 4.77, 7.82, 4.77, 3.28, 5, 5.88, 2.42, 12, 9], "goLearn": [36.0, 0, 32.0, 43.0, 0, 0, 50.0, 0, 0, 0, 0, 0, 80.0, 80.0, 80.0, 89.0, 85.0, 88.0, 88.0, 90.0, 90.0, 65.0, 79.0, 79.0, 81.0, 86.0, 96.0, 96.0], "reviewCount": [2, 1, 2, 1, 13, 9, 3, 7, 6, 3, 2, 2, 4, 1, 4, 3, 9, 12, 17, 13, 12, 11, 15, 20, 11, 10, 15, 14], "reviewStars": [5, 4, 4, 5, 5, 5, 5, 5, 5, 4, 3, 3, 3, 5, 5, 5, 5, 5, 4.5, 5, 4.5, 4.5, 4.7, 4.94, 4.9, 5, 4.5, 5], "nps": [21.4, 35, 32.3, 38.9, 51, 47.7, 45.2, 47.9, 46.9, 47.1, 44.4, 38.6, 37.1, 39, 53.8, 42.9, 20, -22, 33.3, 20, 11.1, 80, -28.6, 16.7, -14.3, 33.3, 37.5, 66.7], "captureRate": [11.0, 8.8, 9.0, 14.9, 8.4, 9.5, 9.9, 11.7, 11.8, 10.9, 11.8, 0, -3.9, 12.0, 11.6, 7.8, 12.6, 11.4, 17.0, 17.1, 15.4, 16.0, 13.8, 15.8, 14.7, 13.3, 17.2, 13.7], "netGains": [-50, -19, 21, -63, 39, 29, 25, 0, 0, -61, 74, 30, 65, -10, -34, -32, 18, 2, 29, 45, -7, 19, -13, 17, -4, 19, 71, 15]}, "359": {"hours": [321, 351, 361, 166, 357, 350, 386, 360, 377, 323, 514, 460, 488, 403, 372, 359.83, 402, 330, 400, 423, 354, 412, 399, 369, 367, 414, 420, 407], "overtime": [44, 28.8, 21, 0, 7.37, 14, 20, 9, 6, 0, 4, 23, 9.5, 6, 0, 0, 0, 0, 10, 5.41, 16, 12, 12, 9.36, 2.13, 13.17, 0, 5], "goLearn": [67.0, 65.0, 65.2, 60.6, 64.8, 70.4, 60.9, 63.0, 57.0, 69.9, 75.5, 90.6, 90.1, 91.4, 92.0, 92.0, 92.0, 65.2, 66.2, 67.8, 65.0, 35.0, 57.0, 61.0, 0, 0, 0, 0], "reviewCount": [4, 4, 6, 2, 1, 6, 10, 55, 111, 48, 29, 20, 5, 9, 4, 7, 7, 2, 0, 2, 0, 0, 3, 1, 5, 8, 7, 12], "reviewStars": [5, 4.75, 4.83, 5, 5, 5, 5, 4.87, 4.9, 4.8, 4.9, 5, 4.4, 4.6, 4, 5, 4, 4.5, 0, 5, 0, 0, 4.6, 1, 5, 5, 5, 4.5], "nps": [0, 36.4, 100, 50, 31, 25, 40, 87.5, 60, 66.7, 100, 20, 45.5, 0, 60, 62.1, 100, 14.3, 100, 57.1, 83.3, 60, 50, 100, 80, 33.3, 80, 60], "captureRate": [14.7, 15.4, 13.7, 20.9, 13.9, 14.5, 18.4, 12.4, 13.3, 19.7, 18.7, 13.9, 14.7, 14.7, 13.5, 12.9, 14.2, 15.1, 12.3, 10.7, 11.9, 10.2, 12.8, 12.1, 10.4, 13.5, 17.3, 20.7], "netGains": [38, 22, 13, -8, 44, 67, 48, 39, 29, -23, 41, 66, 72, 10, -11, 0, -60, 19, 9, 10, -14, -15, -21, -10, -17, 11, 47, 31]}};
+const WEEKLY_FIN = {"319": [{"to": "2026-01-06", "washSales": 2385, "netSales": 36055.83, "armSold": 77, "captureRate": 10.29, "rpc": 11.64}, {"to": "2026-01-13", "washSales": 1825, "netSales": 28562.64, "armSold": 46, "captureRate": 10.55, "rpc": 12.5}, {"to": "2026-01-20", "washSales": 2099, "netSales": 30384.87, "armSold": 71, "captureRate": 11.22, "rpc": 10.08}, {"to": "2026-01-27", "washSales": 472, "netSales": 6556.01, "armSold": 18, "captureRate": 16.51, "rpc": 3.95}, {"to": "2026-02-03", "washSales": 2540, "netSales": 38883.41, "armSold": 57, "captureRate": 8.05, "rpc": 11.8}, {"to": "2026-02-10", "washSales": 2290, "netSales": 35023.33, "armSold": 80, "captureRate": 11.35, "rpc": 11.95}, {"to": "2026-02-17", "washSales": 2047, "netSales": 29566.48, "armSold": 60, "captureRate": 12.27, "rpc": 9.16}, {"to": "2026-02-24", "washSales": 1956, "netSales": 28950.86, "armSold": 70, "captureRate": 17.72, "rpc": 8.57}, {"to": "2026-03-03", "washSales": 2325, "netSales": 35624, "armSold": 101, "captureRate": 17.44, "rpc": 11.94}, {"to": "2026-03-10", "washSales": 1332, "netSales": 19907.38, "armSold": 37, "captureRate": 17.79, "rpc": 6.74}, {"to": "2026-03-17", "washSales": 2526, "netSales": 39702.36, "armSold": 92, "captureRate": 16.25, "rpc": 11.69}, {"to": "2026-03-24", "washSales": 2907, "netSales": 47554.22, "armSold": 107, "captureRate": 14.02, "rpc": 12.72}, {"to": "2026-03-31", "washSales": 3234, "netSales": 53739.64, "armSold": 111, "captureRate": 14.05, "rpc": 13.82}, {"to": "2026-04-07", "washSales": 1730, "netSales": 27555.81, "armSold": 48, "captureRate": 14.29, "rpc": 9.3}, {"to": "2026-04-14", "washSales": 1362, "netSales": 21689.75, "armSold": 33, "captureRate": 16.75, "rpc": 8.07}, {"to": "2026-04-21", "washSales": 1481, "netSales": 23155.38, "armSold": 39, "captureRate": 14.55, "rpc": 7.07}, {"to": "2026-04-28", "washSales": 2112, "netSales": 34188.03, "armSold": 69, "captureRate": 15.79, "rpc": 10.95}, {"to": "2026-05-05", "washSales": 1623, "netSales": 26496.62, "armSold": 43, "captureRate": 13.96, "rpc": 11.51}, {"to": "2026-05-12", "washSales": 2179, "netSales": 36259.94, "armSold": 44, "captureRate": 10.95, "rpc": 12.15}, {"to": "2026-05-19", "washSales": 1949, "netSales": 32273.22, "armSold": 44, "captureRate": 11.11, "rpc": 12.47}, {"to": "2026-05-26", "washSales": 1572, "netSales": 25636.3, "armSold": 29, "captureRate": 10.03, "rpc": 9.9}, {"to": "2026-06-02", "washSales": 2093, "netSales": 34873.42, "armSold": 46, "captureRate": 10.62, "rpc": 12.62}, {"to": "2026-06-09", "washSales": 1693, "netSales": 27478.33, "armSold": 25, "captureRate": 8.56, "rpc": 9.55}, {"to": "2026-06-16", "washSales": 1971, "netSales": 32536.1, "armSold": 44, "captureRate": 12.05, "rpc": 11.25}, {"to": "2026-06-23", "washSales": 1869, "netSales": 14952, "armSold": 49, "captureRate": 13.84, "rpc": -36.21}, {"to": "2026-06-30", "washSales": 2350, "netSales": 39793.93, "armSold": 65, "captureRate": 12.55, "rpc": 13.18}, {"to": "2026-07-07", "washSales": 2499, "netSales": 36774.64, "armSold": 70, "captureRate": 15.18, "rpc": 7.58}, {"to": "2026-07-14", "washSales": 1950, "netSales": 32079.73, "armSold": 54, "captureRate": 12.5, "rpc": 13.02}], "341": [{"to": "2026-01-06", "washSales": 3525, "netSales": 53136.41, "armSold": 96, "captureRate": 11.18, "rpc": 12.45}, {"to": "2026-01-13", "washSales": 2835, "netSales": 42375.67, "armSold": 62, "captureRate": 10.49, "rpc": 11.64}, {"to": "2026-01-20", "washSales": 3631, "netSales": 55334, "armSold": 98, "captureRate": 11.94, "rpc": 12.88}, {"to": "2026-01-27", "washSales": 713, "netSales": 10181.5, "armSold": 12, "captureRate": 14.63, "rpc": -2.85}, {"to": "2026-02-03", "washSales": 2804, "netSales": 41419.67, "armSold": 79, "captureRate": 11.86, "rpc": 12.66}, {"to": "2026-02-10", "washSales": 4047, "netSales": 60879.54, "armSold": 110, "captureRate": 10.12, "rpc": 13.12}, {"to": "2026-02-17", "washSales": 3267, "netSales": 49364.53, "armSold": 77, "captureRate": 11.86, "rpc": 12.36}, {"to": "2026-02-24", "washSales": 3057, "netSales": 63206.3, "armSold": 62, "captureRate": 10.9, "rpc": 42.22}, {"to": "2026-03-03", "washSales": 3463, "netSales": 51887.14, "armSold": 101, "captureRate": 13.91, "rpc": 13.29}, {"to": "2026-03-10", "washSales": 2151, "netSales": 31218.85, "armSold": 43, "captureRate": 15.81, "rpc": 10.69}, {"to": "2026-03-17", "washSales": 4225, "netSales": 64164.53, "armSold": 77, "captureRate": 9.73, "rpc": 13.75}, {"to": "2026-03-24", "washSales": 5261, "netSales": 81853, "armSold": 162, "captureRate": 13.47, "rpc": 13.72}, {"to": "2026-03-31", "washSales": 5702, "netSales": 88311.26, "armSold": 195, "captureRate": 15.08, "rpc": 13.6}, {"to": "2026-04-07", "washSales": 2515, "netSales": 38911.5, "armSold": 34, "captureRate": 10.86, "rpc": 14.5}, {"to": "2026-04-14", "washSales": 2173, "netSales": 33565.41, "armSold": 28, "captureRate": 12.56, "rpc": 10.44}, {"to": "2026-04-21", "washSales": 2291, "netSales": 35255.46, "armSold": 32, "captureRate": 11.59, "rpc": 111.94}, {"to": "2026-04-28", "washSales": 3231, "netSales": 49388.45, "armSold": 65, "captureRate": 14.48, "rpc": 9.76}, {"to": "2026-05-05", "washSales": 2179, "netSales": 33987.52, "armSold": 42, "captureRate": 13.46, "rpc": 12.7}, {"to": "2026-05-12", "washSales": 3262, "netSales": 49835.99, "armSold": 55, "captureRate": 11.32, "rpc": 11.85}, {"to": "2026-05-19", "washSales": 3075, "netSales": 47721.93, "armSold": 64, "captureRate": 12.85, "rpc": 13.24}, {"to": "2026-05-26", "washSales": 2556, "netSales": 40257.2, "armSold": 43, "captureRate": 10.97, "rpc": 14.44}, {"to": "2026-06-02", "washSales": 2909, "netSales": 46038.12, "armSold": 70, "captureRate": 13.73, "rpc": 13.93}, {"to": "2026-06-09", "washSales": 2425, "netSales": 38913.21, "armSold": 52, "captureRate": 14.94, "rpc": 14.2}, {"to": "2026-06-16", "washSales": 2680, "netSales": 42441.18, "armSold": 62, "captureRate": 14.32, "rpc": 14.46}, {"to": "2026-06-23", "washSales": 2781, "netSales": 44625.16, "armSold": 74, "captureRate": 15.45, "rpc": 14.74}, {"to": "2026-06-30", "washSales": 3454, "netSales": 55828.33, "armSold": 91, "captureRate": 13.87, "rpc": 15.12}, {"to": "2026-07-07", "washSales": 3611, "netSales": 57281.14, "armSold": 156, "captureRate": 19.43, "rpc": 13.69}, {"to": "2026-07-14", "washSales": 2700, "netSales": 42955, "armSold": 103, "captureRate": 19.14, "rpc": 15.21}], "342": [{"to": "2026-01-06", "washSales": 2680, "netSales": 40422.9, "armSold": 69, "captureRate": 10.06, "rpc": 13.8}, {"to": "2026-01-13", "washSales": 2058, "netSales": 30411.97, "armSold": 73, "captureRate": 16.63, "rpc": 13.27}, {"to": "2026-01-20", "washSales": 2697, "netSales": 40340.52, "armSold": 72, "captureRate": 13.24, "rpc": 13.74}, {"to": "2026-01-27", "washSales": 660, "netSales": 8583.7, "armSold": 13, "captureRate": 20.0, "rpc": -3.17}, {"to": "2026-02-03", "washSales": 2868, "netSales": 43382, "armSold": 83, "captureRate": 14.72, "rpc": 14.29}, {"to": "2026-02-10", "washSales": 2787, "netSales": 42108.5, "armSold": 101, "captureRate": 13.84, "rpc": 14.39}, {"to": "2026-02-17", "washSales": 2336, "netSales": 35154, "armSold": 62, "captureRate": 15.2, "rpc": 13.28}, {"to": "2026-02-24", "washSales": 2170, "netSales": 32337.39, "armSold": 61, "captureRate": 16.18, "rpc": 12.25}, {"to": "2026-03-03", "washSales": 2464, "netSales": 35888, "armSold": 83, "captureRate": 17.36, "rpc": 11.08}, {"to": "2026-03-10", "washSales": 1603, "netSales": 22859, "armSold": 41, "captureRate": 21.47, "rpc": 9.63}, {"to": "2026-03-17", "washSales": 3025, "netSales": 45478, "armSold": 79, "captureRate": 15.19, "rpc": 13.65}, {"to": "2026-03-24", "washSales": 3695, "netSales": 57452, "armSold": 84, "captureRate": 10.47, "rpc": 13.54}, {"to": "2026-03-31", "washSales": 3786, "netSales": 58711, "armSold": 108, "captureRate": 13.37, "rpc": 13.9}, {"to": "2026-04-07", "washSales": 1779, "netSales": 26875, "armSold": 36, "captureRate": 18.56, "rpc": 11.38}, {"to": "2026-04-14", "washSales": 1570, "netSales": 23826, "armSold": 25, "captureRate": 15.15, "rpc": 11.27}, {"to": "2026-04-21", "washSales": 1768, "netSales": 26970, "armSold": 33, "captureRate": 17.84, "rpc": 9.68}, {"to": "2026-04-28", "washSales": 2343, "netSales": 34609, "armSold": 50, "captureRate": 15.34, "rpc": 8}, {"to": "2026-05-05", "washSales": 1704, "netSales": 26329, "armSold": 29, "captureRate": 15.34, "rpc": 11.44}, {"to": "2026-05-12", "washSales": 2501, "netSales": 38368, "armSold": 51, "captureRate": 13.75, "rpc": 13.83}, {"to": "2026-05-19", "washSales": 2445, "netSales": 38784, "armSold": 64, "captureRate": 16.84, "rpc": 14.07}, {"to": "2026-05-26", "washSales": 1819, "netSales": 28750, "armSold": 36, "captureRate": 14.29, "rpc": 13.41}, {"to": "2026-06-02", "washSales": 2162, "netSales": 34005, "armSold": 54, "captureRate": 16.36, "rpc": 14.62}, {"to": "2026-06-09", "washSales": 1900, "netSales": 29717, "armSold": 26, "captureRate": 9.96, "rpc": 13.55}, {"to": "2026-06-16", "washSales": 2008, "netSales": 31649, "armSold": 40, "captureRate": 13.7, "rpc": 13.26}, {"to": "2026-06-23", "washSales": 2181, "netSales": 34242, "armSold": 58, "captureRate": 17.47, "rpc": 13.86}, {"to": "2026-06-30", "washSales": 2515, "netSales": 39324, "armSold": 51, "captureRate": 11.28, "rpc": 13.79}, {"to": "2026-07-07", "washSales": 2568, "netSales": 40887, "armSold": 70, "captureRate": 13.31, "rpc": 14.68}, {"to": "2026-07-14", "washSales": 2158, "netSales": 33852, "armSold": 62, "captureRate": 14.49, "rpc": 14.84}], "343": [{"to": "2026-01-06", "washSales": 2550, "netSales": 40151.24, "armSold": 69, "captureRate": 10.78, "rpc": 13.92}, {"to": "2026-01-13", "washSales": 1904, "netSales": 28972.9, "armSold": 39, "captureRate": 9.8, "rpc": 11.65}, {"to": "2026-01-20", "washSales": 2426, "netSales": 37301.32, "armSold": 69, "captureRate": 11.71, "rpc": 12.1}, {"to": "2026-01-27", "washSales": 588, "netSales": 8329.7, "armSold": 8, "captureRate": 11.59, "rpc": 2.1}, {"to": "2026-02-03", "washSales": 2980, "netSales": 46008.51, "armSold": 56, "captureRate": 9.57, "rpc": 12.54}, {"to": "2026-02-10", "washSales": 2812, "netSales": 44478.71, "armSold": 87, "captureRate": 12.24, "rpc": 13.68}, {"to": "2026-02-17", "washSales": 2167, "netSales": 32880.34, "armSold": 31, "captureRate": 7.99, "rpc": 11.62}, {"to": "2026-02-24", "washSales": 2167, "netSales": 32913, "armSold": 44, "captureRate": 11.17, "rpc": 12.09}, {"to": "2026-03-03", "washSales": 2451, "netSales": 38235.6, "armSold": 75, "captureRate": 14.65, "rpc": 13.8}, {"to": "2026-03-10", "washSales": 1454, "netSales": 21646.72, "armSold": 27, "captureRate": 13.78, "rpc": 8.24}, {"to": "2026-03-17", "washSales": 2783, "netSales": 43764.22, "armSold": 56, "captureRate": 10.85, "rpc": 13.38}, {"to": "2026-03-24", "washSales": 3453, "netSales": 55023.25, "armSold": 82, "captureRate": 10.15, "rpc": 13.52}, {"to": "2026-03-31", "washSales": 3718, "netSales": 60904, "armSold": 96, "captureRate": 11.79, "rpc": 13.57}, {"to": "2026-04-07", "washSales": 1744, "netSales": 27758, "armSold": 26, "captureRate": 10.74, "rpc": 11.86}, {"to": "2026-04-14", "washSales": 1469, "netSales": 23553, "armSold": 10, "captureRate": 8.0, "rpc": 11.44}, {"to": "2026-04-21", "washSales": 1530, "netSales": 24184, "armSold": 28, "captureRate": 14.07, "rpc": 9.87}, {"to": "2026-04-28", "washSales": 1711, "netSales": 26951.75, "armSold": 22, "captureRate": 9.36, "rpc": 9.05}, {"to": "2026-05-05", "washSales": 1580, "netSales": 25122.15, "armSold": 26, "captureRate": 11.06, "rpc": 12.13}, {"to": "2026-05-12", "washSales": 2237, "netSales": 36533.06, "armSold": 55, "captureRate": 16.37, "rpc": 13.52}, {"to": "2026-05-19", "washSales": 2243, "netSales": 36054.16, "armSold": 34, "captureRate": 9.24, "rpc": 13.1}, {"to": "2026-05-26", "washSales": 1668, "netSales": 27358.33, "armSold": 42, "captureRate": 17.36, "rpc": 11.97}, {"to": "2026-06-02", "washSales": 2017, "netSales": 32976.11, "armSold": 29, "captureRate": 8.38, "rpc": 13.65}, {"to": "2026-06-09", "washSales": 1527, "netSales": 24344.33, "armSold": 22, "captureRate": 10.84, "rpc": 11.2}, {"to": "2026-06-16", "washSales": 1813, "netSales": 28928.3, "armSold": 42, "captureRate": 13.25, "rpc": 11.92}, {"to": "2026-06-23", "washSales": 1900, "netSales": 30623.43, "armSold": 27, "captureRate": 8.71, "rpc": 13.17}, {"to": "2026-06-30", "washSales": 2380, "netSales": 38984.37, "armSold": 70, "captureRate": 14.74, "rpc": 13.66}, {"to": "2026-07-07", "washSales": 2437, "netSales": 38396.19, "armSold": 59, "captureRate": 10.89, "rpc": 12.15}, {"to": "2026-07-14", "washSales": 1755, "netSales": 28387.44, "armSold": 38, "captureRate": 10.16, "rpc": 12.98}], "344": [{"to": "2026-01-06", "washSales": 0, "netSales": 31527.19, "armSold": 85, "captureRate": -5.38, "rpc": -4.01}, {"to": "2026-01-13", "washSales": 1545, "netSales": 22805.39, "armSold": 39, "captureRate": 12.66, "rpc": 12.63}, {"to": "2026-01-20", "washSales": 2036, "netSales": 29192, "armSold": 40, "captureRate": 13.07, "rpc": 10.95}, {"to": "2026-01-27", "washSales": 489, "netSales": 6539.5, "armSold": 11, "captureRate": 22.0, "rpc": 1.55}, {"to": "2026-02-03", "washSales": 2572, "netSales": 37694.41, "armSold": 51, "captureRate": 8.92, "rpc": 12.98}, {"to": "2026-02-10", "washSales": 2178, "netSales": 31955.39, "armSold": 45, "captureRate": 7.22, "rpc": 13.44}, {"to": "2026-02-17", "washSales": 1899, "netSales": 27918.26, "armSold": 23, "captureRate": 6.28, "rpc": 12.57}, {"to": "2026-02-24", "washSales": 1722, "netSales": 25262.55, "armSold": 59, "captureRate": 17.56, "rpc": 12.83}, {"to": "2026-03-03", "washSales": 0, "netSales": 0, "armSold": 0, "captureRate": 0, "rpc": 0}, {"to": "2026-03-10", "washSales": 1327, "netSales": 18982.25, "armSold": 33, "captureRate": 17.46, "rpc": 12.51}, {"to": "2026-03-17", "washSales": 2379, "netSales": 35665, "armSold": 49, "captureRate": 10.75, "rpc": 13.18}, {"to": "2026-03-24", "washSales": 3027, "netSales": 45983, "armSold": 81, "captureRate": 11.89, "rpc": 12.88}, {"to": "2026-03-31", "washSales": 3029, "netSales": 44994.37, "armSold": 72, "captureRate": 10.64, "rpc": 12.45}, {"to": "2026-04-07", "washSales": 1358, "netSales": 20433.32, "armSold": 28, "captureRate": 15.22, "rpc": 13.1}, {"to": "2026-04-14", "washSales": 1193, "netSales": 17650, "armSold": 24, "captureRate": 21.05, "rpc": 10.21}, {"to": "2026-04-21", "washSales": 1335, "netSales": 19743, "armSold": 14, "captureRate": 9.09, "rpc": 8.56}, {"to": "2026-04-28", "washSales": 1849, "netSales": 27294, "armSold": 25, "captureRate": 9.03, "rpc": 10.73}, {"to": "2026-05-05", "washSales": 1361, "netSales": 20701, "armSold": 24, "captureRate": 10.34, "rpc": 13.18}, {"to": "2026-05-12", "washSales": 1952, "netSales": 29462, "armSold": 27, "captureRate": 8.71, "rpc": 12.56}, {"to": "2026-05-19", "washSales": 1959, "netSales": 30070, "armSold": 29, "captureRate": 8.79, "rpc": 13.94}, {"to": "2026-05-26", "washSales": 1391, "netSales": 21256, "armSold": 13, "captureRate": 0, "rpc": 0}, {"to": "2026-06-02", "washSales": 1703, "netSales": 26418.55, "armSold": 31, "captureRate": 10.2, "rpc": 14.09}, {"to": "2026-06-09", "washSales": 1468, "netSales": 22665.14, "armSold": 22, "captureRate": 10.38, "rpc": 14.25}, {"to": "2026-06-16", "washSales": 1550, "netSales": 23708, "armSold": 34, "captureRate": 13.71, "rpc": 12.67}, {"to": "2026-06-23", "washSales": 1631, "netSales": 25043, "armSold": 31, "captureRate": 11.19, "rpc": 14.62}, {"to": "2026-06-30", "washSales": 1928, "netSales": 30363.92, "armSold": 51, "captureRate": 12.35, "rpc": 15.33}, {"to": "2026-07-07", "washSales": 2009, "netSales": 30457.6, "armSold": 49, "captureRate": 10.7, "rpc": 13.21}, {"to": "2026-07-14", "washSales": 1628, "netSales": 25515.29, "armSold": 29, "captureRate": 8.15, "rpc": 12.78}], "345": [{"to": "2026-01-06", "washSales": 3467, "netSales": 53021, "armSold": 121, "captureRate": 11.42, "rpc": 13.21}, {"to": "2026-01-13", "washSales": 3656, "netSales": 35761.29, "armSold": 74, "captureRate": 4.59, "rpc": 1.27}, {"to": "2026-01-20", "washSales": 3494, "netSales": 53625, "armSold": 103, "captureRate": 11.8, "rpc": 12.78}, {"to": "2026-01-27", "washSales": 934, "netSales": 13573.76, "armSold": 23, "captureRate": 13.61, "rpc": 6.53}, {"to": "2026-02-03", "washSales": 4724, "netSales": 73109, "armSold": 123, "captureRate": 9.26, "rpc": 13.29}, {"to": "2026-02-10", "washSales": 3647, "netSales": 55896, "armSold": 106, "captureRate": 9.32, "rpc": 12.9}, {"to": "2026-02-17", "washSales": 3221, "netSales": 49107, "armSold": 91, "captureRate": 12.83, "rpc": 11.77}, {"to": "2026-02-24", "washSales": 2998, "netSales": 45243.82, "armSold": 88, "captureRate": 12.75, "rpc": 11.54}, {"to": "2026-03-03", "washSales": 3526, "netSales": 54068.64, "armSold": 148, "captureRate": 16.78, "rpc": 12.12}, {"to": "2026-03-10", "washSales": 2453, "netSales": 36508.47, "armSold": 89, "captureRate": 20.6, "rpc": 9.33}, {"to": "2026-03-17", "washSales": 4123, "netSales": 63477.56, "armSold": 173, "captureRate": 18.04, "rpc": 12.21}, {"to": "2026-03-24", "washSales": 4964, "netSales": 79142.9, "armSold": 185, "captureRate": 15.15, "rpc": 12.94}, {"to": "2026-03-31", "washSales": 4603, "netSales": 73929.28, "armSold": 184, "captureRate": 16.68, "rpc": 12.94}, {"to": "2026-04-07", "washSales": 2442, "netSales": 38529, "armSold": 62, "captureRate": 16.45, "rpc": 9.33}, {"to": "2026-04-14", "washSales": 2123, "netSales": 32540.94, "armSold": 47, "captureRate": 17.41, "rpc": 6.09}, {"to": "2026-04-21", "washSales": 2222, "netSales": 34454.16, "armSold": 51, "captureRate": 16.4, "rpc": 7.27}, {"to": "2026-04-28", "washSales": 3499, "netSales": 54795.49, "armSold": 89, "captureRate": 17.42, "rpc": 8.67}, {"to": "2026-05-05", "washSales": 2333, "netSales": 35570.79, "armSold": 62, "captureRate": 13.25, "rpc": 8.39}, {"to": "2026-05-12", "washSales": 3178, "netSales": 50341, "armSold": 82, "captureRate": 14.83, "rpc": 10.8}, {"to": "2026-05-19", "washSales": 3396, "netSales": 54956.56, "armSold": 108, "captureRate": 16.41, "rpc": 12.76}, {"to": "2026-05-26", "washSales": 2754, "netSales": 44382.83, "armSold": 90, "captureRate": 18.56, "rpc": 11.8}, {"to": "2026-06-02", "washSales": 3085, "netSales": 49381, "armSold": 103, "captureRate": 17.08, "rpc": 12.36}, {"to": "2026-06-09", "washSales": 2806, "netSales": 44256, "armSold": 77, "captureRate": 17.95, "rpc": 10.82}, {"to": "2026-06-16", "washSales": 3047, "netSales": 48732.85, "armSold": 118, "captureRate": 21.69, "rpc": 10.43}, {"to": "2026-06-23", "washSales": 2709, "netSales": 43175, "armSold": 84, "captureRate": 18.38, "rpc": 10.56}, {"to": "2026-06-30", "washSales": 3611, "netSales": 57356.92, "armSold": 130, "captureRate": 17.86, "rpc": 11.2}, {"to": "2026-07-07", "washSales": 3794, "netSales": 59488.65, "armSold": 156, "captureRate": 17.28, "rpc": 11.39}, {"to": "2026-07-14", "washSales": 2917, "netSales": 45535.78, "armSold": 97, "captureRate": 16.17, "rpc": 10.8}], "346": [{"to": "2026-01-06", "washSales": 2552, "netSales": 38654.24, "armSold": 48, "captureRate": 8.84, "rpc": 12.99}, {"to": "2026-01-13", "washSales": 2066, "netSales": 30993.35, "armSold": 54, "captureRate": 14.67, "rpc": 12.27}, {"to": "2026-01-20", "washSales": 2472, "netSales": 37073.43, "armSold": 74, "captureRate": 16.34, "rpc": 12.09}, {"to": "2026-01-27", "washSales": 652, "netSales": 9068.48, "armSold": 11, "captureRate": 17.46, "rpc": 2.51}, {"to": "2026-02-03", "washSales": 3199, "netSales": 48955.47, "armSold": 94, "captureRate": 14.33, "rpc": 14.02}, {"to": "2026-02-10", "washSales": 2693, "netSales": 41048.19, "armSold": 84, "captureRate": 14.38, "rpc": 13.61}, {"to": "2026-02-17", "washSales": 2376, "netSales": 35302.53, "armSold": 61, "captureRate": 16.67, "rpc": 11.77}, {"to": "2026-02-24", "washSales": 2277, "netSales": 34459.29, "armSold": 55, "captureRate": 14.51, "rpc": 12.42}, {"to": "2026-03-03", "washSales": 2735, "netSales": 40512.65, "armSold": 82, "captureRate": 15.8, "rpc": 12.27}, {"to": "2026-03-10", "washSales": 1806, "netSales": 25854.57, "armSold": 46, "captureRate": 20.26, "rpc": 9.4}, {"to": "2026-03-17", "washSales": 2967, "netSales": 44919.03, "armSold": 66, "captureRate": 13.95, "rpc": 13.09}, {"to": "2026-03-24", "washSales": 3532, "netSales": 55404.45, "armSold": 96, "captureRate": 14.5, "rpc": 13.51}, {"to": "2026-03-31", "washSales": 3458, "netSales": 54712, "armSold": 120, "captureRate": 16.69, "rpc": 13.61}, {"to": "2026-04-07", "washSales": 1719, "netSales": 26669, "armSold": 43, "captureRate": 20.19, "rpc": 11.84}, {"to": "2026-04-14", "washSales": 1665, "netSales": 25103.88, "armSold": 30, "captureRate": 16.39, "rpc": 9.88}, {"to": "2026-04-21", "washSales": 1713, "netSales": 25598.45, "armSold": 31, "captureRate": 14.62, "rpc": 9.58}, {"to": "2026-04-28", "washSales": 2522, "netSales": 38414.05, "armSold": 47, "captureRate": 13.86, "rpc": 9.13}, {"to": "2026-05-05", "washSales": 1691, "netSales": 26210.23, "armSold": 35, "captureRate": 15.28, "rpc": 12.14}, {"to": "2026-05-12", "washSales": 2424, "netSales": 37421.6, "armSold": 58, "captureRate": 15.68, "rpc": 11.9}, {"to": "2026-05-19", "washSales": 2434, "netSales": 38367.2, "armSold": 64, "captureRate": 17.25, "rpc": 13.18}, {"to": "2026-05-26", "washSales": 1854, "netSales": 28554.04, "armSold": 55, "captureRate": 22.54, "rpc": 10.96}, {"to": "2026-06-02", "washSales": 2171, "netSales": 34067.93, "armSold": 72, "captureRate": 23.23, "rpc": 12.19}, {"to": "2026-06-09", "washSales": 1914, "netSales": 29612.85, "armSold": 39, "captureRate": 15.66, "rpc": 11.13}, {"to": "2026-06-16", "washSales": 2117, "netSales": 33470.34, "armSold": 49, "captureRate": 16.23, "rpc": 12.74}, {"to": "2026-06-23", "washSales": 2055, "netSales": 32087.4, "armSold": 54, "captureRate": 18.12, "rpc": 12.21}, {"to": "2026-06-30", "washSales": 2532, "netSales": 39467.48, "armSold": 82, "captureRate": 19.43, "rpc": 13.02}, {"to": "2026-07-07", "washSales": 2575, "netSales": 40406.84, "armSold": 90, "captureRate": 18.75, "rpc": 12.59}, {"to": "2026-07-14", "washSales": 2235, "netSales": 34896.3, "armSold": 63, "captureRate": 16.94, "rpc": 12.64}], "347": [{"to": "2026-01-06", "washSales": 2958, "netSales": 48058.21, "armSold": 93, "captureRate": 10.5, "rpc": 14.74}, {"to": "2026-01-13", "washSales": 2161, "netSales": 34787, "armSold": 53, "captureRate": 9.93, "rpc": 13.42}, {"to": "2026-01-20", "washSales": 2779, "netSales": 44804.74, "armSold": 78, "captureRate": 11.75, "rpc": 14.19}, {"to": "2026-01-27", "washSales": 681, "netSales": 10432.47, "armSold": 13, "captureRate": 13.83, "rpc": 8.8}, {"to": "2026-02-03", "washSales": 4071, "netSales": 66266.63, "armSold": 118, "captureRate": 9.96, "rpc": 14.73}, {"to": "2026-02-10", "washSales": 3117, "netSales": 50918.48, "armSold": 80, "captureRate": 8.48, "rpc": 14.73}, {"to": "2026-02-17", "washSales": 2414, "netSales": 39471.5, "armSold": 45, "captureRate": 8.46, "rpc": 14.71}, {"to": "2026-02-24", "washSales": 2426, "netSales": 39685.26, "armSold": 72, "captureRate": 14.04, "rpc": 14.42}, {"to": "2026-03-03", "washSales": 2912, "netSales": 47184.83, "armSold": 91, "captureRate": 12.45, "rpc": 13.74}, {"to": "2026-03-10", "washSales": 1610, "netSales": 25658.54, "armSold": 40, "captureRate": 14.65, "rpc": 11.89}, {"to": "2026-03-17", "washSales": 3151, "netSales": 51799.37, "armSold": 78, "captureRate": 11.57, "rpc": 14.24}, {"to": "2026-03-24", "washSales": 3734, "netSales": 63189.51, "armSold": 97, "captureRate": 9.91, "rpc": 14.99}, {"to": "2026-03-31", "washSales": 4070, "netSales": 68183.45, "armSold": 93, "captureRate": 8.93, "rpc": 14.61}, {"to": "2026-04-07", "washSales": 2063, "netSales": 34655.45, "armSold": 49, "captureRate": 13.46, "rpc": 13.45}, {"to": "2026-04-14", "washSales": 1734, "netSales": 29367.55, "armSold": 39, "captureRate": 17.26, "rpc": 12.42}, {"to": "2026-04-21", "washSales": 1950, "netSales": 31553.66, "armSold": 52, "captureRate": 16.94, "rpc": 11.15}, {"to": "2026-04-28", "washSales": 2786, "netSales": 46332.83, "armSold": 73, "captureRate": 14.37, "rpc": 12.72}, {"to": "2026-05-05", "washSales": 2025, "netSales": 34070.26, "armSold": 59, "captureRate": 15.25, "rpc": 12.79}, {"to": "2026-05-12", "washSales": 2740, "netSales": 45877.85, "armSold": 97, "captureRate": 17.6, "rpc": 13.9}, {"to": "2026-05-19", "washSales": 2812, "netSales": 47285.35, "armSold": 70, "captureRate": 12.41, "rpc": 14.22}, {"to": "2026-05-26", "washSales": 2184, "netSales": 37523.33, "armSold": 49, "captureRate": 13.5, "rpc": 13.93}, {"to": "2026-06-02", "washSales": 2681, "netSales": 46251, "armSold": 60, "captureRate": 11.49, "rpc": 14.97}, {"to": "2026-06-09", "washSales": 2042, "netSales": 34369.49, "armSold": 51, "captureRate": 14.33, "rpc": 13.74}, {"to": "2026-06-16", "washSales": 2462, "netSales": 41371.64, "armSold": 64, "captureRate": 13.45, "rpc": 13.23}, {"to": "2026-06-23", "washSales": 2470, "netSales": 41866.3, "armSold": 58, "captureRate": 12.69, "rpc": 14.36}, {"to": "2026-06-30", "washSales": 3190, "netSales": 53673.21, "armSold": 92, "captureRate": 11.46, "rpc": 14.44}, {"to": "2026-07-07", "washSales": 3200, "netSales": 53451.37, "armSold": 79, "captureRate": 9.94, "rpc": 13.46}, {"to": "2026-07-14", "washSales": 2499, "netSales": 42765.46, "armSold": 60, "captureRate": 11.09, "rpc": 13.63}], "348": [{"to": "2026-01-06", "washSales": 2366, "netSales": 36415.23, "armSold": 75, "captureRate": 9.81, "rpc": 14.05}, {"to": "2026-01-13", "washSales": 1694, "netSales": 26288.97, "armSold": 40, "captureRate": 10.26, "rpc": 13.65}, {"to": "2026-01-20", "washSales": 1881, "netSales": 28496.45, "armSold": 46, "captureRate": 10.0, "rpc": 13.08}, {"to": "2026-01-27", "washSales": 517, "netSales": 7300.15, "armSold": 7, "captureRate": 9.59, "rpc": 7.54}, {"to": "2026-02-03", "washSales": 2677, "netSales": 41523.49, "armSold": 58, "captureRate": 8.72, "rpc": 13.84}, {"to": "2026-02-10", "washSales": 2510, "netSales": 38576.24, "armSold": 49, "captureRate": 6.4, "rpc": 14.18}, {"to": "2026-02-17", "washSales": 2026, "netSales": 30962.34, "armSold": 62, "captureRate": 14.52, "rpc": 13.49}, {"to": "2026-02-24", "washSales": 2017, "netSales": 30077.81, "armSold": 64, "captureRate": 14.85, "rpc": 12.54}, {"to": "2026-03-03", "washSales": 2176, "netSales": 33442.91, "armSold": 75, "captureRate": 15.12, "rpc": 12.93}, {"to": "2026-03-10", "washSales": 1193, "netSales": 17038.25, "armSold": 30, "captureRate": 16.48, "rpc": 9.59}, {"to": "2026-03-17", "washSales": 2522, "netSales": 37943.54, "armSold": 87, "captureRate": 15.73, "rpc": 12.91}, {"to": "2026-03-24", "washSales": 3003, "netSales": 47410.95, "armSold": 101, "captureRate": 12.88, "rpc": 13.24}, {"to": "2026-03-31", "washSales": 3099, "netSales": 48883.58, "armSold": 105, "captureRate": 13.57, "rpc": 13.65}, {"to": "2026-04-07", "washSales": 1481, "netSales": 22986.23, "armSold": 36, "captureRate": 14.01, "rpc": 11.49}, {"to": "2026-04-14", "washSales": 1267, "netSales": 20132.08, "armSold": 20, "captureRate": 12.35, "rpc": 12.73}, {"to": "2026-04-21", "washSales": 1403, "netSales": 20482.41, "armSold": 21, "captureRate": 9.86, "rpc": 5.67}, {"to": "2026-04-28", "washSales": 1939, "netSales": 29796.07, "armSold": 51, "captureRate": 16.94, "rpc": 8.15}, {"to": "2026-05-05", "washSales": 1300, "netSales": 20636.79, "armSold": 36, "captureRate": 16.82, "rpc": 12.07}, {"to": "2026-05-12", "washSales": 2089, "netSales": 32704.17, "armSold": 49, "captureRate": 12.89, "rpc": 11.72}, {"to": "2026-05-19", "washSales": 1954, "netSales": 31137.71, "armSold": 44, "captureRate": 11.25, "rpc": 13.41}, {"to": "2026-05-26", "washSales": 1570, "netSales": 24736.07, "armSold": 45, "captureRate": 15.2, "rpc": 12.24}, {"to": "2026-06-02", "washSales": 1863, "netSales": 30100.85, "armSold": 57, "captureRate": 14.32, "rpc": 13.43}, {"to": "2026-06-09", "washSales": 1533, "netSales": 24623.15, "armSold": 46, "captureRate": 17.69, "rpc": 12.16}, {"to": "2026-06-16", "washSales": 1675, "netSales": 26861.41, "armSold": 48, "captureRate": 17.27, "rpc": 12.15}, {"to": "2026-06-23", "washSales": 1746, "netSales": 28077.87, "armSold": 47, "captureRate": 15.41, "rpc": 11.83}, {"to": "2026-06-30", "washSales": 2107, "netSales": 33866.32, "armSold": 91, "captureRate": 20.59, "rpc": 13.22}, {"to": "2026-07-07", "washSales": 2065, "netSales": 32611.07, "armSold": 54, "captureRate": 11.16, "rpc": 13.19}, {"to": "2026-07-14", "washSales": 1762, "netSales": 27740.37, "armSold": 66, "captureRate": 17.6, "rpc": 12.22}], "349": [{"to": "2026-01-06", "washSales": 2152, "netSales": 34642, "armSold": 47, "captureRate": 7.36, "rpc": 14.24}, {"to": "2026-01-13", "washSales": 1640, "netSales": 25823.11, "armSold": 30, "captureRate": 7.37, "rpc": 13.0}, {"to": "2026-01-20", "washSales": 2009, "netSales": 32237, "armSold": 25, "captureRate": 5.36, "rpc": 13.11}, {"to": "2026-01-27", "washSales": 526, "netSales": 7865.2, "armSold": 9, "captureRate": 11.69, "rpc": 7.04}, {"to": "2026-02-03", "washSales": 2519, "netSales": 40758.89, "armSold": 34, "captureRate": 6.15, "rpc": 13.4}, {"to": "2026-02-10", "washSales": 2292, "netSales": 36432.24, "armSold": 32, "captureRate": 4.98, "rpc": 13.93}, {"to": "2026-02-17", "washSales": 1816, "netSales": 28683.19, "armSold": 29, "captureRate": 8.71, "rpc": 12.27}, {"to": "2026-02-24", "washSales": 1726, "netSales": 27713.27, "armSold": 30, "captureRate": 8.82, "rpc": 12.66}, {"to": "2026-03-03", "washSales": 2045, "netSales": 32445.2, "armSold": 21, "captureRate": 4.39, "rpc": 12.99}, {"to": "2026-03-10", "washSales": 1188, "netSales": 18673.53, "armSold": 14, "captureRate": 10.94, "rpc": 11.5}, {"to": "2026-03-17", "washSales": 2463, "netSales": 39607.21, "armSold": 58, "captureRate": 11.55, "rpc": 13.67}, {"to": "2026-03-24", "washSales": 3134, "netSales": 51343.4, "armSold": 81, "captureRate": 10.38, "rpc": 62.52}, {"to": "2026-03-31", "washSales": 3193, "netSales": 52147.93, "armSold": 72, "captureRate": 9.18, "rpc": 13.53}, {"to": "2026-04-07", "washSales": 1302, "netSales": 20583.78, "armSold": 23, "captureRate": 12.23, "rpc": 10.63}, {"to": "2026-04-14", "washSales": 1137, "netSales": 18504.41, "armSold": 22, "captureRate": 18.03, "rpc": 11.17}, {"to": "2026-04-21", "washSales": 1231, "netSales": 19560.43, "armSold": 14, "captureRate": 8.48, "rpc": 8.5}, {"to": "2026-04-28", "washSales": 1878, "netSales": 29854, "armSold": 38, "captureRate": 13.48, "rpc": 9.2}, {"to": "2026-05-05", "washSales": 1289, "netSales": 21313.2, "armSold": 25, "captureRate": 12.2, "rpc": 12.11}, {"to": "2026-05-12", "washSales": 1923, "netSales": 31264.81, "armSold": 40, "captureRate": 11.02, "rpc": 12.21}, {"to": "2026-05-19", "washSales": 1796, "netSales": 29326.48, "armSold": 39, "captureRate": 12.7, "rpc": 12.04}, {"to": "2026-05-26", "washSales": 1430, "netSales": 23626.94, "armSold": 35, "captureRate": 12.07, "rpc": 12.39}, {"to": "2026-06-02", "washSales": 1743, "netSales": 28923, "armSold": 37, "captureRate": 12.29, "rpc": 13.75}, {"to": "2026-06-09", "washSales": 1439, "netSales": 24061, "armSold": 23, "captureRate": 10.6, "rpc": 11.67}, {"to": "2026-06-16", "washSales": 1647, "netSales": 26612, "armSold": 39, "captureRate": 13.13, "rpc": 11.18}, {"to": "2026-06-23", "washSales": 1696, "netSales": 28260, "armSold": 44, "captureRate": 14.38, "rpc": 12.84}, {"to": "2026-06-30", "washSales": 2039, "netSales": 33902, "armSold": 54, "captureRate": 12.59, "rpc": 12.59}, {"to": "2026-07-07", "washSales": 2186, "netSales": 35497, "armSold": 49, "captureRate": 9.11, "rpc": 11.6}, {"to": "2026-07-14", "washSales": 1691, "netSales": 28056, "armSold": 31, "captureRate": 9.39, "rpc": 11.83}], "352": [{"to": "2026-01-06", "washSales": 3290, "netSales": 45810.27, "armSold": 80, "captureRate": 6.64, "rpc": 12.45}, {"to": "2026-01-13", "washSales": 2656, "netSales": 35761, "armSold": 74, "captureRate": 8.87, "rpc": 10.98}, {"to": "2026-01-20", "washSales": 3235, "netSales": 44371.38, "armSold": 76, "captureRate": 7.99, "rpc": 11.48}, {"to": "2026-01-27", "washSales": 1098, "netSales": 14785.38, "armSold": 19, "captureRate": 9.9, "rpc": 9.52}, {"to": "2026-02-03", "washSales": 3561, "netSales": 49441.47, "armSold": 80, "captureRate": 6.71, "rpc": 12.46}, {"to": "2026-02-10", "washSales": 3554, "netSales": 48954.6, "armSold": 108, "captureRate": 8.35, "rpc": 12.09}, {"to": "2026-02-17", "washSales": 3133, "netSales": 43138.43, "armSold": 78, "captureRate": 9.34, "rpc": 11.38}, {"to": "2026-02-24", "washSales": 2936, "netSales": 40649.15, "armSold": 87, "captureRate": 9.45, "rpc": 11.93}, {"to": "2026-03-03", "washSales": 3349, "netSales": 46440.64, "armSold": 83, "captureRate": 8.01, "rpc": 12.15}, {"to": "2026-03-10", "washSales": 2291, "netSales": 30263.9, "armSold": 72, "captureRate": 13.71, "rpc": 9.42}, {"to": "2026-03-17", "washSales": 3550, "netSales": 51031.47, "armSold": 72, "captureRate": 7.35, "rpc": 12.39}, {"to": "2026-03-24", "washSales": 4074, "netSales": 66603.51, "armSold": 113, "captureRate": 8.59, "rpc": 13.89}, {"to": "2026-03-31", "washSales": 4040, "netSales": 66051.36, "armSold": 95, "captureRate": 7.39, "rpc": 14.21}, {"to": "2026-04-07", "washSales": 2512, "netSales": 40971, "armSold": 43, "captureRate": 7.89, "rpc": 12.58}, {"to": "2026-04-14", "washSales": 2179, "netSales": 35649.43, "armSold": 38, "captureRate": 9.11, "rpc": 11.68}, {"to": "2026-04-21", "washSales": 2090, "netSales": 33680.93, "armSold": 57, "captureRate": 11.33, "rpc": 11.98}, {"to": "2026-04-28", "washSales": 3169, "netSales": 52623.68, "armSold": 78, "captureRate": 9.97, "rpc": 13.55}, {"to": "2026-05-05", "washSales": 2278, "netSales": 37871.16, "armSold": 41, "captureRate": 7.12, "rpc": 13.46}, {"to": "2026-05-12", "washSales": 2816, "netSales": 45887.77, "armSold": 48, "captureRate": 7.2, "rpc": 13.15}, {"to": "2026-05-19", "washSales": 3034, "netSales": 50260.33, "armSold": 64, "captureRate": 8.28, "rpc": 14.05}, {"to": "2026-05-26", "washSales": 2545, "netSales": 42068.26, "armSold": 49, "captureRate": 8.18, "rpc": 13.72}, {"to": "2026-06-02", "washSales": 2793, "netSales": 46698.22, "armSold": 104, "captureRate": 13.81, "rpc": 14.15}, {"to": "2026-06-09", "washSales": 2356, "netSales": 39547.72, "armSold": 109, "captureRate": 21.29, "rpc": 13.12}, {"to": "2026-06-16", "washSales": 2518, "netSales": 42201, "armSold": 79, "captureRate": 14.16, "rpc": 13.8}, {"to": "2026-06-23", "washSales": 2671, "netSales": 44415.17, "armSold": 79, "captureRate": 12.93, "rpc": 13.58}, {"to": "2026-06-30", "washSales": 3090, "netSales": 51209.74, "armSold": 98, "captureRate": 11.17, "rpc": 13.6}, {"to": "2026-07-07", "washSales": 3348, "netSales": 53793.85, "armSold": 104, "captureRate": 9.92, "rpc": 12.84}, {"to": "2026-07-14", "washSales": 2526, "netSales": 41736.48, "armSold": 58, "captureRate": 9.45, "rpc": 40.91}], "354": [{"to": "2026-01-06", "washSales": 1338, "netSales": 21599.07, "armSold": 20, "captureRate": 4.82, "rpc": 14.85}, {"to": "2026-01-13", "washSales": 1177, "netSales": 18524.12, "armSold": 21, "captureRate": 6.69, "rpc": 13.74}, {"to": "2026-01-20", "washSales": 1217, "netSales": 19008.11, "armSold": 38, "captureRate": 10.7, "rpc": 13.78}, {"to": "2026-01-27", "washSales": 384, "netSales": 5779.12, "armSold": 7, "captureRate": 11.29, "rpc": 7.4}, {"to": "2026-02-03", "washSales": 1444, "netSales": 23341.22, "armSold": 38, "captureRate": 8.41, "rpc": 14.22}, {"to": "2026-02-10", "washSales": 1448, "netSales": 23217.09, "armSold": 39, "captureRate": 8.41, "rpc": 14.61}, {"to": "2026-02-17", "washSales": 1261, "netSales": 20109.22, "armSold": 15, "captureRate": 4.89, "rpc": 13.45}, {"to": "2026-02-24", "washSales": 1236, "netSales": 19994.12, "armSold": 21, "captureRate": 6.5, "rpc": 14.16}, {"to": "2026-03-03", "washSales": 1664, "netSales": 26696.33, "armSold": 36, "captureRate": 7.17, "rpc": 14.45}, {"to": "2026-03-10", "washSales": 979, "netSales": 15205.22, "armSold": 9, "captureRate": 4.04, "rpc": 12.54}, {"to": "2026-03-17", "washSales": 1338, "netSales": 21635.15, "armSold": 33, "captureRate": 10.22, "rpc": 14.26}, {"to": "2026-03-24", "washSales": 1785, "netSales": 28439.11, "armSold": 42, "captureRate": 8.22, "rpc": 15.31}, {"to": "2026-03-31", "washSales": 1851, "netSales": 29887.13, "armSold": 37, "captureRate": 7.14, "rpc": 14.55}, {"to": "2026-04-07", "washSales": 1040, "netSales": 16233.17, "armSold": 19, "captureRate": 10.05, "rpc": 13.46}, {"to": "2026-04-14", "washSales": 1081, "netSales": 16907.14, "armSold": 15, "captureRate": 7.85, "rpc": 12.83}, {"to": "2026-04-21", "washSales": 951, "netSales": 14717.26, "armSold": 14, "captureRate": 7.07, "rpc": 12.38}, {"to": "2026-04-28", "washSales": 1418, "netSales": 22371.25, "armSold": 22, "captureRate": 7.51, "rpc": 13.49}, {"to": "2026-05-05", "washSales": 1004, "netSales": 15769.58, "armSold": 21, "captureRate": 10.55, "rpc": 12.84}, {"to": "2026-05-12", "washSales": 1389, "netSales": 22034.1, "armSold": 35, "captureRate": 11.99, "rpc": 13.69}, {"to": "2026-05-19", "washSales": 1396, "netSales": 22392.13, "armSold": 14, "captureRate": 4.33, "rpc": 14.75}, {"to": "2026-05-26", "washSales": 1169, "netSales": 18342.12, "armSold": 18, "captureRate": 8.0, "rpc": 13.5}, {"to": "2026-06-02", "washSales": 1375, "netSales": 22253.07, "armSold": 23, "captureRate": 7.35, "rpc": 15.18}, {"to": "2026-06-09", "washSales": 966, "netSales": 15493.18, "armSold": 21, "captureRate": 12.14, "rpc": 13.4}, {"to": "2026-06-16", "washSales": 1182, "netSales": 18710.27, "armSold": 26, "captureRate": 9.7, "rpc": 13.71}, {"to": "2026-06-23", "washSales": 1301, "netSales": 21150.09, "armSold": 24, "captureRate": 9.3, "rpc": 15.21}, {"to": "2026-06-30", "washSales": 1516, "netSales": 24815.17, "armSold": 50, "captureRate": 13.23, "rpc": 15.83}, {"to": "2026-07-07", "washSales": 1648, "netSales": 25644.11, "armSold": 44, "captureRate": 11.4, "rpc": 13.34}, {"to": "2026-07-14", "washSales": 1334, "netSales": 21820.2, "armSold": 54, "captureRate": 15.93, "rpc": 15.81}], "358": [{"to": "2026-01-06", "washSales": 2879, "netSales": 43890.13, "armSold": 93, "captureRate": 11.03, "rpc": 13.06}, {"to": "2026-01-13", "washSales": 2377, "netSales": 35694.43, "armSold": 46, "captureRate": 8.78, "rpc": 12.37}, {"to": "2026-01-20", "washSales": 2915, "netSales": 43914.77, "armSold": 68, "captureRate": 9.02, "rpc": 12.92}, {"to": "2026-01-27", "washSales": 685, "netSales": 9688.79, "armSold": 14, "captureRate": 14.89, "rpc": 6.66}, {"to": "2026-02-03", "washSales": 3730, "netSales": 56199, "armSold": 85, "captureRate": 8.4, "rpc": 12.84}, {"to": "2026-02-10", "washSales": 3153, "netSales": 47801, "armSold": 87, "captureRate": 9.47, "rpc": 13.57}, {"to": "2026-02-17", "washSales": 2595, "netSales": 39365, "armSold": 54, "captureRate": 9.87, "rpc": 12.35}, {"to": "2026-02-24", "washSales": 2621, "netSales": 39971, "armSold": 67, "captureRate": 11.71, "rpc": 12.49}, {"to": "2026-03-03", "washSales": 3097, "netSales": 46483.62, "armSold": 91, "captureRate": 11.76, "rpc": 12.6}, {"to": "2026-03-10", "washSales": 1934, "netSales": 29391.62, "armSold": 33, "captureRate": 10.93, "rpc": 10.63}, {"to": "2026-03-17", "washSales": 3223, "netSales": 49071, "armSold": 87, "captureRate": 11.8, "rpc": 13.2}, {"to": "2026-03-24", "washSales": 0, "netSales": 0, "armSold": 0, "captureRate": 0, "rpc": 0}, {"to": "2026-03-31", "washSales": 0, "netSales": 3700, "armSold": 102, "captureRate": -3.87, "rpc": 14.68}, {"to": "2026-04-07", "washSales": 1986, "netSales": 30385, "armSold": 37, "captureRate": 12.01, "rpc": 12.76}, {"to": "2026-04-14", "washSales": 1876, "netSales": 28225, "armSold": 28, "captureRate": 11.62, "rpc": 12.05}, {"to": "2026-04-21", "washSales": 2076, "netSales": 31158.83, "armSold": 27, "captureRate": 7.85, "rpc": 11.61}, {"to": "2026-04-28", "washSales": 3112, "netSales": 47728.2, "armSold": 76, "captureRate": 12.6, "rpc": 12.48}, {"to": "2026-05-05", "washSales": 2022, "netSales": 31475.19, "armSold": 42, "captureRate": 11.35, "rpc": 13.46}, {"to": "2026-05-12", "washSales": 2886, "netSales": 44498.29, "armSold": 105, "captureRate": 16.96, "rpc": 14.08}, {"to": "2026-05-19", "washSales": 2982, "netSales": 46061.66, "armSold": 93, "captureRate": 17.13, "rpc": 14.17}, {"to": "2026-05-26", "washSales": 2218, "netSales": 34299.75, "armSold": 62, "captureRate": 15.42, "rpc": 13.74}, {"to": "2026-06-02", "washSales": 2726, "netSales": 42279.23, "armSold": 78, "captureRate": 16.05, "rpc": 13.85}, {"to": "2026-06-09", "washSales": 2298, "netSales": 35312.17, "armSold": 50, "captureRate": 13.77, "rpc": 12.91}, {"to": "2026-06-16", "washSales": 2684, "netSales": 40115.88, "armSold": 81, "captureRate": 15.82, "rpc": 11.54}, {"to": "2026-06-23", "washSales": 2687, "netSales": 41340.35, "armSold": 70, "captureRate": 14.68, "rpc": 13.18}, {"to": "2026-06-30", "washSales": 3298, "netSales": 50453.55, "armSold": 97, "captureRate": 13.27, "rpc": 13.68}, {"to": "2026-07-07", "washSales": 3380, "netSales": 50913, "armSold": 141, "captureRate": 17.24, "rpc": 12.85}, {"to": "2026-07-14", "washSales": 2827, "netSales": 42997.78, "armSold": 90, "captureRate": 13.72, "rpc": 13.14}], "359": [{"to": "2026-01-06", "washSales": 2621, "netSales": 43206.22, "armSold": 96, "captureRate": 14.75, "rpc": 14.81}, {"to": "2026-01-13", "washSales": 2237, "netSales": 36381.5, "armSold": 72, "captureRate": 15.35, "rpc": 14.11}, {"to": "2026-01-20", "washSales": 2764, "netSales": 45197.59, "armSold": 79, "captureRate": 13.67, "rpc": 14.3}, {"to": "2026-01-27", "washSales": 720, "netSales": 10910.67, "armSold": 19, "captureRate": 20.88, "rpc": 7.16}, {"to": "2026-02-03", "washSales": 3750, "netSales": 61355.71, "armSold": 123, "captureRate": 13.87, "rpc": 54.43}, {"to": "2026-02-10", "washSales": 3069, "netSales": 50238.5, "armSold": 118, "captureRate": 14.51, "rpc": 14.43}, {"to": "2026-02-17", "washSales": 2628, "netSales": 42952.51, "armSold": 91, "captureRate": 18.42, "rpc": 14.53}, {"to": "2026-02-24", "washSales": 2502, "netSales": 40841.31, "armSold": 62, "captureRate": 12.42, "rpc": 14.12}, {"to": "2026-03-03", "washSales": 2819, "netSales": 46248.64, "armSold": 73, "captureRate": 13.3, "rpc": 14.56}, {"to": "2026-03-10", "washSales": 1660, "netSales": 26759, "armSold": 38, "captureRate": 19.69, "rpc": 12.51}, {"to": "2026-03-17", "washSales": 3125, "netSales": 51327.58, "armSold": 110, "captureRate": 18.68, "rpc": 14.05}, {"to": "2026-03-24", "washSales": 3518, "netSales": 59467.23, "armSold": 105, "captureRate": 13.89, "rpc": 14.44}, {"to": "2026-03-31", "washSales": 3951, "netSales": 66784.34, "armSold": 118, "captureRate": 14.68, "rpc": 14.85}, {"to": "2026-04-07", "washSales": 2170, "netSales": 36749.92, "armSold": 45, "captureRate": 14.71, "rpc": 14.82}, {"to": "2026-04-14", "washSales": 1893, "netSales": 32021.41, "armSold": 28, "captureRate": 13.46, "rpc": 14.29}, {"to": "2026-04-21", "washSales": 1920, "netSales": 32330.43, "armSold": 28, "captureRate": 12.9, "rpc": 12.96}, {"to": "2026-04-28", "washSales": 2710, "netSales": 45258.17, "armSold": 50, "captureRate": 14.2, "rpc": 12.83}, {"to": "2026-05-05", "washSales": 1884, "netSales": 31628.14, "armSold": 39, "captureRate": 15.06, "rpc": 14.45}, {"to": "2026-05-12", "washSales": 2676, "netSales": 44854.58, "armSold": 50, "captureRate": 12.35, "rpc": 14.52}, {"to": "2026-05-19", "washSales": 2665, "netSales": 45730.13, "armSold": 47, "captureRate": 10.66, "rpc": 16.29}, {"to": "2026-05-26", "washSales": 2049, "netSales": 34837.06, "armSold": 36, "captureRate": 11.92, "rpc": 14.41}, {"to": "2026-06-02", "washSales": 2589, "netSales": 44298, "armSold": 44, "captureRate": 10.19, "rpc": 15.49}, {"to": "2026-06-09", "washSales": 1969, "netSales": 33237.2, "armSold": 31, "captureRate": 12.76, "rpc": 14.32}, {"to": "2026-06-16", "washSales": 2291, "netSales": 38459.21, "armSold": 42, "captureRate": 12.14, "rpc": 14.38}, {"to": "2026-06-23", "washSales": 2258, "netSales": 37944.15, "armSold": 35, "captureRate": 10.39, "rpc": 14.0}, {"to": "2026-06-30", "washSales": 2767, "netSales": 47094.17, "armSold": 72, "captureRate": 13.46, "rpc": 14.74}, {"to": "2026-07-07", "washSales": 2772, "netSales": 46146.02, "armSold": 98, "captureRate": 17.28, "rpc": 12.98}, {"to": "2026-07-14", "washSales": 2209, "netSales": 38169.18, "armSold": 81, "captureRate": 20.72, "rpc": 15.01}]};
+const STAFF = {"319": [{"name": "Jayare", "role": "SGM", "washSales": 2015, "armSold": 18, "captureRate": 4.97, "rpc": 13.64, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 9.4, "retailPct": 9.1, "levelAsOf": "July"}, {"name": "Raeden", "role": "AGM", "washSales": 6268, "armSold": 128, "captureRate": 8.68, "rpc": 13.49, "currentLevel": 1, "neededForNextLevel": 27, "totalPct": 5.1, "retailPct": 4.7, "levelAsOf": "July"}, {"name": "Daniel", "role": "TL", "washSales": 6579, "armSold": 178, "captureRate": 11.45, "rpc": 14.36, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 2.4, "retailPct": 2.7, "levelAsOf": "July"}, {"name": "Marina", "role": "CSTL", "washSales": 2150, "armSold": 36, "captureRate": 8.51, "rpc": 14.05, "currentLevel": 1, "neededForNextLevel": 21, "totalPct": 6.7, "retailPct": 8.4, "levelAsOf": "July"}, {"name": "James", "role": "SA", "washSales": 14417, "armSold": 383, "captureRate": 12.23, "rpc": 14.2, "currentLevel": 2, "neededForNextLevel": 5, "totalPct": 39.8, "retailPct": 39.9, "levelAsOf": "July"}, {"name": "Miah", "role": "Sales Advisor", "washSales": 11887, "armSold": 290, "captureRate": 11.35, "rpc": 14.34}, {"name": "Kavares", "role": "CST", "washSales": 3084, "armSold": 34, "captureRate": 5.3, "rpc": 13.19}, {"name": "Julius", "role": "SA", "washSales": 1114, "armSold": 27, "captureRate": 9.89, "rpc": 17.1}], "341": [{"name": "Parker", "role": "Garrett", "washSales": 6190, "armSold": 149, "captureRate": 10.72, "rpc": 13.66, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "ugarte", "role": "abel", "washSales": 9725, "armSold": 240, "captureRate": 12.35, "rpc": 14.36, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Watson", "role": "Tatum", "washSales": 5907, "armSold": 192, "captureRate": 13.27, "rpc": 14.09, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Nusbaum", "role": "Colton", "washSales": 5802, "armSold": 191, "captureRate": 18.45, "rpc": 12.71, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": 0.5, "retailPct": 2.2, "levelAsOf": "July"}, {"name": "Kewish", "role": "Jacob", "washSales": 6496, "armSold": 83, "captureRate": 7.66, "rpc": 12.74, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Brown", "role": "Elissa", "washSales": 6976, "armSold": 144, "captureRate": 10.46, "rpc": 13.36}, {"name": "Mendoza", "role": "Daniel", "washSales": 10269, "armSold": 203, "captureRate": 10.94, "rpc": 15.9}, {"name": "Daniels", "role": "Xavier", "washSales": 8023, "armSold": 253, "captureRate": 16.64, "rpc": 15.97}, {"name": "Thomas", "role": "Ian", "washSales": 2246, "armSold": 59, "captureRate": 14.97, "rpc": 15.28}, {"name": "Williams", "role": "Donnie", "washSales": 3181, "armSold": 115, "captureRate": 19.36, "rpc": 14.96}, {"name": "Sebastian", "role": "Matthew", "washSales": 1685, "armSold": 30, "captureRate": 9.93, "rpc": -5.82}, {"name": "Sandoval", "role": "Jose", "washSales": 5070, "armSold": 161, "captureRate": 16.53, "rpc": 15.44}], "342": [{"name": "Pierson", "role": "Tiffany", "washSales": 19926, "armSold": 567, "captureRate": 17.7, "rpc": 17.63, "currentLevel": 2, "neededForNextLevel": 15, "totalPct": 28.5, "retailPct": 24.0, "levelAsOf": "July"}, {"name": "Epstein", "role": "Aaron", "washSales": 8491, "armSold": 231, "captureRate": 13.94, "rpc": 14.81, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Tolofari", "role": "Barasua", "washSales": 4852, "armSold": 89, "captureRate": 10.03, "rpc": 14.8, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Gates", "role": "Juliann", "washSales": 2526, "armSold": 69, "captureRate": 13.22, "rpc": 14.4, "currentLevel": 1, "neededForNextLevel": 20, "totalPct": 5.1, "retailPct": 5.9, "levelAsOf": "July"}, {"name": "Coker", "role": "Case", "washSales": 5166, "armSold": 140, "captureRate": 12.58, "rpc": 14.39, "currentLevel": 1, "neededForNextLevel": 6, "totalPct": 18.2, "retailPct": 19.2, "levelAsOf": "July"}, {"name": "Bowman", "role": "Mason", "washSales": 11633, "armSold": 278, "captureRate": 14.25, "rpc": 15.1}, {"name": "Margrum", "role": "Niya", "washSales": 5283, "armSold": 128, "captureRate": 13.88, "rpc": 15.55}, {"name": "Robinson", "role": "Jerimiah", "washSales": 1141, "armSold": 15, "captureRate": 6.82, "rpc": 15.35}], "343": [{"name": "Bodkins", "role": "Aiden", "washSales": 5263, "armSold": 96, "captureRate": 9.72, "rpc": 13.42, "currentLevel": 1, "neededForNextLevel": 21, "totalPct": 6.8, "retailPct": 8.1, "levelAsOf": "July"}, {"name": "L", "role": "Najib", "washSales": 1328, "armSold": 39, "captureRate": 13.73, "rpc": 13.75, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 7.7, "retailPct": 7.6, "levelAsOf": "July"}, {"name": "allen", "role": "zach", "washSales": 330, "armSold": 15, "captureRate": 29.41, "rpc": 12.44, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 3.6, "retailPct": 2.4, "levelAsOf": "July"}, {"name": "Ojeda", "role": "Phailin", "washSales": 11177, "armSold": 334, "captureRate": 14.64, "rpc": 14.31, "currentLevel": 2, "neededForNextLevel": 12, "totalPct": 24.7, "retailPct": 26.9, "levelAsOf": "July"}, {"name": "Martinez", "role": "Gabi", "washSales": 2538, "armSold": 61, "captureRate": 12.22, "rpc": 13.95, "currentLevel": 1, "neededForNextLevel": 7, "totalPct": 23.3, "retailPct": 22.3, "levelAsOf": "July"}, {"name": "Gjonaj", "role": "Erik", "washSales": 292, "armSold": 6, "captureRate": 9.38, "rpc": 13.73}, {"name": "Combs", "role": "Shay", "washSales": 2666, "armSold": 51, "captureRate": 10.6, "rpc": 13.82}, {"name": "Stokes", "role": "Brian", "washSales": 627, "armSold": 9, "captureRate": 9.47, "rpc": 14.35}, {"name": "Botello", "role": "Lalo", "washSales": 754, "armSold": 13, "captureRate": 13.4, "rpc": 13.1}, {"name": "Mazolla", "role": "AJ", "washSales": 591, "armSold": 12, "captureRate": 12.24, "rpc": 15.66}], "344": [{"name": "Caroline", "role": "Ludyjan", "washSales": 932, "armSold": 25, "captureRate": 10.73, "rpc": 13.84, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Jose", "role": "Armendarez", "washSales": 2381, "armSold": 31, "captureRate": 28.44, "rpc": 65.31, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Christa", "role": "Spies", "washSales": 3052, "armSold": 66, "captureRate": 11.26, "rpc": 15.5, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 3.8, "retailPct": 2.7, "levelAsOf": "July"}, {"name": "Keyauna", "role": "McFarland", "washSales": 11644, "armSold": 273, "captureRate": 11.51, "rpc": 15.23, "currentLevel": 1, "neededForNextLevel": 11, "totalPct": 19.7, "retailPct": 23.6, "levelAsOf": "July"}, {"name": "Omarion", "role": "Jones", "washSales": 2089, "armSold": 45, "captureRate": 9.45, "rpc": 12.92, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Graham", "role": "Ogren", "washSales": 13327, "armSold": 229, "captureRate": 9.46, "rpc": 14.09}, {"name": "DeAndrae", "role": "Farr", "washSales": 4867, "armSold": 132, "captureRate": 16.5, "rpc": 14.61}, {"name": "Eiden", "role": "Johnson", "washSales": 5763, "armSold": 156, "captureRate": 13.73, "rpc": 14.7}, {"name": "Hennig", "role": "Blake", "washSales": 526, "armSold": 12, "captureRate": 12.9, "rpc": 15.44}, {"name": "Rodriguez", "role": "Cesar", "washSales": 323, "armSold": 4, "captureRate": 9.76, "rpc": -0.51}, {"name": "Padilla", "role": "Ryan", "washSales": 241, "armSold": 6, "captureRate": 11.32, "rpc": 17.98}, {"name": "Shahry", "role": "Ariana", "washSales": 1280, "armSold": 16, "captureRate": 6.32, "rpc": 16.42}, {"name": "Rafalowski", "role": "Gracie", "washSales": 887, "armSold": 17, "captureRate": 8.99, "rpc": 15.26}], "345": [{"name": "Torrez", "role": "Chris", "washSales": 12732, "armSold": 368, "captureRate": 17.39, "rpc": 13.15, "currentLevel": 2, "neededForNextLevel": 10, "totalPct": 18.7, "retailPct": 16.3, "levelAsOf": "July"}, {"name": "Dominguez", "role": "Ivan", "washSales": 30046, "armSold": 978, "captureRate": 14.63, "rpc": 13.37, "currentLevel": 3, "neededForNextLevel": 2, "totalPct": 32.6, "retailPct": 37.9, "levelAsOf": "July"}, {"name": "Lopez", "role": "Alex", "washSales": 1855, "armSold": 29, "captureRate": 5.77, "rpc": 14.16, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Keval", "role": "Nikhil", "washSales": 3421, "armSold": 108, "captureRate": 11.92, "rpc": 13.96, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Quiroga", "role": "Christian", "washSales": 3822, "armSold": 147, "captureRate": 16.78, "rpc": 13.21, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Paguese", "role": "Jay", "washSales": 13869, "armSold": 429, "captureRate": 15.2, "rpc": 14.71}, {"name": "Sanchez", "role": "Rubi", "washSales": 5766, "armSold": 272, "captureRate": 21.83, "rpc": 13.85}, {"name": "Bennett", "role": "Malaya", "washSales": 2542, "armSold": 65, "captureRate": 14.1, "rpc": 14.05}], "346": [{"name": "Torres", "role": "Jon", "washSales": 13072, "armSold": 382, "captureRate": 17.82, "rpc": 14.26, "currentLevel": 2, "neededForNextLevel": 18, "totalPct": 14.5, "retailPct": 18.2, "levelAsOf": "July"}, {"name": "Santiago", "role": "Christian", "washSales": 11188, "armSold": 414, "captureRate": 23.46, "rpc": 15.17, "currentLevel": 3, "neededForNextLevel": 14, "totalPct": 32.2, "retailPct": 33.5, "levelAsOf": "July"}, {"name": "Glazner", "role": "Josh", "washSales": 6470, "armSold": 123, "captureRate": 12.17, "rpc": 13.72, "currentLevel": 1, "neededForNextLevel": 24, "totalPct": 6.8, "retailPct": 6.1, "levelAsOf": "July"}, {"name": "Hileman", "role": "Mazzy", "washSales": 1659, "armSold": 23, "captureRate": 7.06, "rpc": 14.58, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Adams", "role": "Caleb", "washSales": 3103, "armSold": 83, "captureRate": 14.36, "rpc": 14.36, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Bias", "role": "Nyeia", "washSales": 2085, "armSold": 36, "captureRate": 8.91, "rpc": 13.11}, {"name": "Braun", "role": "Seth", "washSales": 3356, "armSold": 71, "captureRate": 11.36, "rpc": 14.64}, {"name": "Garcia", "role": "Emma", "washSales": 6528, "armSold": 195, "captureRate": 18.91, "rpc": 14.82}, {"name": "Baughman", "role": "Makienzie", "washSales": 2067, "armSold": 30, "captureRate": 10.2, "rpc": 13.47}, {"name": "Gonzalez", "role": "Israel", "washSales": 2637, "armSold": 57, "captureRate": 15.08, "rpc": 13.7}, {"name": "Jefferson", "role": "JD", "washSales": 873, "armSold": 16, "captureRate": 12.31, "rpc": 13.02}, {"name": "Pena", "role": "Koko", "washSales": 2224, "armSold": 65, "captureRate": 20.44, "rpc": 10.72}, {"name": "Koon", "role": "Paige", "washSales": 770, "armSold": 15, "captureRate": 13.27, "rpc": 12.76}], "347": [{"name": "Hallcy", "role": "Deandre", "washSales": 19603, "armSold": 694, "captureRate": 13.8, "rpc": 15.24, "currentLevel": 3, "neededForNextLevel": 22, "totalPct": 26.9, "retailPct": 32.1, "levelAsOf": "July"}, {"name": "Fall", "role": "Abdoulaye", "washSales": 9116, "armSold": 311, "captureRate": 14.82, "rpc": 16.54, "currentLevel": 1, "neededForNextLevel": 4, "totalPct": 17.8, "retailPct": 16.2, "levelAsOf": "July"}, {"name": "Narbayev", "role": "Akbar", "washSales": 7804, "armSold": 195, "captureRate": 11.34, "rpc": 15.71, "currentLevel": 1, "neededForNextLevel": 13, "totalPct": 9.0, "retailPct": 9.5, "levelAsOf": "July"}, {"name": "Knox", "role": "Kylie", "washSales": 13502, "armSold": 273, "captureRate": 8.5, "rpc": 15.49, "currentLevel": 1, "neededForNextLevel": 27, "totalPct": 13.0, "retailPct": 12.4, "levelAsOf": "July"}, {"name": "Hicks", "role": "Brad", "washSales": 7610, "armSold": 71, "captureRate": 6.08, "rpc": 14.24, "currentLevel": 1, "neededForNextLevel": 27, "totalPct": 9.3, "retailPct": 4.6, "levelAsOf": "July"}, {"name": "Hill", "role": "Jacob", "washSales": 2639, "armSold": 91, "captureRate": 16.61, "rpc": 12.29}, {"name": "Hagen", "role": "Joshua", "washSales": 3296, "armSold": 35, "captureRate": 6.53, "rpc": 13.28}, {"name": "Sarr", "role": "Jamil", "washSales": 2783, "armSold": 85, "captureRate": 15.77, "rpc": 14.42}, {"name": "Miranda", "role": "Ryan", "washSales": 4496, "armSold": 114, "captureRate": 11.5, "rpc": 15.78}, {"name": "Swetlik", "role": "Zack", "washSales": 579, "armSold": 19, "captureRate": 13.67, "rpc": 27.46}], "348": [{"name": "Cass", "role": "SA", "washSales": 9528, "armSold": 271, "captureRate": 12.81, "rpc": 14.28, "currentLevel": 1, "neededForNextLevel": 17, "totalPct": 10.7, "retailPct": 13.3, "levelAsOf": "July"}, {"name": "Christine", "role": "SA", "washSales": 1732, "armSold": 31, "captureRate": 7.75, "rpc": 14.46, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 3.2, "retailPct": 3.7, "levelAsOf": "July"}, {"name": "Zach", "role": "AGM", "washSales": 1705, "armSold": 41, "captureRate": 18.81, "rpc": 10.96, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Jay", "role": "SGM", "washSales": 2402, "armSold": 51, "captureRate": 11.09, "rpc": 14.18, "currentLevel": 1, "neededForNextLevel": 25, "totalPct": 4.1, "retailPct": 1.9, "levelAsOf": "July"}, {"name": "Tristin", "role": "SA", "washSales": 4446, "armSold": 82, "captureRate": 8.81, "rpc": 14.79, "currentLevel": 1, "neededForNextLevel": 25, "totalPct": 6.4, "retailPct": 6.6, "levelAsOf": "July"}, {"name": "Jordan", "role": "TL", "washSales": 4517, "armSold": 117, "captureRate": 12.25, "rpc": 13.36}, {"name": "Luke F", "role": "SA", "washSales": 4887, "armSold": 168, "captureRate": 16.34, "rpc": 13.23}, {"name": "Peter", "role": "SA", "washSales": 3191, "armSold": 115, "captureRate": 16.74, "rpc": 14.0}, {"name": "Ayden", "role": "SA", "washSales": 2968, "armSold": 94, "captureRate": 14.44, "rpc": 14.52}, {"name": "Nevo", "role": "SA", "washSales": 3320, "armSold": 211, "captureRate": 31.92, "rpc": 15.87}, {"name": "Maria", "role": "AGM", "washSales": 928, "armSold": 44, "captureRate": 22.92, "rpc": 13.56}, {"name": "Katie", "role": "SA", "washSales": 1451, "armSold": 41, "captureRate": 13.44, "rpc": 15.45}, {"name": "Cat", "role": "SA", "washSales": 1788, "armSold": 32, "captureRate": 8.56, "rpc": 14.42}], "349": [{"name": "Owen", "role": "Luke", "washSales": 6414, "armSold": 141, "captureRate": 10.89, "rpc": -25.99, "currentLevel": 1, "neededForNextLevel": 23, "totalPct": 14.0, "retailPct": 10.3, "levelAsOf": "July"}, {"name": "Lucas", "role": "Omar", "washSales": 5527, "armSold": 54, "captureRate": 5.29, "rpc": 15.99, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 6.7, "retailPct": -5.1, "levelAsOf": "July"}, {"name": "Northington", "role": "Sam", "washSales": 1308, "armSold": 7, "captureRate": 2.93, "rpc": 15.29, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Sanchez", "role": "Jaxsen", "washSales": 4150, "armSold": 128, "captureRate": 14.92, "rpc": 13.19, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 6.0, "retailPct": 3.8, "levelAsOf": "July"}, {"name": "Choat", "role": "Houston", "washSales": 2287, "armSold": 22, "captureRate": 4.21, "rpc": 14.68, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 3.5, "retailPct": 4.5, "levelAsOf": "July"}, {"name": "Snodgrass", "role": "Alli", "washSales": 1623, "armSold": 24, "captureRate": 6.82, "rpc": 14.91}, {"name": "Wright", "role": "Emerson", "washSales": 2025, "armSold": 18, "captureRate": 4.38, "rpc": 14.18}, {"name": "Rivera", "role": "Isabella", "washSales": 434, "armSold": 8, "captureRate": 8.25, "rpc": 9.1}, {"name": "Herrera", "role": "Keane", "washSales": 4171, "armSold": 97, "captureRate": 10.15, "rpc": 42.47}, {"name": "Bikes", "role": "Lukas", "washSales": 2165, "armSold": 41, "captureRate": 7.58, "rpc": 14.64}, {"name": "Runkel", "role": "Cooper", "washSales": 5420, "armSold": 117, "captureRate": 11.57, "rpc": 14.43}], "352": [{"name": "Marcus", "role": "SGM", "washSales": 8310, "armSold": 249, "captureRate": 10.47, "rpc": 0, "currentLevel": 2, "neededForNextLevel": 5, "totalPct": 24.2, "retailPct": 28.3, "levelAsOf": "July"}, {"name": "Merina", "role": "AGM", "washSales": 8506, "armSold": 222, "captureRate": 8.88, "rpc": 0, "currentLevel": 2, "neededForNextLevel": 4, "totalPct": 31.9, "retailPct": 32.1, "levelAsOf": "July"}, {"name": "Colton", "role": "SA", "washSales": 11006, "armSold": 202, "captureRate": 5.69, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 14, "totalPct": 10.6, "retailPct": 9.9, "levelAsOf": "July"}, {"name": "Jaime", "role": "SA", "washSales": 5148, "armSold": 61, "captureRate": 4.13, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Brett", "role": "SA", "washSales": 53, "armSold": 2, "captureRate": 14.29, "rpc": 0}, {"name": "Jon", "role": "SA", "washSales": 1453, "armSold": 25, "captureRate": 5.81, "rpc": 0}, {"name": "Grace", "role": "SA", "washSales": 616, "armSold": 19, "captureRate": 12.26, "rpc": 0}, {"name": "Malachi", "role": "SA", "washSales": 4406, "armSold": 199, "captureRate": 15.18, "rpc": 0}], "354": [{"name": "Oliver Ramirez", "role": "CST", "washSales": 1765, "armSold": 42, "captureRate": 8.14, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Ariyonna Gallman", "role": "CST", "washSales": 2339, "armSold": 41, "captureRate": 6.19, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 5.9, "retailPct": 6.8, "levelAsOf": "July"}, {"name": "Kerri McIrvin", "role": "SA", "washSales": 1299, "armSold": 27, "captureRate": 6.87, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Monica Norman", "role": "SA", "washSales": 2983, "armSold": 61, "captureRate": 6.02, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Jesus Luna", "role": "CSL", "washSales": 1682, "armSold": 34, "captureRate": 6.85, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 5.5, "retailPct": 5.9, "levelAsOf": "July"}, {"name": "Isaiah  Sauls", "role": "TL", "washSales": 3120, "armSold": 67, "captureRate": 6.86, "rpc": 0}, {"name": "Sonia Mendez", "role": "AGM", "washSales": 1137, "armSold": 28, "captureRate": 7.2, "rpc": 0}, {"name": "Blanca Claudio", "role": "SGM", "washSales": 4845, "armSold": 137, "captureRate": 9.16, "rpc": 0}, {"name": "Mikayla Strelsky", "role": "SA", "washSales": 4276, "armSold": 82, "captureRate": 6.75, "rpc": 0}, {"name": "John Magana", "role": "AGM", "washSales": 1234, "armSold": 25, "captureRate": 7.53, "rpc": 0}, {"name": "Natasha", "role": "SA", "washSales": 1602, "armSold": 37, "captureRate": 7.92, "rpc": 0}, {"name": "Mariana", "role": "SA", "washSales": 1403, "armSold": 25, "captureRate": 6.44, "rpc": 0}, {"name": "Luis", "role": "SA", "washSales": 979, "armSold": 40, "captureRate": 13.56, "rpc": 0}], "358": [{"name": "Jose", "role": "SAL", "washSales": 8797, "armSold": 140, "captureRate": 9.23, "rpc": 16.36, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Daniel", "role": "TL", "washSales": 3710, "armSold": 31, "captureRate": 3.94, "rpc": 15.88, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Sam", "role": "SA", "washSales": 2019, "armSold": 45, "captureRate": 9.3, "rpc": 14.37, "currentLevel": 1, "neededForNextLevel": 22, "totalPct": 5.0, "retailPct": 4.1, "levelAsOf": "July"}, {"name": "Eili", "role": "SA", "washSales": 13063, "armSold": 286, "captureRate": 11.26, "rpc": 17.35, "currentLevel": 1, "neededForNextLevel": 3, "totalPct": 21.5, "retailPct": 22.7, "levelAsOf": "July"}, {"name": "Nathan", "role": "SA", "washSales": 3171, "armSold": 41, "captureRate": 12.69, "rpc": 28.54}, {"name": "Isaac", "role": "SGM", "washSales": 484, "armSold": 13, "captureRate": 12.62, "rpc": 14.54}, {"name": "LD", "role": "SA", "washSales": 11676, "armSold": 445, "captureRate": 18.78, "rpc": 14.6}, {"name": "Lynn", "role": "CST", "washSales": 875, "armSold": 14, "captureRate": 9.52, "rpc": 15.28}, {"name": "Robert", "role": "SA", "washSales": 343, "armSold": 13, "captureRate": 19.12, "rpc": 14.93}], "359": [{"name": "Tolofari", "role": "Bara", "washSales": 15434, "armSold": 567, "captureRate": 19.05, "rpc": 15.1, "currentLevel": 2, "neededForNextLevel": 9, "totalPct": 27.0, "retailPct": 24.6, "levelAsOf": "July"}, {"name": "Rocha", "role": "Jackson", "washSales": 7752, "armSold": 325, "captureRate": 21.8, "rpc": 15.1, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 6.8, "retailPct": 5.9, "levelAsOf": "July"}, {"name": "Riley", "role": "Alyssa", "washSales": 15528, "armSold": 329, "captureRate": 11.74, "rpc": 16.13, "currentLevel": 3, "neededForNextLevel": 21, "totalPct": 31.4, "retailPct": 34.6, "levelAsOf": "July"}, {"name": "Beaman", "role": "Logan", "washSales": 4885, "armSold": 137, "captureRate": 11.01, "rpc": 11.59, "currentLevel": 3, "neededForNextLevel": 10, "totalPct": 23.1, "retailPct": 21.7, "levelAsOf": "July"}]};
+const REPORTING_ACCURACY = {"348": [{"name": "Cass", "month": "January", "type": "under", "value": 14}, {"name": "Cass", "month": "February", "type": "under", "value": 77}, {"name": "Cass", "month": "March", "type": "under", "value": 59}, {"name": "Christine", "month": "January", "type": "under", "value": 4}, {"name": "Christine", "month": "February", "type": "under", "value": 2}, {"name": "Christine", "month": "March", "type": "under", "value": 10}, {"name": "Zach", "month": "January", "type": "over", "value": 9}, {"name": "Zach", "month": "February", "type": "error", "value": null}, {"name": "Zach", "month": "March", "type": "under", "value": 24}, {"name": "Jay", "month": "January", "type": "under", "value": 5}, {"name": "Jay", "month": "February", "type": "under", "value": 10}, {"name": "Jay", "month": "March", "type": "under", "value": 13}, {"name": "Tristin", "month": "January", "type": "under", "value": 1}, {"name": "Tristin", "month": "February", "type": "under", "value": 4}, {"name": "Tristin", "month": "March", "type": "under", "value": 33}, {"name": "Jordan", "month": "January", "type": "under", "value": 39}, {"name": "Jordan", "month": "February", "type": "under", "value": 32}, {"name": "Jordan", "month": "March", "type": "under", "value": 7}, {"name": "Luke F", "month": "January", "type": "over", "value": 3}, {"name": "Luke F", "month": "February", "type": "under", "value": 7}, {"name": "Luke F", "month": "March", "type": "under", "value": 59}, {"name": "Peter", "month": "January", "type": "under", "value": 8}, {"name": "Peter", "month": "February", "type": "under", "value": 53}, {"name": "Peter", "month": "March", "type": "under", "value": 24}, {"name": "Ayden", "month": "January", "type": "error", "value": null}, {"name": "Ayden", "month": "February", "type": "under", "value": 17}, {"name": "Ayden", "month": "March", "type": "under", "value": 51}, {"name": "Nevo", "month": "January", "type": "error", "value": null}, {"name": "Nevo", "month": "February", "type": "error", "value": null}, {"name": "Nevo", "month": "March", "type": "error", "value": null}], "354": [{"name": "Oliver Ramirez", "month": "January", "type": "under", "value": 1}, {"name": "Oliver Ramirez", "month": "February", "type": "under", "value": 2}, {"name": "Oliver Ramirez", "month": "March", "type": "under", "value": 22}, {"name": "Ariyonna Gallman", "month": "January", "type": "under", "value": 2}, {"name": "Ariyonna Gallman", "month": "February", "type": "under", "value": 6}, {"name": "Ariyonna Gallman", "month": "March", "type": "under", "value": 5}, {"name": "Kerri McIrvin", "month": "January", "type": "equal", "value": 0}, {"name": "Kerri McIrvin", "month": "February", "type": "under", "value": 7}, {"name": "Kerri McIrvin", "month": "March", "type": "under", "value": 13}, {"name": "Monica Norman", "month": "January", "type": "under", "value": 5}, {"name": "Monica Norman", "month": "February", "type": "under", "value": 18}, {"name": "Monica Norman", "month": "March", "type": "under", "value": 19}, {"name": "Jesus Luna", "month": "January", "type": "under", "value": 2}, {"name": "Jesus Luna", "month": "February", "type": "under", "value": 3}, {"name": "Jesus Luna", "month": "March", "type": "under", "value": 6}, {"name": "Isaiah  Sauls", "month": "January", "type": "over", "value": 4}, {"name": "Isaiah  Sauls", "month": "February", "type": "under", "value": 15}, {"name": "Isaiah  Sauls", "month": "March", "type": "under", "value": 3}, {"name": "Sonia Mendez", "month": "January", "type": "under", "value": 4}, {"name": "Sonia Mendez", "month": "February", "type": "under", "value": 8}, {"name": "Sonia Mendez", "month": "March", "type": "error", "value": null}, {"name": "Blanca Claudio", "month": "January", "type": "under", "value": 13}, {"name": "Blanca Claudio", "month": "February", "type": "under", "value": 11}, {"name": "Blanca Claudio", "month": "March", "type": "under", "value": 8}, {"name": "Mikayla Strelsky", "month": "January", "type": "error", "value": null}, {"name": "Mikayla Strelsky", "month": "February", "type": "error", "value": null}, {"name": "Mikayla Strelsky", "month": "March", "type": "under", "value": 30}, {"name": "John Magana", "month": "January", "type": "error", "value": null}, {"name": "John Magana", "month": "February", "type": "error", "value": null}, {"name": "John Magana", "month": "March", "type": "error", "value": null}]};
+
+const fmtUSD = n => "$" + Math.round(n).toLocaleString("en-US");
+const fmtNum = n => Math.round(n).toLocaleString("en-US");
+const SITE_CODES = Object.keys(SITE_META);
+
+// Brand palette for charts (GO Car Wash: cyan blue + orange)
+const COLOR_ACCENT = "#17a9d6";
+const COLOR_GOOD = "#16924c";
+const COLOR_BAD = "#d8483c";
+const COLOR_WARN = "#f1521e";
+const COLOR_MUTED = "#b9c6cb";
+const COLOR_ORANGE = "#f1521e";
+
+const gridColor = "rgba(18,24,26,0.06)";
+const textColor = "#667479";
+const CHARTS_AVAILABLE = typeof Chart !== "undefined";
+if (CHARTS_AVAILABLE) {
+  Chart.defaults.color = textColor;
+  Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif";
+  Chart.defaults.font.size = 11;
+}
+
+// ================= DATE RANGE ENGINE =================
+let currentRange = "previous_week";
+let customFromIdx = 0;
+let customToIdx = WEEKS.length - 1;
+
+function fmtDateShort(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function fmtDateFull(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function computeRangeIndices(range) {
+  const lastIdx = WEEKS.length - 1;
+  if (range === "previous_week") return [lastIdx];
+  if (range === "ytd") return WEEKS.map((_, i) => i);
+  if (range === "current_month" || range === "previous_month") {
+    const now = new Date();
+    let m = now.getMonth(), y = now.getFullYear();
+    if (range === "previous_month") { m -= 1; if (m < 0) { m = 11; y -= 1; } }
+    const idxs = WEEKS.map((w, i) => i).filter(i => {
+      const d = new Date(WEEKS[i].to + "T00:00:00");
+      return d.getMonth() === m && d.getFullYear() === y;
+    });
+    return idxs.length ? idxs : [lastIdx];
+  }
+  if (range === "custom") {
+    const a = Math.min(customFromIdx, customToIdx);
+    const b = Math.max(customFromIdx, customToIdx);
+    const arr = [];
+    for (let i = a; i <= b; i++) arr.push(i);
+    return arr;
+  }
+  return [lastIdx];
+}
+
+function currentIndices() { return computeRangeIndices(currentRange); }
+
+function updateRangeLabel() {
+  const idxs = currentIndices();
+  const first = WEEKS[idxs[0]];
+  const last = WEEKS[idxs[idxs.length - 1]];
+  const label = document.getElementById("rangeLabel");
+  const rangeText = idxs.length === 1
+    ? `Week of ${fmtDateShort(first.from)} – ${fmtDateFull(first.to)}`
+    : `${fmtDateFull(first.from)} – ${fmtDateFull(last.to)} (${idxs.length} weeks)`;
+  label.innerHTML = `Showing: <b>${rangeText}</b>`;
+}
+
+// ================= AGGREGATION HELPERS =================
+function avg(arr, idxs) { return idxs.reduce((a, i) => a + arr[i], 0) / idxs.length; }
+function sum(arr, idxs) { return idxs.reduce((a, i) => a + arr[i], 0); }
+function isNotDecreasing(series, idxs) {
+  const lastIdx = Math.max(...idxs);
+  if (lastIdx === 0) return true;
+  return series[lastIdx] >= series[lastIdx - 1] - 0.001;
+}
+
+function aggregateSiteOverview(code, idxs) {
+  const fin = WEEKLY_FIN[code];
+  const washSales = sum(fin.map(w => w.washSales), idxs);
+  const netSales = sum(fin.map(w => w.netSales), idxs);
+  const armSold = sum(fin.map(w => w.armSold), idxs);
+  const captureRate = +avg(fin.map(w => w.captureRate), idxs).toFixed(2);
+  const rpc = +avg(fin.map(w => w.rpc), idxs).toFixed(2);
+  return { code, name: SITE_META[code], washSales, netSales, armSold, captureRate, rpc };
+}
+
+function computeStandards(code, idxs) {
+  const r = RECAP[code];
+  const hoursAvg = avg(r.hours, idxs);
+  const otAvg = avg(r.overtime, idxs);
+  const glAvg = avg(r.goLearn, idxs);
+  const rcAvg = avg(r.reviewCount, idxs);
+  const rsAvg = avg(r.reviewStars, idxs);
+  const npsAvg = avg(r.nps, idxs);
+  const crAvg = avg(r.captureRate, idxs);
+  const ngSum = sum(r.netGains, idxs);
+  const bh = BH_STANDARD[code];
+  const rsDecreasing = !isNotDecreasing(r.reviewStars, idxs);
+  const crDecreasing = !isNotDecreasing(r.captureRate, idxs);
+  return [
+    { label: "Weekly Labor Hours", actual: hoursAvg.toFixed(1), standard: bh.toFixed(1) + " target", bad: hoursAvg > bh },
+    { label: "Overtime Hours", actual: otAvg.toFixed(1), standard: "≤ 10", bad: otAvg > 10 },
+    { label: "GO Learn Completion", actual: glAvg.toFixed(0) + "%", standard: "≥ 95%", bad: glAvg < 95 },
+    { label: "Review Count", actual: rcAvg.toFixed(1), standard: "≥ 10 / wk", bad: rcAvg < 10 },
+    { label: "Review Stars", actual: rsAvg.toFixed(2), standard: "≥ 3.5, not decreasing", bad: rsAvg < 3.5 || rsDecreasing },
+    { label: "Customer NPS", actual: npsAvg.toFixed(1), standard: "≥ 50", bad: npsAvg < 50 },
+    { label: "Capture Rate", actual: crAvg.toFixed(2) + "%", standard: "≥ 12%, not decreasing", bad: crAvg < 12 || crDecreasing },
+    { label: "Net Membership Gains", actual: (ngSum >= 0 ? "+" : "") + ngSum, standard: "> 0", bad: ngSum <= 0 },
+  ];
+}
+
+// ---------- Tab switching ----------
+const tabButtons = document.querySelectorAll(".tabbtn");
+const views = document.querySelectorAll(".view");
+const siteToolbar = document.getElementById("siteToolbar");
+tabButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    tabButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const target = btn.dataset.view;
+    views.forEach(v => v.classList.toggle("active", v.id === "view-" + target));
+    siteToolbar.classList.toggle("show", target === "detail" || target === "staff");
+  });
+});
+
+// ---------- Range control ----------
+const rangePills = document.querySelectorAll(".range-pill");
+const rangeCustom = document.getElementById("rangeCustom");
+const customFromSel = document.getElementById("customFrom");
+const customToSel = document.getElementById("customTo");
+
+WEEKS.forEach((w, i) => {
+  const label = `${fmtDateShort(w.from)} – ${fmtDateFull(w.to)}`;
+  const o1 = document.createElement("option"); o1.value = i; o1.textContent = label;
+  const o2 = document.createElement("option"); o2.value = i; o2.textContent = label;
+  customFromSel.appendChild(o1);
+  customToSel.appendChild(o2);
+});
+customFromSel.value = 0;
+customToSel.value = WEEKS.length - 1;
+
+function setActiveRangePill(range) {
+  rangePills.forEach(p => p.classList.toggle("active", p.dataset.range === range));
+  rangeCustom.classList.toggle("show", range === "custom");
+}
+
+rangePills.forEach(p => {
+  p.addEventListener("click", () => {
+    currentRange = p.dataset.range;
+    setActiveRangePill(currentRange);
+    if (currentRange === "custom") { customFromIdx = +customFromSel.value; customToIdx = +customToSel.value; }
+    refreshAll();
+  });
+});
+customFromSel.addEventListener("change", () => { customFromIdx = +customFromSel.value; if (currentRange === "custom") refreshAll(); });
+customToSel.addEventListener("change", () => { customToIdx = +customToSel.value; if (currentRange === "custom") refreshAll(); });
+
+function refreshAll() {
+  updateRangeLabel();
+  renderOverview();
+  renderSiteDetail(siteSelect.value);
+  renderExceptions();
+}
+
+// ---------- Site selector ----------
+const siteSelect = document.getElementById("siteSelect");
+const DISTRICTS = {
+  "341": "District 1", "342": "District 1", "344": "District 1", "345": "District 1", "352": "District 1", "359": "District 1",
+  "347": "District 2", "348": "District 2", "343": "District 2", "349": "District 2", "319": "District 2", "358": "District 2",
+  "346": "District 3", "354": "District 3"
+};
+const DISTRICT_ORDER = ["District 1", "District 2", "District 3"];
+DISTRICT_ORDER.forEach(dname => {
+  const grp = document.createElement("optgroup");
+  grp.label = dname;
+  SITE_CODES.filter(c => DISTRICTS[c] === dname).sort((a, b) => +a - +b).forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = code + " — " + SITE_META[code];
+    grp.appendChild(opt);
+  });
+  siteSelect.appendChild(grp);
+});
+siteSelect.value = "319";
+siteSelect.addEventListener("change", () => {
+  renderSiteDetail(siteSelect.value);
+  renderStaffView(siteSelect.value);
+});
+
+// ================= DISTRICT OVERVIEW =================
+let salesChartInstance = null;
+let captureChartInstance = null;
+
+function renderOverview() {
+  const idxs = currentIndices();
+  const siteAggs = SITE_CODES.map(code => aggregateSiteOverview(code, idxs));
+  siteAggs.sort((a, b) => b.captureRate - a.captureRate);
+  siteAggs.forEach((d, i) => d.rank = i + 1);
+
+  const totalSales = siteAggs.reduce((a, d) => a + d.netSales, 0);
+  const totalCars = siteAggs.reduce((a, d) => a + d.washSales, 0);
+  const totalArm = siteAggs.reduce((a, d) => a + d.armSold, 0);
+  const marketAvgCapture = +(siteAggs.reduce((a, d) => a + d.captureRate, 0) / siteAggs.length).toFixed(2);
+
+  document.getElementById("kpi-sales").textContent = fmtUSD(totalSales);
+  document.getElementById("kpi-cars").textContent = fmtNum(totalCars);
+  document.getElementById("kpi-cars-sub").textContent = siteAggs.length + " sites reporting";
+  document.getElementById("kpi-capture").textContent = marketAvgCapture.toFixed(2) + "%";
+  const top = siteAggs[0];
+  document.getElementById("kpi-capture-sub").textContent = "top site: " + top.name + " (" + top.captureRate + "%)";
+  document.getElementById("kpi-arm").textContent = fmtNum(totalArm);
+
+  const tbody = document.getElementById("leaderboard-body");
+  tbody.innerHTML = "";
+  const maxCapture = Math.max(...siteAggs.map(d => d.captureRate), 0.01);
+  siteAggs.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.style.cursor = "pointer";
+    const rankClass = d.rank === 1 ? "rank-1" : d.rank === 2 ? "rank-2" : d.rank === 3 ? "rank-3" : "";
+    tr.innerHTML = `
+      <td><span class="rank-pill ${rankClass}">${d.rank}</span></td>
+      <td><div class="site-name">${d.name}</div><div class="site-code">Site ${d.code}</div></td>
+      <td class="site-code">${DISTRICTS[d.code]}</td>
+      <td class="num">${fmtNum(d.washSales)}</td>
+      <td class="num">${fmtUSD(d.netSales)}</td>
+      <td><div class="cap-cell"><div class="cap-bar-track"><div class="cap-bar-fill" style="width:${Math.max(0, d.captureRate / maxCapture * 100).toFixed(0)}%"></div></div><span>${d.captureRate}%</span></div></td>
+      <td class="num">${fmtNum(d.armSold)}</td>
+      <td class="num">$${d.rpc.toFixed(2)}</td>
+    `;
+    tr.addEventListener("click", () => {
+      siteSelect.value = d.code;
+      document.querySelector('.tabbtn[data-view="detail"]').click();
+      renderSiteDetail(d.code);
+      renderStaffView(d.code);
+    });
+    tbody.appendChild(tr);
+  });
+
+  const distBody = document.getElementById("district-body");
+  distBody.innerHTML = "";
+  const districtAggs = DISTRICT_ORDER.map(dname => {
+    const members = siteAggs.filter(d => DISTRICTS[d.code] === dname);
+    const netSales = members.reduce((a, d) => a + d.netSales, 0);
+    const armSold = members.reduce((a, d) => a + d.armSold, 0);
+    const avgCapture = +(members.reduce((a, d) => a + d.captureRate, 0) / members.length).toFixed(2);
+    const avgRpc = +(members.reduce((a, d) => a + d.rpc, 0) / members.length).toFixed(2);
+    return { name: dname, count: members.length, netSales, armSold, avgCapture, avgRpc };
+  }).sort((a, b) => b.avgCapture - a.avgCapture);
+  const maxDistCapture = Math.max(...districtAggs.map(d => d.avgCapture), 0.01);
+  districtAggs.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="site-name">${d.name}</td>
+      <td class="num">${d.count}</td>
+      <td class="num">${fmtUSD(d.netSales)}</td>
+      <td><div class="cap-cell"><div class="cap-bar-track"><div class="cap-bar-fill" style="width:${Math.max(0, d.avgCapture / maxDistCapture * 100).toFixed(0)}%"></div></div><span>${d.avgCapture}%</span></div></td>
+      <td class="num">${fmtNum(d.armSold)}</td>
+      <td class="num">$${d.avgRpc.toFixed(2)}</td>
+    `;
+    distBody.appendChild(tr);
+  });
+
+  if (CHARTS_AVAILABLE) {
+    const bySales = [...siteAggs].sort((a, b) => b.netSales - a.netSales);
+    if (salesChartInstance) salesChartInstance.destroy();
+    salesChartInstance = new Chart(document.getElementById("salesChart"), {
+      type: "bar",
+      data: { labels: bySales.map(d => d.name), datasets: [{ data: bySales.map(d => d.netSales), backgroundColor: COLOR_ACCENT, borderRadius: 4, maxBarThickness: 22 }] },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtUSD(c.raw) } } },
+        scales: { x: { grid: { color: gridColor }, ticks: { callback: v => "$" + (v / 1000).toFixed(0) + "k" } }, y: { grid: { display: false } } }
+      }
+    });
+
+    const byCode = [...siteAggs].sort((a, b) => a.code.localeCompare(b.code));
+    if (captureChartInstance) captureChartInstance.destroy();
+    captureChartInstance = new Chart(document.getElementById("captureChart"), {
+      type: "bar",
+      data: {
+        labels: byCode.map(d => d.name),
+        datasets: [
+          { label: "Capture Rate", data: byCode.map(d => d.captureRate), backgroundColor: byCode.map(d => d.captureRate >= marketAvgCapture ? COLOR_GOOD : COLOR_BAD), borderRadius: 4, maxBarThickness: 16 },
+          { type: "line", label: "Market Avg", data: byCode.map(() => marketAvgCapture), borderColor: COLOR_WARN, borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0 }
+        ]
+      },
+      options: {
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.dataset.label + ": " + c.raw.toFixed(2) + "%" } } },
+        scales: { x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 60, minRotation: 60 } }, y: { grid: { color: gridColor }, ticks: { callback: v => v + "%" } } }
+      }
+    });
+  } else {
+    document.querySelectorAll("#view-overview .panel canvas").forEach(c => {
+      const note = document.createElement("div");
+      note.style.cssText = "padding:24px;text-align:center;color:var(--muted);font-size:13px;";
+      note.textContent = "Chart library didn't load (likely a restricted preview). Open this file in a full browser to see charts.";
+      c.replaceWith(note);
+    });
+  }
+}
+
+// ================= SITE DETAIL =================
+let laborChartInstance = null;
+let captureTrendInstance = null;
+let npsTrendInstance = null;
+const ALL_IDXS = WEEKS.map((_, i) => i);
+const WEEK_SHORT_LABELS = WEEKS.map(w => fmtDateShort(w.to));
+
+function renderSiteDetail(code) {
+  const idxs = currentIndices();
+  const agg = aggregateSiteOverview(code, idxs);
+  const allSiteAggs = SITE_CODES.map(c => aggregateSiteOverview(c, idxs)).sort((a, b) => b.captureRate - a.captureRate);
+  const rank = allSiteAggs.findIndex(d => d.code === code) + 1;
+  const marketAvgCapture = +(allSiteAggs.reduce((a, d) => a + d.captureRate, 0) / allSiteAggs.length).toFixed(2);
+  const marketAvgRpc = +(allSiteAggs.reduce((a, d) => a + d.rpc, 0) / allSiteAggs.length).toFixed(2);
+
+  const districtName = DISTRICTS[code];
+  const districtSiteAggs = allSiteAggs.filter(d => DISTRICTS[d.code] === districtName);
+  const districtRank = districtSiteAggs.findIndex(d => d.code === code) + 1;
+
+  document.getElementById("siteRankNote").textContent = "Rank #" + rank + " of " + allSiteAggs.length + " by capture rate (selected range) · Rank #" + districtRank + " of " + districtSiteAggs.length + " within " + districtName;
+
+  const captureBad = agg.captureRate < marketAvgCapture;
+  const rpcBad = agg.rpc < marketAvgRpc;
+  const hoursAvgRange = avg(RECAP[code].hours, idxs);
+  const bh = BH_STANDARD[code];
+  const laborBad = hoursAvgRange > bh;
+
+  const kpis = document.getElementById("detail-kpis");
+  kpis.innerHTML = `
+    <div class="kpi">
+      <div class="k-label">Net Carwash Sales</div>
+      <div class="k-value">${fmtUSD(agg.netSales)}</div>
+      <div class="k-sub" style="color:var(--muted)">${fmtNum(agg.washSales)} cars washed</div>
+    </div>
+    <div class="kpi ${captureBad ? 'flag-bad' : 'flag-good'}">
+      <div class="k-label">Capture Rate</div>
+      <div class="k-value">${agg.captureRate}%</div>
+      <div class="k-sub">${captureBad ? 'below' : 'at/above'} market avg (${marketAvgCapture}%)</div>
+    </div>
+    <div class="kpi ${rpcBad ? 'flag-bad' : 'flag-good'}">
+      <div class="k-label">RPC ($)</div>
+      <div class="k-value">$${agg.rpc.toFixed(2)}</div>
+      <div class="k-sub">${rpcBad ? 'below' : 'at/above'} market avg ($${marketAvgRpc.toFixed(2)})</div>
+    </div>
+    <div class="kpi ${laborBad ? 'flag-bad' : 'flag-good'}">
+      <div class="k-label">Avg Weekly Labor Hours</div>
+      <div class="k-value">${hoursAvgRange.toFixed(1)}</div>
+      <div class="k-sub">${laborBad ? 'over' : 'within'} target (${bh.toFixed(1)})</div>
+    </div>
+  `;
+
+  const rows = computeStandards(code, idxs);
+  const tbody = document.getElementById("detail-metrics-body");
+  tbody.innerHTML = "";
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.classList.add(r.bad ? "flag-row-bad" : "flag-row-good");
+    const pillClass = r.bad ? "status-bad" : "status-good";
+    const pillText = r.bad ? "Below Standard" : "Meets Standard";
+    tr.innerHTML = `<td>${r.label}</td><td class="num">${r.actual}</td><td class="num">${r.standard}</td><td><span class="status-pill ${pillClass}">${pillText}</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Labor hours: full-history LINE chart with flat goal reference line
+  const hoursSeries = RECAP[code].hours;
+  const t = RECAP[code];
+  const latestCapture = t.captureRate[t.captureRate.length - 1];
+  const latestNps = t.nps[t.nps.length - 1];
+  const avgNps4 = +(t.nps.slice(-4).reduce((a, b) => a + b, 0) / 4).toFixed(1);
+  document.getElementById("captureTrendStat").innerHTML = `Latest week: <b>${latestCapture}%</b> · 28-week range: ${Math.min(...t.captureRate)}% – ${Math.max(...t.captureRate)}%`;
+  document.getElementById("npsTrendStat").innerHTML = `Latest week: <b>${latestNps}</b> · 4-week avg: <b>${avgNps4}</b>`;
+
+  if (CHARTS_AVAILABLE) {
+    if (laborChartInstance) laborChartInstance.destroy();
+    laborChartInstance = new Chart(document.getElementById("laborChart"), {
+      type: "line",
+      data: {
+        labels: WEEK_SHORT_LABELS,
+        datasets: [
+          { label: "Actual Weekly Hours", data: hoursSeries, borderColor: COLOR_ACCENT, backgroundColor: "rgba(23,169,214,0.08)", fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+          { label: "Target", data: ALL_IDXS.map(() => bh), borderColor: COLOR_WARN, borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0 }
+        ]
+      },
+      options: {
+        plugins: { legend: { position: "bottom" } },
+        scales: { x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 8 } }, y: { grid: { color: gridColor } } }
+      }
+    });
+
+    if (captureTrendInstance) captureTrendInstance.destroy();
+    captureTrendInstance = new Chart(document.getElementById("captureTrendChart"), {
+      type: "line",
+      data: {
+        labels: WEEK_SHORT_LABELS,
+        datasets: [
+          { label: "Capture Rate", data: t.captureRate, borderColor: COLOR_ACCENT, backgroundColor: "rgba(23,169,214,0.08)", fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+          { label: "Standard (12%)", data: ALL_IDXS.map(() => 12), borderColor: COLOR_WARN, borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0 }
+        ]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 8 } }, y: { grid: { color: gridColor }, ticks: { callback: v => v + "%" } } }
+      }
+    });
+
+    if (npsTrendInstance) npsTrendInstance.destroy();
+    npsTrendInstance = new Chart(document.getElementById("npsTrendChart"), {
+      type: "line",
+      data: {
+        labels: WEEK_SHORT_LABELS,
+        datasets: [{ label: "NPS", data: t.nps, borderColor: COLOR_ORANGE, backgroundColor: "rgba(241,82,30,0.08)", fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 8 } }, y: { grid: { color: gridColor } } }
+      }
+    });
+  } else {
+    document.querySelectorAll("#view-detail canvas").forEach(c => {
+      const note = document.createElement("div");
+      note.style.cssText = "padding:24px;text-align:center;color:var(--muted);font-size:13px;";
+      note.textContent = "Chart library didn't load (likely a restricted preview). Open this file in a full browser to see charts.";
+      c.replaceWith(note);
+    });
+  }
+}
+
+// ================= STAFF & COMPLIANCE =================
+function seededRandom(seed) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+function hashCode(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = (h << 5) - h + str.charCodeAt(i); h |= 0; }
+  return Math.abs(h) || 1;
+}
+
+function illustrativeAccuracy(code) {
+  const staff = STAFF[code] || [];
+  const rand = seededRandom(hashCode(code + "-accuracy"));
+  const months = ["January", "February", "March"];
+  const rows = [];
+  staff.forEach(st => {
+    months.forEach(month => {
+      const roll = rand();
+      let type, value;
+      if (roll < 0.08) { type = "error"; value = null; }
+      else if (roll < 0.18) { type = "over"; value = Math.round(1 + rand() * 8); }
+      else if (roll < 0.24) { type = "equal"; value = 0; }
+      else { type = "under"; value = Math.round(1 + rand() * 45); }
+      rows.push({ name: st.name, month, type, value });
+    });
+  });
+  return rows;
+}
+
+function renderStaffView(code) {
+  const staff = [...(STAFF[code] || [])].sort((a, b) => b.captureRate - a.captureRate);
+
+  const lbBody = document.getElementById("staff-leaderboard-body");
+  lbBody.innerHTML = "";
+  if (staff.length === 0) {
+    lbBody.innerHTML = `<tr><td colspan="10"><div class="empty-state">No individual staff data available for this site.</div></td></tr>`;
+  }
+  staff.forEach((st, idx) => {
+    const rank = idx + 1;
+    const rankClass = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
+    const hasLevel = st.currentLevel !== undefined;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="rank-pill ${rankClass}">${rank}</span></td>
+      <td><div class="site-name">${st.name}</div><div class="site-code">${st.role || ""}</div></td>
+      <td class="num">${fmtNum(st.washSales)}</td>
+      <td class="num">${fmtNum(st.armSold)}</td>
+      <td>${st.captureRate}%</td>
+      <td class="num">$${st.rpc.toFixed(2)}</td>
+      <td class="num">${hasLevel ? st.currentLevel : "—"}</td>
+      <td class="num">${hasLevel && st.neededForNextLevel !== null ? st.neededForNextLevel : "—"}</td>
+      <td class="num">${hasLevel && st.totalPct !== null ? st.totalPct + "%" : "—"}</td>
+      <td class="num">${hasLevel && st.retailPct !== null ? st.retailPct + "%" : "—"}</td>
+    `;
+    lbBody.appendChild(tr);
+  });
+
+  const complianceContent = document.getElementById("compliance-content");
+  const complianceSubtitle = document.getElementById("complianceSubtitle");
+  const real = REPORTING_ACCURACY[code];
+  const acc = real || illustrativeAccuracy(code);
+  const isIllustrative = !real;
+
+  complianceSubtitle.innerHTML = isIllustrative
+    ? `memberships logged in the POS vs. memberships credited on the sales leaderboard <span class="illustrative-badge">Illustrative Data</span>`
+    : `memberships logged in the POS vs. memberships credited on the sales leaderboard — real data, Jan–Mar 2026 only`;
+
+  let html = `<div class="table-scroll"><table><thead><tr><th>Employee</th><th>Month</th><th class="num">Membership Variance</th><th>Status</th></tr></thead><tbody>`;
+  acc.forEach(row => {
+    let pillClass, pillText, flagRow = "";
+    if (row.type === "error") { pillClass = "status-warn"; pillText = "Data Error"; }
+    else if (row.type === "equal") { pillClass = "status-good"; pillText = "Compliant"; }
+    else if (row.type === "over") { pillClass = "status-good"; pillText = "Over by " + row.value; }
+    else {
+      const bad = row.value >= 20;
+      pillClass = bad ? "status-bad" : "status-good";
+      pillText = "Under by " + row.value;
+      if (bad) flagRow = "flag-row-bad";
+    }
+    html += `<tr class="${flagRow}"><td class="site-name">${row.name}</td><td>${row.month}</td><td class="num">${row.value !== null ? row.value : "—"}</td><td><span class="status-pill ${pillClass}">${pillText}</span></td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  complianceContent.innerHTML = html;
+}
+
+// ================= EXCEPTIONS =================
+const METRIC_DEFS = [
+  { key: "hours", label: "Weekly Labor Hours", isBad: (v, code) => v > BH_STANDARD[code] },
+  { key: "overtime", label: "Overtime Hours", isBad: v => v > 10 },
+  { key: "goLearn", label: "GO Learn Completion", isBad: v => v < 95 },
+  { key: "reviewCount", label: "Review Count", isBad: v => v < 10 },
+  { key: "reviewStars", label: "Review Stars", isBad: v => v < 3.5 },
+  { key: "nps", label: "Customer NPS", isBad: v => v < 50 },
+  { key: "captureRate", label: "Capture Rate", isBad: v => v < 12 },
+  { key: "netGains", label: "Net Membership Gains", isBad: v => v <= 0 },
+];
+const MONTH_ORDER = ["January", "February", "March"];
+
+function computeStreak(series, isBadFn) {
+  let streak = 0;
+  for (let i = series.length - 1; i >= 0; i--) {
+    if (isBadFn(series[i])) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function computeExceptions(idxs) {
+  const rows = [];
+  SITE_CODES.forEach(code => {
+    const std = computeStandards(code, idxs);
+    std.forEach((row, i) => {
+      if (!row.bad) return;
+      const def = METRIC_DEFS[i];
+      const streak = computeStreak(RECAP[code][def.key], v => def.isBad(v, code));
+      rows.push({ code, name: SITE_META[code], district: DISTRICTS[code], category: def.label, actual: row.actual, standard: row.standard, streak, type: "standard" });
+    });
+
+    const real = REPORTING_ACCURACY[code];
+    const acc = real || illustrativeAccuracy(code);
+    const isIllustrative = !real;
+    if (acc.length) {
+      const maxMonth = acc.reduce((max, r) => MONTH_ORDER.indexOf(r.month) > MONTH_ORDER.indexOf(max) ? r.month : max, acc[0].month);
+      acc.filter(r => r.month === maxMonth && r.type === "under" && r.value !== null && r.value >= 20).forEach(r => {
+        rows.push({ code, name: SITE_META[code], district: DISTRICTS[code], category: "Logging Compliance — " + r.name, actual: "Under by " + r.value, standard: "0 variance", streak: null, type: "compliance", illustrative: isIllustrative, month: r.month });
+      });
+    }
+  });
+  rows.sort((a, b) => {
+    const as = a.streak === null ? -1 : a.streak, bs = b.streak === null ? -1 : b.streak;
+    if (bs !== as) return bs - as;
+    return a.code.localeCompare(b.code);
+  });
+  return rows;
+}
+
+function renderExceptions() {
+  const idxs = currentIndices();
+  const rows = computeExceptions(idxs);
+  const sitesAffected = new Set(rows.map(r => r.code)).size;
+  const standardCount = rows.filter(r => r.type === "standard").length;
+  const complianceCount = rows.filter(r => r.type === "compliance").length;
+  document.getElementById("exceptions-summary").innerHTML =
+    rows.length === 0
+      ? "No active exceptions for the selected range — every site is within standard."
+      : `<b>${rows.length}</b> active exceptions across <b>${sitesAffected}</b> of 14 sites for the selected range — ${standardCount} operating-standard misses, ${complianceCount} logging-compliance flags.`;
+
+  const tbody = document.getElementById("exceptions-body");
+  tbody.innerHTML = "";
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No active exceptions for the selected range — every site is within standard.</div></td></tr>`;
+    return;
+  }
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.classList.add("flag-row-bad");
+    tr.style.cursor = "pointer";
+    const duration = r.streak === null
+      ? (r.illustrative ? `${r.month} · illustrative` : r.month)
+      : (r.streak <= 1 ? "New this week" : `${r.streak} consecutive weeks`);
+    tr.innerHTML = `
+      <td><div class="site-name">${r.name}</div><div class="site-code">${r.code}</div></td>
+      <td>${r.district}</td>
+      <td>${r.category}</td>
+      <td class="num">${r.actual}</td>
+      <td class="num">${r.standard}</td>
+      <td>${duration}</td>
+    `;
+    tr.addEventListener("click", () => {
+      siteSelect.value = r.code;
+      renderSiteDetail(r.code);
+      renderStaffView(r.code);
+      document.querySelector('.tabbtn[data-view="detail"]').click();
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- Init ----------
+try {
+  setActiveRangePill(currentRange);
+  updateRangeLabel();
+  renderOverview();
+  renderSiteDetail("319");
+  renderStaffView("319");
+  renderExceptions();
+} catch (e) {
+  console.error("Dashboard init error:", e);
+  const wrap = document.querySelector(".wrap");
+  if (wrap) {
+    const note = document.createElement("div");
+    note.style.cssText = "margin:16px 0;padding:14px 16px;border:1px solid var(--bad);background:#fdeceb;color:var(--bad);border-radius:8px;font-size:13px;";
+    note.textContent = "Something went wrong loading this dashboard (" + e.message + "). Try opening it in Safari or Chrome instead of a file preview.";
+    wrap.prepend(note);
+  }
+}
+</script>
+</body>
+</html>
