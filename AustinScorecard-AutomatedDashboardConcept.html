@@ -267,10 +267,27 @@
   }
   .exc-clean-note { color: var(--good); font-weight: 600; font-size: 11.5px; font-family: "Inter", sans-serif; }
 
+  .scoreboard-category-title {
+    font-family: "Poppins", sans-serif; font-size: 15px; font-weight: 700; margin: 22px 0 10px; color: var(--text);
+  }
+  .scoreboard-category-title:first-of-type { margin-top: 0; }
+  .scoreboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 6px; }
+  .scoreboard-card table { min-width: 0; }
+  .sb-change { font-weight: 700; font-size: 12px; white-space: nowrap; }
+  .sb-up { color: var(--good); }
+  .sb-down { color: var(--bad); }
+  .sb-flat { color: var(--muted); }
+  .sb-toggle {
+    margin-top: 10px; background: var(--panel2); border: 1px solid var(--border); border-radius: 20px;
+    padding: 6px 14px; font-size: 11.5px; font-weight: 700; color: var(--accent-dark); cursor: pointer; font-family: inherit;
+  }
+  .sb-toggle:hover { background: var(--accent-tint); }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 860px) {
     .charts, .two-col { grid-template-columns: 1fr; }
     .kpis { grid-template-columns: repeat(2, 1fr); }
+    .scoreboard-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
     body { padding: 14px; }
@@ -349,6 +366,7 @@
   <div class="tabbar">
     <button class="tabbtn active" data-view="overview">Market Overview</button>
     <button class="tabbtn" data-view="exceptions">Exceptions</button>
+    <button class="tabbtn" data-view="scoreboard">Scoreboard</button>
     <button class="tabbtn" data-view="detail">Site Detail</button>
     <button class="tabbtn" data-view="staff">Staff &amp; Compliance</button>
   </div>
@@ -449,8 +467,24 @@
     </div>
 
     <div class="note">
-      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites and grouped by district so nobody has to click into every site to find what needs attention. Click a card above to filter the list to just that category, or expand districts and sites manually to browse everything. "Duration" tracks how many consecutive weeks a metric has been out of standard, independent of the date range selected above, so a short-term dip and a persistent problem don't look the same. Click any row inside a site to jump to that site's detail view.
+      <b>How this works:</b> these are the same standards already used on each site's Actual vs. Standard table, rolled up across all 14 sites and grouped by district so nobody has to click into every site to find what needs attention. Click a card above to filter the list to just that category, or expand districts and sites manually to browse everything. "Trend" shows how many consecutive weeks a metric has been out of standard and whether it's improving or worsening over that run (independent of the date range selected above, so a short-term dip and a persistent problem don't look the same), or the previous week's value for anything newly flagged. Click any row inside a site to jump to that site's detail view.
     </div>
+  </div>
+
+  <!-- ===================== SCOREBOARD ===================== -->
+  <div class="view" id="view-scoreboard">
+    <div class="note" style="margin-bottom:16px;">
+      <b>How this works:</b> standings are always based on the most recent completed week, independent of the date range control above, so movement and time-in-rank stay meaningful week to week. Sales metrics are prioritized first (capture rate leads), then the metrics that save money, then customer experience. Each board shows the top 5 by default — expand any of them to see all 14 sites. Click a row to jump to that site's detail view.
+    </div>
+
+    <h3 class="scoreboard-category-title">Sales</h3>
+    <div class="scoreboard-grid" id="scoreboard-sales"></div>
+
+    <h3 class="scoreboard-category-title">Money Saving</h3>
+    <div class="scoreboard-grid" id="scoreboard-money"></div>
+
+    <h3 class="scoreboard-category-title">Customer Experience</h3>
+    <div class="scoreboard-grid" id="scoreboard-customer"></div>
   </div>
 
   <!-- ===================== SITE DETAIL ===================== -->
@@ -463,7 +497,7 @@
         <div class="table-scroll">
         <table>
           <thead>
-            <tr><th>Metric</th><th class="num">Actual</th><th class="num">Standard</th><th>Status</th></tr>
+            <tr><th>Metric</th><th class="num">Actual</th><th class="num">Standard</th><th>Status</th><th>Trend</th></tr>
           </thead>
           <tbody id="detail-metrics-body"></tbody>
         </table>
@@ -482,14 +516,14 @@
         <canvas id="captureTrendChart" height="200"></canvas>
       </div>
       <div class="panel">
-        <h2>Customer NPS Trend <span>real weekly data, last 28 weeks</span></h2>
+        <h2>Customer NPS Trend <span>rolling 4-week average, last 28 weeks</span></h2>
         <p class="stat-line" id="npsTrendStat"></p>
         <canvas id="npsTrendChart" height="200"></canvas>
       </div>
     </div>
 
     <div class="note warn-note">
-      <b>Data note:</b> capture rate does run against a real monthly target site-by-site, but that target data isn't available in this concept — so 12% is used here as a flat, generalized stand-in standard (labeled below) to demonstrate how the flagging would work. Swap in the real monthly targets and this becomes exact. RPC uses the market average as its stand-in standard. The trend charts above always show the full 28-week history for context; the date-range control above affects the summary figures and standards table.
+      <b>Data note:</b> capture rate does run against a real monthly target site-by-site, but that target data isn't available in this concept — so 12% is used here as a flat, generalized stand-in standard (labeled below) to demonstrate how the flagging would work. Swap in the real monthly targets and this becomes exact. RPC uses the market average as its stand-in standard. Customer NPS is shown as a rolling 4-week average, matching how it would come straight out of Rinsed with API access — the average here is a simple mean of each week's score, not weighted by how many responses came in that week, so it's an approximation until that weighting is available. The trend charts above always show the full 28-week history for context; the date-range control above affects the summary figures and standards table.
     </div>
   </div>
 
@@ -534,6 +568,11 @@ const RECAP = {"319": {"hours": [181.58, 218.92, 208.45, 85.63, 219.62, 194.78, 
 const WEEKLY_FIN = {"319": [{"to": "2026-01-06", "washSales": 2385, "netSales": 36055.83, "armSold": 77, "captureRate": 10.29, "rpc": 11.64}, {"to": "2026-01-13", "washSales": 1825, "netSales": 28562.64, "armSold": 46, "captureRate": 10.55, "rpc": 12.5}, {"to": "2026-01-20", "washSales": 2099, "netSales": 30384.87, "armSold": 71, "captureRate": 11.22, "rpc": 10.08}, {"to": "2026-01-27", "washSales": 472, "netSales": 6556.01, "armSold": 18, "captureRate": 16.51, "rpc": 3.95}, {"to": "2026-02-03", "washSales": 2540, "netSales": 38883.41, "armSold": 57, "captureRate": 8.05, "rpc": 11.8}, {"to": "2026-02-10", "washSales": 2290, "netSales": 35023.33, "armSold": 80, "captureRate": 11.35, "rpc": 11.95}, {"to": "2026-02-17", "washSales": 2047, "netSales": 29566.48, "armSold": 60, "captureRate": 12.27, "rpc": 9.16}, {"to": "2026-02-24", "washSales": 1956, "netSales": 28950.86, "armSold": 70, "captureRate": 17.72, "rpc": 8.57}, {"to": "2026-03-03", "washSales": 2325, "netSales": 35624, "armSold": 101, "captureRate": 17.44, "rpc": 11.94}, {"to": "2026-03-10", "washSales": 1332, "netSales": 19907.38, "armSold": 37, "captureRate": 17.79, "rpc": 6.74}, {"to": "2026-03-17", "washSales": 2526, "netSales": 39702.36, "armSold": 92, "captureRate": 16.25, "rpc": 11.69}, {"to": "2026-03-24", "washSales": 2907, "netSales": 47554.22, "armSold": 107, "captureRate": 14.02, "rpc": 12.72}, {"to": "2026-03-31", "washSales": 3234, "netSales": 53739.64, "armSold": 111, "captureRate": 14.05, "rpc": 13.82}, {"to": "2026-04-07", "washSales": 1730, "netSales": 27555.81, "armSold": 48, "captureRate": 14.29, "rpc": 9.3}, {"to": "2026-04-14", "washSales": 1362, "netSales": 21689.75, "armSold": 33, "captureRate": 16.75, "rpc": 8.07}, {"to": "2026-04-21", "washSales": 1481, "netSales": 23155.38, "armSold": 39, "captureRate": 14.55, "rpc": 7.07}, {"to": "2026-04-28", "washSales": 2112, "netSales": 34188.03, "armSold": 69, "captureRate": 15.79, "rpc": 10.95}, {"to": "2026-05-05", "washSales": 1623, "netSales": 26496.62, "armSold": 43, "captureRate": 13.96, "rpc": 11.51}, {"to": "2026-05-12", "washSales": 2179, "netSales": 36259.94, "armSold": 44, "captureRate": 10.95, "rpc": 12.15}, {"to": "2026-05-19", "washSales": 1949, "netSales": 32273.22, "armSold": 44, "captureRate": 11.11, "rpc": 12.47}, {"to": "2026-05-26", "washSales": 1572, "netSales": 25636.3, "armSold": 29, "captureRate": 10.03, "rpc": 9.9}, {"to": "2026-06-02", "washSales": 2093, "netSales": 34873.42, "armSold": 46, "captureRate": 10.62, "rpc": 12.62}, {"to": "2026-06-09", "washSales": 1693, "netSales": 27478.33, "armSold": 25, "captureRate": 8.56, "rpc": 9.55}, {"to": "2026-06-16", "washSales": 1971, "netSales": 32536.1, "armSold": 44, "captureRate": 12.05, "rpc": 11.25}, {"to": "2026-06-23", "washSales": 1869, "netSales": 14952, "armSold": 49, "captureRate": 13.84, "rpc": -36.21}, {"to": "2026-06-30", "washSales": 2350, "netSales": 39793.93, "armSold": 65, "captureRate": 12.55, "rpc": 13.18}, {"to": "2026-07-07", "washSales": 2499, "netSales": 36774.64, "armSold": 70, "captureRate": 15.18, "rpc": 7.58}, {"to": "2026-07-14", "washSales": 1950, "netSales": 32079.73, "armSold": 54, "captureRate": 12.5, "rpc": 13.02}], "341": [{"to": "2026-01-06", "washSales": 3525, "netSales": 53136.41, "armSold": 96, "captureRate": 11.18, "rpc": 12.45}, {"to": "2026-01-13", "washSales": 2835, "netSales": 42375.67, "armSold": 62, "captureRate": 10.49, "rpc": 11.64}, {"to": "2026-01-20", "washSales": 3631, "netSales": 55334, "armSold": 98, "captureRate": 11.94, "rpc": 12.88}, {"to": "2026-01-27", "washSales": 713, "netSales": 10181.5, "armSold": 12, "captureRate": 14.63, "rpc": -2.85}, {"to": "2026-02-03", "washSales": 2804, "netSales": 41419.67, "armSold": 79, "captureRate": 11.86, "rpc": 12.66}, {"to": "2026-02-10", "washSales": 4047, "netSales": 60879.54, "armSold": 110, "captureRate": 10.12, "rpc": 13.12}, {"to": "2026-02-17", "washSales": 3267, "netSales": 49364.53, "armSold": 77, "captureRate": 11.86, "rpc": 12.36}, {"to": "2026-02-24", "washSales": 3057, "netSales": 63206.3, "armSold": 62, "captureRate": 10.9, "rpc": 42.22}, {"to": "2026-03-03", "washSales": 3463, "netSales": 51887.14, "armSold": 101, "captureRate": 13.91, "rpc": 13.29}, {"to": "2026-03-10", "washSales": 2151, "netSales": 31218.85, "armSold": 43, "captureRate": 15.81, "rpc": 10.69}, {"to": "2026-03-17", "washSales": 4225, "netSales": 64164.53, "armSold": 77, "captureRate": 9.73, "rpc": 13.75}, {"to": "2026-03-24", "washSales": 5261, "netSales": 81853, "armSold": 162, "captureRate": 13.47, "rpc": 13.72}, {"to": "2026-03-31", "washSales": 5702, "netSales": 88311.26, "armSold": 195, "captureRate": 15.08, "rpc": 13.6}, {"to": "2026-04-07", "washSales": 2515, "netSales": 38911.5, "armSold": 34, "captureRate": 10.86, "rpc": 14.5}, {"to": "2026-04-14", "washSales": 2173, "netSales": 33565.41, "armSold": 28, "captureRate": 12.56, "rpc": 10.44}, {"to": "2026-04-21", "washSales": 2291, "netSales": 35255.46, "armSold": 32, "captureRate": 11.59, "rpc": 111.94}, {"to": "2026-04-28", "washSales": 3231, "netSales": 49388.45, "armSold": 65, "captureRate": 14.48, "rpc": 9.76}, {"to": "2026-05-05", "washSales": 2179, "netSales": 33987.52, "armSold": 42, "captureRate": 13.46, "rpc": 12.7}, {"to": "2026-05-12", "washSales": 3262, "netSales": 49835.99, "armSold": 55, "captureRate": 11.32, "rpc": 11.85}, {"to": "2026-05-19", "washSales": 3075, "netSales": 47721.93, "armSold": 64, "captureRate": 12.85, "rpc": 13.24}, {"to": "2026-05-26", "washSales": 2556, "netSales": 40257.2, "armSold": 43, "captureRate": 10.97, "rpc": 14.44}, {"to": "2026-06-02", "washSales": 2909, "netSales": 46038.12, "armSold": 70, "captureRate": 13.73, "rpc": 13.93}, {"to": "2026-06-09", "washSales": 2425, "netSales": 38913.21, "armSold": 52, "captureRate": 14.94, "rpc": 14.2}, {"to": "2026-06-16", "washSales": 2680, "netSales": 42441.18, "armSold": 62, "captureRate": 14.32, "rpc": 14.46}, {"to": "2026-06-23", "washSales": 2781, "netSales": 44625.16, "armSold": 74, "captureRate": 15.45, "rpc": 14.74}, {"to": "2026-06-30", "washSales": 3454, "netSales": 55828.33, "armSold": 91, "captureRate": 13.87, "rpc": 15.12}, {"to": "2026-07-07", "washSales": 3611, "netSales": 57281.14, "armSold": 156, "captureRate": 19.43, "rpc": 13.69}, {"to": "2026-07-14", "washSales": 2700, "netSales": 42955, "armSold": 103, "captureRate": 19.14, "rpc": 15.21}], "342": [{"to": "2026-01-06", "washSales": 2680, "netSales": 40422.9, "armSold": 69, "captureRate": 10.06, "rpc": 13.8}, {"to": "2026-01-13", "washSales": 2058, "netSales": 30411.97, "armSold": 73, "captureRate": 16.63, "rpc": 13.27}, {"to": "2026-01-20", "washSales": 2697, "netSales": 40340.52, "armSold": 72, "captureRate": 13.24, "rpc": 13.74}, {"to": "2026-01-27", "washSales": 660, "netSales": 8583.7, "armSold": 13, "captureRate": 20.0, "rpc": -3.17}, {"to": "2026-02-03", "washSales": 2868, "netSales": 43382, "armSold": 83, "captureRate": 14.72, "rpc": 14.29}, {"to": "2026-02-10", "washSales": 2787, "netSales": 42108.5, "armSold": 101, "captureRate": 13.84, "rpc": 14.39}, {"to": "2026-02-17", "washSales": 2336, "netSales": 35154, "armSold": 62, "captureRate": 15.2, "rpc": 13.28}, {"to": "2026-02-24", "washSales": 2170, "netSales": 32337.39, "armSold": 61, "captureRate": 16.18, "rpc": 12.25}, {"to": "2026-03-03", "washSales": 2464, "netSales": 35888, "armSold": 83, "captureRate": 17.36, "rpc": 11.08}, {"to": "2026-03-10", "washSales": 1603, "netSales": 22859, "armSold": 41, "captureRate": 21.47, "rpc": 9.63}, {"to": "2026-03-17", "washSales": 3025, "netSales": 45478, "armSold": 79, "captureRate": 15.19, "rpc": 13.65}, {"to": "2026-03-24", "washSales": 3695, "netSales": 57452, "armSold": 84, "captureRate": 10.47, "rpc": 13.54}, {"to": "2026-03-31", "washSales": 3786, "netSales": 58711, "armSold": 108, "captureRate": 13.37, "rpc": 13.9}, {"to": "2026-04-07", "washSales": 1779, "netSales": 26875, "armSold": 36, "captureRate": 18.56, "rpc": 11.38}, {"to": "2026-04-14", "washSales": 1570, "netSales": 23826, "armSold": 25, "captureRate": 15.15, "rpc": 11.27}, {"to": "2026-04-21", "washSales": 1768, "netSales": 26970, "armSold": 33, "captureRate": 17.84, "rpc": 9.68}, {"to": "2026-04-28", "washSales": 2343, "netSales": 34609, "armSold": 50, "captureRate": 15.34, "rpc": 8}, {"to": "2026-05-05", "washSales": 1704, "netSales": 26329, "armSold": 29, "captureRate": 15.34, "rpc": 11.44}, {"to": "2026-05-12", "washSales": 2501, "netSales": 38368, "armSold": 51, "captureRate": 13.75, "rpc": 13.83}, {"to": "2026-05-19", "washSales": 2445, "netSales": 38784, "armSold": 64, "captureRate": 16.84, "rpc": 14.07}, {"to": "2026-05-26", "washSales": 1819, "netSales": 28750, "armSold": 36, "captureRate": 14.29, "rpc": 13.41}, {"to": "2026-06-02", "washSales": 2162, "netSales": 34005, "armSold": 54, "captureRate": 16.36, "rpc": 14.62}, {"to": "2026-06-09", "washSales": 1900, "netSales": 29717, "armSold": 26, "captureRate": 9.96, "rpc": 13.55}, {"to": "2026-06-16", "washSales": 2008, "netSales": 31649, "armSold": 40, "captureRate": 13.7, "rpc": 13.26}, {"to": "2026-06-23", "washSales": 2181, "netSales": 34242, "armSold": 58, "captureRate": 17.47, "rpc": 13.86}, {"to": "2026-06-30", "washSales": 2515, "netSales": 39324, "armSold": 51, "captureRate": 11.28, "rpc": 13.79}, {"to": "2026-07-07", "washSales": 2568, "netSales": 40887, "armSold": 70, "captureRate": 13.31, "rpc": 14.68}, {"to": "2026-07-14", "washSales": 2158, "netSales": 33852, "armSold": 62, "captureRate": 14.49, "rpc": 14.84}], "343": [{"to": "2026-01-06", "washSales": 2550, "netSales": 40151.24, "armSold": 69, "captureRate": 10.78, "rpc": 13.92}, {"to": "2026-01-13", "washSales": 1904, "netSales": 28972.9, "armSold": 39, "captureRate": 9.8, "rpc": 11.65}, {"to": "2026-01-20", "washSales": 2426, "netSales": 37301.32, "armSold": 69, "captureRate": 11.71, "rpc": 12.1}, {"to": "2026-01-27", "washSales": 588, "netSales": 8329.7, "armSold": 8, "captureRate": 11.59, "rpc": 2.1}, {"to": "2026-02-03", "washSales": 2980, "netSales": 46008.51, "armSold": 56, "captureRate": 9.57, "rpc": 12.54}, {"to": "2026-02-10", "washSales": 2812, "netSales": 44478.71, "armSold": 87, "captureRate": 12.24, "rpc": 13.68}, {"to": "2026-02-17", "washSales": 2167, "netSales": 32880.34, "armSold": 31, "captureRate": 7.99, "rpc": 11.62}, {"to": "2026-02-24", "washSales": 2167, "netSales": 32913, "armSold": 44, "captureRate": 11.17, "rpc": 12.09}, {"to": "2026-03-03", "washSales": 2451, "netSales": 38235.6, "armSold": 75, "captureRate": 14.65, "rpc": 13.8}, {"to": "2026-03-10", "washSales": 1454, "netSales": 21646.72, "armSold": 27, "captureRate": 13.78, "rpc": 8.24}, {"to": "2026-03-17", "washSales": 2783, "netSales": 43764.22, "armSold": 56, "captureRate": 10.85, "rpc": 13.38}, {"to": "2026-03-24", "washSales": 3453, "netSales": 55023.25, "armSold": 82, "captureRate": 10.15, "rpc": 13.52}, {"to": "2026-03-31", "washSales": 3718, "netSales": 60904, "armSold": 96, "captureRate": 11.79, "rpc": 13.57}, {"to": "2026-04-07", "washSales": 1744, "netSales": 27758, "armSold": 26, "captureRate": 10.74, "rpc": 11.86}, {"to": "2026-04-14", "washSales": 1469, "netSales": 23553, "armSold": 10, "captureRate": 8.0, "rpc": 11.44}, {"to": "2026-04-21", "washSales": 1530, "netSales": 24184, "armSold": 28, "captureRate": 14.07, "rpc": 9.87}, {"to": "2026-04-28", "washSales": 1711, "netSales": 26951.75, "armSold": 22, "captureRate": 9.36, "rpc": 9.05}, {"to": "2026-05-05", "washSales": 1580, "netSales": 25122.15, "armSold": 26, "captureRate": 11.06, "rpc": 12.13}, {"to": "2026-05-12", "washSales": 2237, "netSales": 36533.06, "armSold": 55, "captureRate": 16.37, "rpc": 13.52}, {"to": "2026-05-19", "washSales": 2243, "netSales": 36054.16, "armSold": 34, "captureRate": 9.24, "rpc": 13.1}, {"to": "2026-05-26", "washSales": 1668, "netSales": 27358.33, "armSold": 42, "captureRate": 17.36, "rpc": 11.97}, {"to": "2026-06-02", "washSales": 2017, "netSales": 32976.11, "armSold": 29, "captureRate": 8.38, "rpc": 13.65}, {"to": "2026-06-09", "washSales": 1527, "netSales": 24344.33, "armSold": 22, "captureRate": 10.84, "rpc": 11.2}, {"to": "2026-06-16", "washSales": 1813, "netSales": 28928.3, "armSold": 42, "captureRate": 13.25, "rpc": 11.92}, {"to": "2026-06-23", "washSales": 1900, "netSales": 30623.43, "armSold": 27, "captureRate": 8.71, "rpc": 13.17}, {"to": "2026-06-30", "washSales": 2380, "netSales": 38984.37, "armSold": 70, "captureRate": 14.74, "rpc": 13.66}, {"to": "2026-07-07", "washSales": 2437, "netSales": 38396.19, "armSold": 59, "captureRate": 10.89, "rpc": 12.15}, {"to": "2026-07-14", "washSales": 1755, "netSales": 28387.44, "armSold": 38, "captureRate": 10.16, "rpc": 12.98}], "344": [{"to": "2026-01-06", "washSales": 0, "netSales": 31527.19, "armSold": 85, "captureRate": -5.38, "rpc": -4.01}, {"to": "2026-01-13", "washSales": 1545, "netSales": 22805.39, "armSold": 39, "captureRate": 12.66, "rpc": 12.63}, {"to": "2026-01-20", "washSales": 2036, "netSales": 29192, "armSold": 40, "captureRate": 13.07, "rpc": 10.95}, {"to": "2026-01-27", "washSales": 489, "netSales": 6539.5, "armSold": 11, "captureRate": 22.0, "rpc": 1.55}, {"to": "2026-02-03", "washSales": 2572, "netSales": 37694.41, "armSold": 51, "captureRate": 8.92, "rpc": 12.98}, {"to": "2026-02-10", "washSales": 2178, "netSales": 31955.39, "armSold": 45, "captureRate": 7.22, "rpc": 13.44}, {"to": "2026-02-17", "washSales": 1899, "netSales": 27918.26, "armSold": 23, "captureRate": 6.28, "rpc": 12.57}, {"to": "2026-02-24", "washSales": 1722, "netSales": 25262.55, "armSold": 59, "captureRate": 17.56, "rpc": 12.83}, {"to": "2026-03-03", "washSales": 0, "netSales": 0, "armSold": 0, "captureRate": 0, "rpc": 0}, {"to": "2026-03-10", "washSales": 1327, "netSales": 18982.25, "armSold": 33, "captureRate": 17.46, "rpc": 12.51}, {"to": "2026-03-17", "washSales": 2379, "netSales": 35665, "armSold": 49, "captureRate": 10.75, "rpc": 13.18}, {"to": "2026-03-24", "washSales": 3027, "netSales": 45983, "armSold": 81, "captureRate": 11.89, "rpc": 12.88}, {"to": "2026-03-31", "washSales": 3029, "netSales": 44994.37, "armSold": 72, "captureRate": 10.64, "rpc": 12.45}, {"to": "2026-04-07", "washSales": 1358, "netSales": 20433.32, "armSold": 28, "captureRate": 15.22, "rpc": 13.1}, {"to": "2026-04-14", "washSales": 1193, "netSales": 17650, "armSold": 24, "captureRate": 21.05, "rpc": 10.21}, {"to": "2026-04-21", "washSales": 1335, "netSales": 19743, "armSold": 14, "captureRate": 9.09, "rpc": 8.56}, {"to": "2026-04-28", "washSales": 1849, "netSales": 27294, "armSold": 25, "captureRate": 9.03, "rpc": 10.73}, {"to": "2026-05-05", "washSales": 1361, "netSales": 20701, "armSold": 24, "captureRate": 10.34, "rpc": 13.18}, {"to": "2026-05-12", "washSales": 1952, "netSales": 29462, "armSold": 27, "captureRate": 8.71, "rpc": 12.56}, {"to": "2026-05-19", "washSales": 1959, "netSales": 30070, "armSold": 29, "captureRate": 8.79, "rpc": 13.94}, {"to": "2026-05-26", "washSales": 1391, "netSales": 21256, "armSold": 13, "captureRate": 0, "rpc": 0}, {"to": "2026-06-02", "washSales": 1703, "netSales": 26418.55, "armSold": 31, "captureRate": 10.2, "rpc": 14.09}, {"to": "2026-06-09", "washSales": 1468, "netSales": 22665.14, "armSold": 22, "captureRate": 10.38, "rpc": 14.25}, {"to": "2026-06-16", "washSales": 1550, "netSales": 23708, "armSold": 34, "captureRate": 13.71, "rpc": 12.67}, {"to": "2026-06-23", "washSales": 1631, "netSales": 25043, "armSold": 31, "captureRate": 11.19, "rpc": 14.62}, {"to": "2026-06-30", "washSales": 1928, "netSales": 30363.92, "armSold": 51, "captureRate": 12.35, "rpc": 15.33}, {"to": "2026-07-07", "washSales": 2009, "netSales": 30457.6, "armSold": 49, "captureRate": 10.7, "rpc": 13.21}, {"to": "2026-07-14", "washSales": 1628, "netSales": 25515.29, "armSold": 29, "captureRate": 8.15, "rpc": 12.78}], "345": [{"to": "2026-01-06", "washSales": 3467, "netSales": 53021, "armSold": 121, "captureRate": 11.42, "rpc": 13.21}, {"to": "2026-01-13", "washSales": 3656, "netSales": 35761.29, "armSold": 74, "captureRate": 4.59, "rpc": 1.27}, {"to": "2026-01-20", "washSales": 3494, "netSales": 53625, "armSold": 103, "captureRate": 11.8, "rpc": 12.78}, {"to": "2026-01-27", "washSales": 934, "netSales": 13573.76, "armSold": 23, "captureRate": 13.61, "rpc": 6.53}, {"to": "2026-02-03", "washSales": 4724, "netSales": 73109, "armSold": 123, "captureRate": 9.26, "rpc": 13.29}, {"to": "2026-02-10", "washSales": 3647, "netSales": 55896, "armSold": 106, "captureRate": 9.32, "rpc": 12.9}, {"to": "2026-02-17", "washSales": 3221, "netSales": 49107, "armSold": 91, "captureRate": 12.83, "rpc": 11.77}, {"to": "2026-02-24", "washSales": 2998, "netSales": 45243.82, "armSold": 88, "captureRate": 12.75, "rpc": 11.54}, {"to": "2026-03-03", "washSales": 3526, "netSales": 54068.64, "armSold": 148, "captureRate": 16.78, "rpc": 12.12}, {"to": "2026-03-10", "washSales": 2453, "netSales": 36508.47, "armSold": 89, "captureRate": 20.6, "rpc": 9.33}, {"to": "2026-03-17", "washSales": 4123, "netSales": 63477.56, "armSold": 173, "captureRate": 18.04, "rpc": 12.21}, {"to": "2026-03-24", "washSales": 4964, "netSales": 79142.9, "armSold": 185, "captureRate": 15.15, "rpc": 12.94}, {"to": "2026-03-31", "washSales": 4603, "netSales": 73929.28, "armSold": 184, "captureRate": 16.68, "rpc": 12.94}, {"to": "2026-04-07", "washSales": 2442, "netSales": 38529, "armSold": 62, "captureRate": 16.45, "rpc": 9.33}, {"to": "2026-04-14", "washSales": 2123, "netSales": 32540.94, "armSold": 47, "captureRate": 17.41, "rpc": 6.09}, {"to": "2026-04-21", "washSales": 2222, "netSales": 34454.16, "armSold": 51, "captureRate": 16.4, "rpc": 7.27}, {"to": "2026-04-28", "washSales": 3499, "netSales": 54795.49, "armSold": 89, "captureRate": 17.42, "rpc": 8.67}, {"to": "2026-05-05", "washSales": 2333, "netSales": 35570.79, "armSold": 62, "captureRate": 13.25, "rpc": 8.39}, {"to": "2026-05-12", "washSales": 3178, "netSales": 50341, "armSold": 82, "captureRate": 14.83, "rpc": 10.8}, {"to": "2026-05-19", "washSales": 3396, "netSales": 54956.56, "armSold": 108, "captureRate": 16.41, "rpc": 12.76}, {"to": "2026-05-26", "washSales": 2754, "netSales": 44382.83, "armSold": 90, "captureRate": 18.56, "rpc": 11.8}, {"to": "2026-06-02", "washSales": 3085, "netSales": 49381, "armSold": 103, "captureRate": 17.08, "rpc": 12.36}, {"to": "2026-06-09", "washSales": 2806, "netSales": 44256, "armSold": 77, "captureRate": 17.95, "rpc": 10.82}, {"to": "2026-06-16", "washSales": 3047, "netSales": 48732.85, "armSold": 118, "captureRate": 21.69, "rpc": 10.43}, {"to": "2026-06-23", "washSales": 2709, "netSales": 43175, "armSold": 84, "captureRate": 18.38, "rpc": 10.56}, {"to": "2026-06-30", "washSales": 3611, "netSales": 57356.92, "armSold": 130, "captureRate": 17.86, "rpc": 11.2}, {"to": "2026-07-07", "washSales": 3794, "netSales": 59488.65, "armSold": 156, "captureRate": 17.28, "rpc": 11.39}, {"to": "2026-07-14", "washSales": 2917, "netSales": 45535.78, "armSold": 97, "captureRate": 16.17, "rpc": 10.8}], "346": [{"to": "2026-01-06", "washSales": 2552, "netSales": 38654.24, "armSold": 48, "captureRate": 8.84, "rpc": 12.99}, {"to": "2026-01-13", "washSales": 2066, "netSales": 30993.35, "armSold": 54, "captureRate": 14.67, "rpc": 12.27}, {"to": "2026-01-20", "washSales": 2472, "netSales": 37073.43, "armSold": 74, "captureRate": 16.34, "rpc": 12.09}, {"to": "2026-01-27", "washSales": 652, "netSales": 9068.48, "armSold": 11, "captureRate": 17.46, "rpc": 2.51}, {"to": "2026-02-03", "washSales": 3199, "netSales": 48955.47, "armSold": 94, "captureRate": 14.33, "rpc": 14.02}, {"to": "2026-02-10", "washSales": 2693, "netSales": 41048.19, "armSold": 84, "captureRate": 14.38, "rpc": 13.61}, {"to": "2026-02-17", "washSales": 2376, "netSales": 35302.53, "armSold": 61, "captureRate": 16.67, "rpc": 11.77}, {"to": "2026-02-24", "washSales": 2277, "netSales": 34459.29, "armSold": 55, "captureRate": 14.51, "rpc": 12.42}, {"to": "2026-03-03", "washSales": 2735, "netSales": 40512.65, "armSold": 82, "captureRate": 15.8, "rpc": 12.27}, {"to": "2026-03-10", "washSales": 1806, "netSales": 25854.57, "armSold": 46, "captureRate": 20.26, "rpc": 9.4}, {"to": "2026-03-17", "washSales": 2967, "netSales": 44919.03, "armSold": 66, "captureRate": 13.95, "rpc": 13.09}, {"to": "2026-03-24", "washSales": 3532, "netSales": 55404.45, "armSold": 96, "captureRate": 14.5, "rpc": 13.51}, {"to": "2026-03-31", "washSales": 3458, "netSales": 54712, "armSold": 120, "captureRate": 16.69, "rpc": 13.61}, {"to": "2026-04-07", "washSales": 1719, "netSales": 26669, "armSold": 43, "captureRate": 20.19, "rpc": 11.84}, {"to": "2026-04-14", "washSales": 1665, "netSales": 25103.88, "armSold": 30, "captureRate": 16.39, "rpc": 9.88}, {"to": "2026-04-21", "washSales": 1713, "netSales": 25598.45, "armSold": 31, "captureRate": 14.62, "rpc": 9.58}, {"to": "2026-04-28", "washSales": 2522, "netSales": 38414.05, "armSold": 47, "captureRate": 13.86, "rpc": 9.13}, {"to": "2026-05-05", "washSales": 1691, "netSales": 26210.23, "armSold": 35, "captureRate": 15.28, "rpc": 12.14}, {"to": "2026-05-12", "washSales": 2424, "netSales": 37421.6, "armSold": 58, "captureRate": 15.68, "rpc": 11.9}, {"to": "2026-05-19", "washSales": 2434, "netSales": 38367.2, "armSold": 64, "captureRate": 17.25, "rpc": 13.18}, {"to": "2026-05-26", "washSales": 1854, "netSales": 28554.04, "armSold": 55, "captureRate": 22.54, "rpc": 10.96}, {"to": "2026-06-02", "washSales": 2171, "netSales": 34067.93, "armSold": 72, "captureRate": 23.23, "rpc": 12.19}, {"to": "2026-06-09", "washSales": 1914, "netSales": 29612.85, "armSold": 39, "captureRate": 15.66, "rpc": 11.13}, {"to": "2026-06-16", "washSales": 2117, "netSales": 33470.34, "armSold": 49, "captureRate": 16.23, "rpc": 12.74}, {"to": "2026-06-23", "washSales": 2055, "netSales": 32087.4, "armSold": 54, "captureRate": 18.12, "rpc": 12.21}, {"to": "2026-06-30", "washSales": 2532, "netSales": 39467.48, "armSold": 82, "captureRate": 19.43, "rpc": 13.02}, {"to": "2026-07-07", "washSales": 2575, "netSales": 40406.84, "armSold": 90, "captureRate": 18.75, "rpc": 12.59}, {"to": "2026-07-14", "washSales": 2235, "netSales": 34896.3, "armSold": 63, "captureRate": 16.94, "rpc": 12.64}], "347": [{"to": "2026-01-06", "washSales": 2958, "netSales": 48058.21, "armSold": 93, "captureRate": 10.5, "rpc": 14.74}, {"to": "2026-01-13", "washSales": 2161, "netSales": 34787, "armSold": 53, "captureRate": 9.93, "rpc": 13.42}, {"to": "2026-01-20", "washSales": 2779, "netSales": 44804.74, "armSold": 78, "captureRate": 11.75, "rpc": 14.19}, {"to": "2026-01-27", "washSales": 681, "netSales": 10432.47, "armSold": 13, "captureRate": 13.83, "rpc": 8.8}, {"to": "2026-02-03", "washSales": 4071, "netSales": 66266.63, "armSold": 118, "captureRate": 9.96, "rpc": 14.73}, {"to": "2026-02-10", "washSales": 3117, "netSales": 50918.48, "armSold": 80, "captureRate": 8.48, "rpc": 14.73}, {"to": "2026-02-17", "washSales": 2414, "netSales": 39471.5, "armSold": 45, "captureRate": 8.46, "rpc": 14.71}, {"to": "2026-02-24", "washSales": 2426, "netSales": 39685.26, "armSold": 72, "captureRate": 14.04, "rpc": 14.42}, {"to": "2026-03-03", "washSales": 2912, "netSales": 47184.83, "armSold": 91, "captureRate": 12.45, "rpc": 13.74}, {"to": "2026-03-10", "washSales": 1610, "netSales": 25658.54, "armSold": 40, "captureRate": 14.65, "rpc": 11.89}, {"to": "2026-03-17", "washSales": 3151, "netSales": 51799.37, "armSold": 78, "captureRate": 11.57, "rpc": 14.24}, {"to": "2026-03-24", "washSales": 3734, "netSales": 63189.51, "armSold": 97, "captureRate": 9.91, "rpc": 14.99}, {"to": "2026-03-31", "washSales": 4070, "netSales": 68183.45, "armSold": 93, "captureRate": 8.93, "rpc": 14.61}, {"to": "2026-04-07", "washSales": 2063, "netSales": 34655.45, "armSold": 49, "captureRate": 13.46, "rpc": 13.45}, {"to": "2026-04-14", "washSales": 1734, "netSales": 29367.55, "armSold": 39, "captureRate": 17.26, "rpc": 12.42}, {"to": "2026-04-21", "washSales": 1950, "netSales": 31553.66, "armSold": 52, "captureRate": 16.94, "rpc": 11.15}, {"to": "2026-04-28", "washSales": 2786, "netSales": 46332.83, "armSold": 73, "captureRate": 14.37, "rpc": 12.72}, {"to": "2026-05-05", "washSales": 2025, "netSales": 34070.26, "armSold": 59, "captureRate": 15.25, "rpc": 12.79}, {"to": "2026-05-12", "washSales": 2740, "netSales": 45877.85, "armSold": 97, "captureRate": 17.6, "rpc": 13.9}, {"to": "2026-05-19", "washSales": 2812, "netSales": 47285.35, "armSold": 70, "captureRate": 12.41, "rpc": 14.22}, {"to": "2026-05-26", "washSales": 2184, "netSales": 37523.33, "armSold": 49, "captureRate": 13.5, "rpc": 13.93}, {"to": "2026-06-02", "washSales": 2681, "netSales": 46251, "armSold": 60, "captureRate": 11.49, "rpc": 14.97}, {"to": "2026-06-09", "washSales": 2042, "netSales": 34369.49, "armSold": 51, "captureRate": 14.33, "rpc": 13.74}, {"to": "2026-06-16", "washSales": 2462, "netSales": 41371.64, "armSold": 64, "captureRate": 13.45, "rpc": 13.23}, {"to": "2026-06-23", "washSales": 2470, "netSales": 41866.3, "armSold": 58, "captureRate": 12.69, "rpc": 14.36}, {"to": "2026-06-30", "washSales": 3190, "netSales": 53673.21, "armSold": 92, "captureRate": 11.46, "rpc": 14.44}, {"to": "2026-07-07", "washSales": 3200, "netSales": 53451.37, "armSold": 79, "captureRate": 9.94, "rpc": 13.46}, {"to": "2026-07-14", "washSales": 2499, "netSales": 42765.46, "armSold": 60, "captureRate": 11.09, "rpc": 13.63}], "348": [{"to": "2026-01-06", "washSales": 2366, "netSales": 36415.23, "armSold": 75, "captureRate": 9.81, "rpc": 14.05}, {"to": "2026-01-13", "washSales": 1694, "netSales": 26288.97, "armSold": 40, "captureRate": 10.26, "rpc": 13.65}, {"to": "2026-01-20", "washSales": 1881, "netSales": 28496.45, "armSold": 46, "captureRate": 10.0, "rpc": 13.08}, {"to": "2026-01-27", "washSales": 517, "netSales": 7300.15, "armSold": 7, "captureRate": 9.59, "rpc": 7.54}, {"to": "2026-02-03", "washSales": 2677, "netSales": 41523.49, "armSold": 58, "captureRate": 8.72, "rpc": 13.84}, {"to": "2026-02-10", "washSales": 2510, "netSales": 38576.24, "armSold": 49, "captureRate": 6.4, "rpc": 14.18}, {"to": "2026-02-17", "washSales": 2026, "netSales": 30962.34, "armSold": 62, "captureRate": 14.52, "rpc": 13.49}, {"to": "2026-02-24", "washSales": 2017, "netSales": 30077.81, "armSold": 64, "captureRate": 14.85, "rpc": 12.54}, {"to": "2026-03-03", "washSales": 2176, "netSales": 33442.91, "armSold": 75, "captureRate": 15.12, "rpc": 12.93}, {"to": "2026-03-10", "washSales": 1193, "netSales": 17038.25, "armSold": 30, "captureRate": 16.48, "rpc": 9.59}, {"to": "2026-03-17", "washSales": 2522, "netSales": 37943.54, "armSold": 87, "captureRate": 15.73, "rpc": 12.91}, {"to": "2026-03-24", "washSales": 3003, "netSales": 47410.95, "armSold": 101, "captureRate": 12.88, "rpc": 13.24}, {"to": "2026-03-31", "washSales": 3099, "netSales": 48883.58, "armSold": 105, "captureRate": 13.57, "rpc": 13.65}, {"to": "2026-04-07", "washSales": 1481, "netSales": 22986.23, "armSold": 36, "captureRate": 14.01, "rpc": 11.49}, {"to": "2026-04-14", "washSales": 1267, "netSales": 20132.08, "armSold": 20, "captureRate": 12.35, "rpc": 12.73}, {"to": "2026-04-21", "washSales": 1403, "netSales": 20482.41, "armSold": 21, "captureRate": 9.86, "rpc": 5.67}, {"to": "2026-04-28", "washSales": 1939, "netSales": 29796.07, "armSold": 51, "captureRate": 16.94, "rpc": 8.15}, {"to": "2026-05-05", "washSales": 1300, "netSales": 20636.79, "armSold": 36, "captureRate": 16.82, "rpc": 12.07}, {"to": "2026-05-12", "washSales": 2089, "netSales": 32704.17, "armSold": 49, "captureRate": 12.89, "rpc": 11.72}, {"to": "2026-05-19", "washSales": 1954, "netSales": 31137.71, "armSold": 44, "captureRate": 11.25, "rpc": 13.41}, {"to": "2026-05-26", "washSales": 1570, "netSales": 24736.07, "armSold": 45, "captureRate": 15.2, "rpc": 12.24}, {"to": "2026-06-02", "washSales": 1863, "netSales": 30100.85, "armSold": 57, "captureRate": 14.32, "rpc": 13.43}, {"to": "2026-06-09", "washSales": 1533, "netSales": 24623.15, "armSold": 46, "captureRate": 17.69, "rpc": 12.16}, {"to": "2026-06-16", "washSales": 1675, "netSales": 26861.41, "armSold": 48, "captureRate": 17.27, "rpc": 12.15}, {"to": "2026-06-23", "washSales": 1746, "netSales": 28077.87, "armSold": 47, "captureRate": 15.41, "rpc": 11.83}, {"to": "2026-06-30", "washSales": 2107, "netSales": 33866.32, "armSold": 91, "captureRate": 20.59, "rpc": 13.22}, {"to": "2026-07-07", "washSales": 2065, "netSales": 32611.07, "armSold": 54, "captureRate": 11.16, "rpc": 13.19}, {"to": "2026-07-14", "washSales": 1762, "netSales": 27740.37, "armSold": 66, "captureRate": 17.6, "rpc": 12.22}], "349": [{"to": "2026-01-06", "washSales": 2152, "netSales": 34642, "armSold": 47, "captureRate": 7.36, "rpc": 14.24}, {"to": "2026-01-13", "washSales": 1640, "netSales": 25823.11, "armSold": 30, "captureRate": 7.37, "rpc": 13.0}, {"to": "2026-01-20", "washSales": 2009, "netSales": 32237, "armSold": 25, "captureRate": 5.36, "rpc": 13.11}, {"to": "2026-01-27", "washSales": 526, "netSales": 7865.2, "armSold": 9, "captureRate": 11.69, "rpc": 7.04}, {"to": "2026-02-03", "washSales": 2519, "netSales": 40758.89, "armSold": 34, "captureRate": 6.15, "rpc": 13.4}, {"to": "2026-02-10", "washSales": 2292, "netSales": 36432.24, "armSold": 32, "captureRate": 4.98, "rpc": 13.93}, {"to": "2026-02-17", "washSales": 1816, "netSales": 28683.19, "armSold": 29, "captureRate": 8.71, "rpc": 12.27}, {"to": "2026-02-24", "washSales": 1726, "netSales": 27713.27, "armSold": 30, "captureRate": 8.82, "rpc": 12.66}, {"to": "2026-03-03", "washSales": 2045, "netSales": 32445.2, "armSold": 21, "captureRate": 4.39, "rpc": 12.99}, {"to": "2026-03-10", "washSales": 1188, "netSales": 18673.53, "armSold": 14, "captureRate": 10.94, "rpc": 11.5}, {"to": "2026-03-17", "washSales": 2463, "netSales": 39607.21, "armSold": 58, "captureRate": 11.55, "rpc": 13.67}, {"to": "2026-03-24", "washSales": 3134, "netSales": 51343.4, "armSold": 81, "captureRate": 10.38, "rpc": 62.52}, {"to": "2026-03-31", "washSales": 3193, "netSales": 52147.93, "armSold": 72, "captureRate": 9.18, "rpc": 13.53}, {"to": "2026-04-07", "washSales": 1302, "netSales": 20583.78, "armSold": 23, "captureRate": 12.23, "rpc": 10.63}, {"to": "2026-04-14", "washSales": 1137, "netSales": 18504.41, "armSold": 22, "captureRate": 18.03, "rpc": 11.17}, {"to": "2026-04-21", "washSales": 1231, "netSales": 19560.43, "armSold": 14, "captureRate": 8.48, "rpc": 8.5}, {"to": "2026-04-28", "washSales": 1878, "netSales": 29854, "armSold": 38, "captureRate": 13.48, "rpc": 9.2}, {"to": "2026-05-05", "washSales": 1289, "netSales": 21313.2, "armSold": 25, "captureRate": 12.2, "rpc": 12.11}, {"to": "2026-05-12", "washSales": 1923, "netSales": 31264.81, "armSold": 40, "captureRate": 11.02, "rpc": 12.21}, {"to": "2026-05-19", "washSales": 1796, "netSales": 29326.48, "armSold": 39, "captureRate": 12.7, "rpc": 12.04}, {"to": "2026-05-26", "washSales": 1430, "netSales": 23626.94, "armSold": 35, "captureRate": 12.07, "rpc": 12.39}, {"to": "2026-06-02", "washSales": 1743, "netSales": 28923, "armSold": 37, "captureRate": 12.29, "rpc": 13.75}, {"to": "2026-06-09", "washSales": 1439, "netSales": 24061, "armSold": 23, "captureRate": 10.6, "rpc": 11.67}, {"to": "2026-06-16", "washSales": 1647, "netSales": 26612, "armSold": 39, "captureRate": 13.13, "rpc": 11.18}, {"to": "2026-06-23", "washSales": 1696, "netSales": 28260, "armSold": 44, "captureRate": 14.38, "rpc": 12.84}, {"to": "2026-06-30", "washSales": 2039, "netSales": 33902, "armSold": 54, "captureRate": 12.59, "rpc": 12.59}, {"to": "2026-07-07", "washSales": 2186, "netSales": 35497, "armSold": 49, "captureRate": 9.11, "rpc": 11.6}, {"to": "2026-07-14", "washSales": 1691, "netSales": 28056, "armSold": 31, "captureRate": 9.39, "rpc": 11.83}], "352": [{"to": "2026-01-06", "washSales": 3290, "netSales": 45810.27, "armSold": 80, "captureRate": 6.64, "rpc": 12.45}, {"to": "2026-01-13", "washSales": 2656, "netSales": 35761, "armSold": 74, "captureRate": 8.87, "rpc": 10.98}, {"to": "2026-01-20", "washSales": 3235, "netSales": 44371.38, "armSold": 76, "captureRate": 7.99, "rpc": 11.48}, {"to": "2026-01-27", "washSales": 1098, "netSales": 14785.38, "armSold": 19, "captureRate": 9.9, "rpc": 9.52}, {"to": "2026-02-03", "washSales": 3561, "netSales": 49441.47, "armSold": 80, "captureRate": 6.71, "rpc": 12.46}, {"to": "2026-02-10", "washSales": 3554, "netSales": 48954.6, "armSold": 108, "captureRate": 8.35, "rpc": 12.09}, {"to": "2026-02-17", "washSales": 3133, "netSales": 43138.43, "armSold": 78, "captureRate": 9.34, "rpc": 11.38}, {"to": "2026-02-24", "washSales": 2936, "netSales": 40649.15, "armSold": 87, "captureRate": 9.45, "rpc": 11.93}, {"to": "2026-03-03", "washSales": 3349, "netSales": 46440.64, "armSold": 83, "captureRate": 8.01, "rpc": 12.15}, {"to": "2026-03-10", "washSales": 2291, "netSales": 30263.9, "armSold": 72, "captureRate": 13.71, "rpc": 9.42}, {"to": "2026-03-17", "washSales": 3550, "netSales": 51031.47, "armSold": 72, "captureRate": 7.35, "rpc": 12.39}, {"to": "2026-03-24", "washSales": 4074, "netSales": 66603.51, "armSold": 113, "captureRate": 8.59, "rpc": 13.89}, {"to": "2026-03-31", "washSales": 4040, "netSales": 66051.36, "armSold": 95, "captureRate": 7.39, "rpc": 14.21}, {"to": "2026-04-07", "washSales": 2512, "netSales": 40971, "armSold": 43, "captureRate": 7.89, "rpc": 12.58}, {"to": "2026-04-14", "washSales": 2179, "netSales": 35649.43, "armSold": 38, "captureRate": 9.11, "rpc": 11.68}, {"to": "2026-04-21", "washSales": 2090, "netSales": 33680.93, "armSold": 57, "captureRate": 11.33, "rpc": 11.98}, {"to": "2026-04-28", "washSales": 3169, "netSales": 52623.68, "armSold": 78, "captureRate": 9.97, "rpc": 13.55}, {"to": "2026-05-05", "washSales": 2278, "netSales": 37871.16, "armSold": 41, "captureRate": 7.12, "rpc": 13.46}, {"to": "2026-05-12", "washSales": 2816, "netSales": 45887.77, "armSold": 48, "captureRate": 7.2, "rpc": 13.15}, {"to": "2026-05-19", "washSales": 3034, "netSales": 50260.33, "armSold": 64, "captureRate": 8.28, "rpc": 14.05}, {"to": "2026-05-26", "washSales": 2545, "netSales": 42068.26, "armSold": 49, "captureRate": 8.18, "rpc": 13.72}, {"to": "2026-06-02", "washSales": 2793, "netSales": 46698.22, "armSold": 104, "captureRate": 13.81, "rpc": 14.15}, {"to": "2026-06-09", "washSales": 2356, "netSales": 39547.72, "armSold": 109, "captureRate": 21.29, "rpc": 13.12}, {"to": "2026-06-16", "washSales": 2518, "netSales": 42201, "armSold": 79, "captureRate": 14.16, "rpc": 13.8}, {"to": "2026-06-23", "washSales": 2671, "netSales": 44415.17, "armSold": 79, "captureRate": 12.93, "rpc": 13.58}, {"to": "2026-06-30", "washSales": 3090, "netSales": 51209.74, "armSold": 98, "captureRate": 11.17, "rpc": 13.6}, {"to": "2026-07-07", "washSales": 3348, "netSales": 53793.85, "armSold": 104, "captureRate": 9.92, "rpc": 12.84}, {"to": "2026-07-14", "washSales": 2526, "netSales": 41736.48, "armSold": 58, "captureRate": 9.45, "rpc": 40.91}], "354": [{"to": "2026-01-06", "washSales": 1338, "netSales": 21599.07, "armSold": 20, "captureRate": 4.82, "rpc": 14.85}, {"to": "2026-01-13", "washSales": 1177, "netSales": 18524.12, "armSold": 21, "captureRate": 6.69, "rpc": 13.74}, {"to": "2026-01-20", "washSales": 1217, "netSales": 19008.11, "armSold": 38, "captureRate": 10.7, "rpc": 13.78}, {"to": "2026-01-27", "washSales": 384, "netSales": 5779.12, "armSold": 7, "captureRate": 11.29, "rpc": 7.4}, {"to": "2026-02-03", "washSales": 1444, "netSales": 23341.22, "armSold": 38, "captureRate": 8.41, "rpc": 14.22}, {"to": "2026-02-10", "washSales": 1448, "netSales": 23217.09, "armSold": 39, "captureRate": 8.41, "rpc": 14.61}, {"to": "2026-02-17", "washSales": 1261, "netSales": 20109.22, "armSold": 15, "captureRate": 4.89, "rpc": 13.45}, {"to": "2026-02-24", "washSales": 1236, "netSales": 19994.12, "armSold": 21, "captureRate": 6.5, "rpc": 14.16}, {"to": "2026-03-03", "washSales": 1664, "netSales": 26696.33, "armSold": 36, "captureRate": 7.17, "rpc": 14.45}, {"to": "2026-03-10", "washSales": 979, "netSales": 15205.22, "armSold": 9, "captureRate": 4.04, "rpc": 12.54}, {"to": "2026-03-17", "washSales": 1338, "netSales": 21635.15, "armSold": 33, "captureRate": 10.22, "rpc": 14.26}, {"to": "2026-03-24", "washSales": 1785, "netSales": 28439.11, "armSold": 42, "captureRate": 8.22, "rpc": 15.31}, {"to": "2026-03-31", "washSales": 1851, "netSales": 29887.13, "armSold": 37, "captureRate": 7.14, "rpc": 14.55}, {"to": "2026-04-07", "washSales": 1040, "netSales": 16233.17, "armSold": 19, "captureRate": 10.05, "rpc": 13.46}, {"to": "2026-04-14", "washSales": 1081, "netSales": 16907.14, "armSold": 15, "captureRate": 7.85, "rpc": 12.83}, {"to": "2026-04-21", "washSales": 951, "netSales": 14717.26, "armSold": 14, "captureRate": 7.07, "rpc": 12.38}, {"to": "2026-04-28", "washSales": 1418, "netSales": 22371.25, "armSold": 22, "captureRate": 7.51, "rpc": 13.49}, {"to": "2026-05-05", "washSales": 1004, "netSales": 15769.58, "armSold": 21, "captureRate": 10.55, "rpc": 12.84}, {"to": "2026-05-12", "washSales": 1389, "netSales": 22034.1, "armSold": 35, "captureRate": 11.99, "rpc": 13.69}, {"to": "2026-05-19", "washSales": 1396, "netSales": 22392.13, "armSold": 14, "captureRate": 4.33, "rpc": 14.75}, {"to": "2026-05-26", "washSales": 1169, "netSales": 18342.12, "armSold": 18, "captureRate": 8.0, "rpc": 13.5}, {"to": "2026-06-02", "washSales": 1375, "netSales": 22253.07, "armSold": 23, "captureRate": 7.35, "rpc": 15.18}, {"to": "2026-06-09", "washSales": 966, "netSales": 15493.18, "armSold": 21, "captureRate": 12.14, "rpc": 13.4}, {"to": "2026-06-16", "washSales": 1182, "netSales": 18710.27, "armSold": 26, "captureRate": 9.7, "rpc": 13.71}, {"to": "2026-06-23", "washSales": 1301, "netSales": 21150.09, "armSold": 24, "captureRate": 9.3, "rpc": 15.21}, {"to": "2026-06-30", "washSales": 1516, "netSales": 24815.17, "armSold": 50, "captureRate": 13.23, "rpc": 15.83}, {"to": "2026-07-07", "washSales": 1648, "netSales": 25644.11, "armSold": 44, "captureRate": 11.4, "rpc": 13.34}, {"to": "2026-07-14", "washSales": 1334, "netSales": 21820.2, "armSold": 54, "captureRate": 15.93, "rpc": 15.81}], "358": [{"to": "2026-01-06", "washSales": 2879, "netSales": 43890.13, "armSold": 93, "captureRate": 11.03, "rpc": 13.06}, {"to": "2026-01-13", "washSales": 2377, "netSales": 35694.43, "armSold": 46, "captureRate": 8.78, "rpc": 12.37}, {"to": "2026-01-20", "washSales": 2915, "netSales": 43914.77, "armSold": 68, "captureRate": 9.02, "rpc": 12.92}, {"to": "2026-01-27", "washSales": 685, "netSales": 9688.79, "armSold": 14, "captureRate": 14.89, "rpc": 6.66}, {"to": "2026-02-03", "washSales": 3730, "netSales": 56199, "armSold": 85, "captureRate": 8.4, "rpc": 12.84}, {"to": "2026-02-10", "washSales": 3153, "netSales": 47801, "armSold": 87, "captureRate": 9.47, "rpc": 13.57}, {"to": "2026-02-17", "washSales": 2595, "netSales": 39365, "armSold": 54, "captureRate": 9.87, "rpc": 12.35}, {"to": "2026-02-24", "washSales": 2621, "netSales": 39971, "armSold": 67, "captureRate": 11.71, "rpc": 12.49}, {"to": "2026-03-03", "washSales": 3097, "netSales": 46483.62, "armSold": 91, "captureRate": 11.76, "rpc": 12.6}, {"to": "2026-03-10", "washSales": 1934, "netSales": 29391.62, "armSold": 33, "captureRate": 10.93, "rpc": 10.63}, {"to": "2026-03-17", "washSales": 3223, "netSales": 49071, "armSold": 87, "captureRate": 11.8, "rpc": 13.2}, {"to": "2026-03-24", "washSales": 0, "netSales": 0, "armSold": 0, "captureRate": 0, "rpc": 0}, {"to": "2026-03-31", "washSales": 0, "netSales": 3700, "armSold": 102, "captureRate": -3.87, "rpc": 14.68}, {"to": "2026-04-07", "washSales": 1986, "netSales": 30385, "armSold": 37, "captureRate": 12.01, "rpc": 12.76}, {"to": "2026-04-14", "washSales": 1876, "netSales": 28225, "armSold": 28, "captureRate": 11.62, "rpc": 12.05}, {"to": "2026-04-21", "washSales": 2076, "netSales": 31158.83, "armSold": 27, "captureRate": 7.85, "rpc": 11.61}, {"to": "2026-04-28", "washSales": 3112, "netSales": 47728.2, "armSold": 76, "captureRate": 12.6, "rpc": 12.48}, {"to": "2026-05-05", "washSales": 2022, "netSales": 31475.19, "armSold": 42, "captureRate": 11.35, "rpc": 13.46}, {"to": "2026-05-12", "washSales": 2886, "netSales": 44498.29, "armSold": 105, "captureRate": 16.96, "rpc": 14.08}, {"to": "2026-05-19", "washSales": 2982, "netSales": 46061.66, "armSold": 93, "captureRate": 17.13, "rpc": 14.17}, {"to": "2026-05-26", "washSales": 2218, "netSales": 34299.75, "armSold": 62, "captureRate": 15.42, "rpc": 13.74}, {"to": "2026-06-02", "washSales": 2726, "netSales": 42279.23, "armSold": 78, "captureRate": 16.05, "rpc": 13.85}, {"to": "2026-06-09", "washSales": 2298, "netSales": 35312.17, "armSold": 50, "captureRate": 13.77, "rpc": 12.91}, {"to": "2026-06-16", "washSales": 2684, "netSales": 40115.88, "armSold": 81, "captureRate": 15.82, "rpc": 11.54}, {"to": "2026-06-23", "washSales": 2687, "netSales": 41340.35, "armSold": 70, "captureRate": 14.68, "rpc": 13.18}, {"to": "2026-06-30", "washSales": 3298, "netSales": 50453.55, "armSold": 97, "captureRate": 13.27, "rpc": 13.68}, {"to": "2026-07-07", "washSales": 3380, "netSales": 50913, "armSold": 141, "captureRate": 17.24, "rpc": 12.85}, {"to": "2026-07-14", "washSales": 2827, "netSales": 42997.78, "armSold": 90, "captureRate": 13.72, "rpc": 13.14}], "359": [{"to": "2026-01-06", "washSales": 2621, "netSales": 43206.22, "armSold": 96, "captureRate": 14.75, "rpc": 14.81}, {"to": "2026-01-13", "washSales": 2237, "netSales": 36381.5, "armSold": 72, "captureRate": 15.35, "rpc": 14.11}, {"to": "2026-01-20", "washSales": 2764, "netSales": 45197.59, "armSold": 79, "captureRate": 13.67, "rpc": 14.3}, {"to": "2026-01-27", "washSales": 720, "netSales": 10910.67, "armSold": 19, "captureRate": 20.88, "rpc": 7.16}, {"to": "2026-02-03", "washSales": 3750, "netSales": 61355.71, "armSold": 123, "captureRate": 13.87, "rpc": 54.43}, {"to": "2026-02-10", "washSales": 3069, "netSales": 50238.5, "armSold": 118, "captureRate": 14.51, "rpc": 14.43}, {"to": "2026-02-17", "washSales": 2628, "netSales": 42952.51, "armSold": 91, "captureRate": 18.42, "rpc": 14.53}, {"to": "2026-02-24", "washSales": 2502, "netSales": 40841.31, "armSold": 62, "captureRate": 12.42, "rpc": 14.12}, {"to": "2026-03-03", "washSales": 2819, "netSales": 46248.64, "armSold": 73, "captureRate": 13.3, "rpc": 14.56}, {"to": "2026-03-10", "washSales": 1660, "netSales": 26759, "armSold": 38, "captureRate": 19.69, "rpc": 12.51}, {"to": "2026-03-17", "washSales": 3125, "netSales": 51327.58, "armSold": 110, "captureRate": 18.68, "rpc": 14.05}, {"to": "2026-03-24", "washSales": 3518, "netSales": 59467.23, "armSold": 105, "captureRate": 13.89, "rpc": 14.44}, {"to": "2026-03-31", "washSales": 3951, "netSales": 66784.34, "armSold": 118, "captureRate": 14.68, "rpc": 14.85}, {"to": "2026-04-07", "washSales": 2170, "netSales": 36749.92, "armSold": 45, "captureRate": 14.71, "rpc": 14.82}, {"to": "2026-04-14", "washSales": 1893, "netSales": 32021.41, "armSold": 28, "captureRate": 13.46, "rpc": 14.29}, {"to": "2026-04-21", "washSales": 1920, "netSales": 32330.43, "armSold": 28, "captureRate": 12.9, "rpc": 12.96}, {"to": "2026-04-28", "washSales": 2710, "netSales": 45258.17, "armSold": 50, "captureRate": 14.2, "rpc": 12.83}, {"to": "2026-05-05", "washSales": 1884, "netSales": 31628.14, "armSold": 39, "captureRate": 15.06, "rpc": 14.45}, {"to": "2026-05-12", "washSales": 2676, "netSales": 44854.58, "armSold": 50, "captureRate": 12.35, "rpc": 14.52}, {"to": "2026-05-19", "washSales": 2665, "netSales": 45730.13, "armSold": 47, "captureRate": 10.66, "rpc": 16.29}, {"to": "2026-05-26", "washSales": 2049, "netSales": 34837.06, "armSold": 36, "captureRate": 11.92, "rpc": 14.41}, {"to": "2026-06-02", "washSales": 2589, "netSales": 44298, "armSold": 44, "captureRate": 10.19, "rpc": 15.49}, {"to": "2026-06-09", "washSales": 1969, "netSales": 33237.2, "armSold": 31, "captureRate": 12.76, "rpc": 14.32}, {"to": "2026-06-16", "washSales": 2291, "netSales": 38459.21, "armSold": 42, "captureRate": 12.14, "rpc": 14.38}, {"to": "2026-06-23", "washSales": 2258, "netSales": 37944.15, "armSold": 35, "captureRate": 10.39, "rpc": 14.0}, {"to": "2026-06-30", "washSales": 2767, "netSales": 47094.17, "armSold": 72, "captureRate": 13.46, "rpc": 14.74}, {"to": "2026-07-07", "washSales": 2772, "netSales": 46146.02, "armSold": 98, "captureRate": 17.28, "rpc": 12.98}, {"to": "2026-07-14", "washSales": 2209, "netSales": 38169.18, "armSold": 81, "captureRate": 20.72, "rpc": 15.01}]};
 const STAFF = {"319": [{"name": "Jayare", "role": "SGM", "washSales": 2015, "armSold": 18, "captureRate": 4.97, "rpc": 13.64, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 9.4, "retailPct": 9.1, "levelAsOf": "July"}, {"name": "Raeden", "role": "AGM", "washSales": 6268, "armSold": 128, "captureRate": 8.68, "rpc": 13.49, "currentLevel": 1, "neededForNextLevel": 27, "totalPct": 5.1, "retailPct": 4.7, "levelAsOf": "July"}, {"name": "Daniel", "role": "TL", "washSales": 6579, "armSold": 178, "captureRate": 11.45, "rpc": 14.36, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 2.4, "retailPct": 2.7, "levelAsOf": "July"}, {"name": "Marina", "role": "CSTL", "washSales": 2150, "armSold": 36, "captureRate": 8.51, "rpc": 14.05, "currentLevel": 1, "neededForNextLevel": 21, "totalPct": 6.7, "retailPct": 8.4, "levelAsOf": "July"}, {"name": "James", "role": "SA", "washSales": 14417, "armSold": 383, "captureRate": 12.23, "rpc": 14.2, "currentLevel": 2, "neededForNextLevel": 5, "totalPct": 39.8, "retailPct": 39.9, "levelAsOf": "July"}, {"name": "Miah", "role": "Sales Advisor", "washSales": 11887, "armSold": 290, "captureRate": 11.35, "rpc": 14.34}, {"name": "Kavares", "role": "CST", "washSales": 3084, "armSold": 34, "captureRate": 5.3, "rpc": 13.19}, {"name": "Julius", "role": "SA", "washSales": 1114, "armSold": 27, "captureRate": 9.89, "rpc": 17.1}], "341": [{"name": "Parker", "role": "Garrett", "washSales": 6190, "armSold": 149, "captureRate": 10.72, "rpc": 13.66, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "ugarte", "role": "abel", "washSales": 9725, "armSold": 240, "captureRate": 12.35, "rpc": 14.36, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Watson", "role": "Tatum", "washSales": 5907, "armSold": 192, "captureRate": 13.27, "rpc": 14.09, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Nusbaum", "role": "Colton", "washSales": 5802, "armSold": 191, "captureRate": 18.45, "rpc": 12.71, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": 0.5, "retailPct": 2.2, "levelAsOf": "July"}, {"name": "Kewish", "role": "Jacob", "washSales": 6496, "armSold": 83, "captureRate": 7.66, "rpc": 12.74, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Brown", "role": "Elissa", "washSales": 6976, "armSold": 144, "captureRate": 10.46, "rpc": 13.36}, {"name": "Mendoza", "role": "Daniel", "washSales": 10269, "armSold": 203, "captureRate": 10.94, "rpc": 15.9}, {"name": "Daniels", "role": "Xavier", "washSales": 8023, "armSold": 253, "captureRate": 16.64, "rpc": 15.97}, {"name": "Thomas", "role": "Ian", "washSales": 2246, "armSold": 59, "captureRate": 14.97, "rpc": 15.28}, {"name": "Williams", "role": "Donnie", "washSales": 3181, "armSold": 115, "captureRate": 19.36, "rpc": 14.96}, {"name": "Sebastian", "role": "Matthew", "washSales": 1685, "armSold": 30, "captureRate": 9.93, "rpc": -5.82}, {"name": "Sandoval", "role": "Jose", "washSales": 5070, "armSold": 161, "captureRate": 16.53, "rpc": 15.44}], "342": [{"name": "Pierson", "role": "Tiffany", "washSales": 19926, "armSold": 567, "captureRate": 17.7, "rpc": 17.63, "currentLevel": 2, "neededForNextLevel": 15, "totalPct": 28.5, "retailPct": 24.0, "levelAsOf": "July"}, {"name": "Epstein", "role": "Aaron", "washSales": 8491, "armSold": 231, "captureRate": 13.94, "rpc": 14.81, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Tolofari", "role": "Barasua", "washSales": 4852, "armSold": 89, "captureRate": 10.03, "rpc": 14.8, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Gates", "role": "Juliann", "washSales": 2526, "armSold": 69, "captureRate": 13.22, "rpc": 14.4, "currentLevel": 1, "neededForNextLevel": 20, "totalPct": 5.1, "retailPct": 5.9, "levelAsOf": "July"}, {"name": "Coker", "role": "Case", "washSales": 5166, "armSold": 140, "captureRate": 12.58, "rpc": 14.39, "currentLevel": 1, "neededForNextLevel": 6, "totalPct": 18.2, "retailPct": 19.2, "levelAsOf": "July"}, {"name": "Bowman", "role": "Mason", "washSales": 11633, "armSold": 278, "captureRate": 14.25, "rpc": 15.1}, {"name": "Margrum", "role": "Niya", "washSales": 5283, "armSold": 128, "captureRate": 13.88, "rpc": 15.55}, {"name": "Robinson", "role": "Jerimiah", "washSales": 1141, "armSold": 15, "captureRate": 6.82, "rpc": 15.35}], "343": [{"name": "Bodkins", "role": "Aiden", "washSales": 5263, "armSold": 96, "captureRate": 9.72, "rpc": 13.42, "currentLevel": 1, "neededForNextLevel": 21, "totalPct": 6.8, "retailPct": 8.1, "levelAsOf": "July"}, {"name": "L", "role": "Najib", "washSales": 1328, "armSold": 39, "captureRate": 13.73, "rpc": 13.75, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 7.7, "retailPct": 7.6, "levelAsOf": "July"}, {"name": "allen", "role": "zach", "washSales": 330, "armSold": 15, "captureRate": 29.41, "rpc": 12.44, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 3.6, "retailPct": 2.4, "levelAsOf": "July"}, {"name": "Ojeda", "role": "Phailin", "washSales": 11177, "armSold": 334, "captureRate": 14.64, "rpc": 14.31, "currentLevel": 2, "neededForNextLevel": 12, "totalPct": 24.7, "retailPct": 26.9, "levelAsOf": "July"}, {"name": "Martinez", "role": "Gabi", "washSales": 2538, "armSold": 61, "captureRate": 12.22, "rpc": 13.95, "currentLevel": 1, "neededForNextLevel": 7, "totalPct": 23.3, "retailPct": 22.3, "levelAsOf": "July"}, {"name": "Gjonaj", "role": "Erik", "washSales": 292, "armSold": 6, "captureRate": 9.38, "rpc": 13.73}, {"name": "Combs", "role": "Shay", "washSales": 2666, "armSold": 51, "captureRate": 10.6, "rpc": 13.82}, {"name": "Stokes", "role": "Brian", "washSales": 627, "armSold": 9, "captureRate": 9.47, "rpc": 14.35}, {"name": "Botello", "role": "Lalo", "washSales": 754, "armSold": 13, "captureRate": 13.4, "rpc": 13.1}, {"name": "Mazolla", "role": "AJ", "washSales": 591, "armSold": 12, "captureRate": 12.24, "rpc": 15.66}], "344": [{"name": "Caroline", "role": "Ludyjan", "washSales": 932, "armSold": 25, "captureRate": 10.73, "rpc": 13.84, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Jose", "role": "Armendarez", "washSales": 2381, "armSold": 31, "captureRate": 28.44, "rpc": 65.31, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Christa", "role": "Spies", "washSales": 3052, "armSold": 66, "captureRate": 11.26, "rpc": 15.5, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 3.8, "retailPct": 2.7, "levelAsOf": "July"}, {"name": "Keyauna", "role": "McFarland", "washSales": 11644, "armSold": 273, "captureRate": 11.51, "rpc": 15.23, "currentLevel": 1, "neededForNextLevel": 11, "totalPct": 19.7, "retailPct": 23.6, "levelAsOf": "July"}, {"name": "Omarion", "role": "Jones", "washSales": 2089, "armSold": 45, "captureRate": 9.45, "rpc": 12.92, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Graham", "role": "Ogren", "washSales": 13327, "armSold": 229, "captureRate": 9.46, "rpc": 14.09}, {"name": "DeAndrae", "role": "Farr", "washSales": 4867, "armSold": 132, "captureRate": 16.5, "rpc": 14.61}, {"name": "Eiden", "role": "Johnson", "washSales": 5763, "armSold": 156, "captureRate": 13.73, "rpc": 14.7}, {"name": "Hennig", "role": "Blake", "washSales": 526, "armSold": 12, "captureRate": 12.9, "rpc": 15.44}, {"name": "Rodriguez", "role": "Cesar", "washSales": 323, "armSold": 4, "captureRate": 9.76, "rpc": -0.51}, {"name": "Padilla", "role": "Ryan", "washSales": 241, "armSold": 6, "captureRate": 11.32, "rpc": 17.98}, {"name": "Shahry", "role": "Ariana", "washSales": 1280, "armSold": 16, "captureRate": 6.32, "rpc": 16.42}, {"name": "Rafalowski", "role": "Gracie", "washSales": 887, "armSold": 17, "captureRate": 8.99, "rpc": 15.26}], "345": [{"name": "Torrez", "role": "Chris", "washSales": 12732, "armSold": 368, "captureRate": 17.39, "rpc": 13.15, "currentLevel": 2, "neededForNextLevel": 10, "totalPct": 18.7, "retailPct": 16.3, "levelAsOf": "July"}, {"name": "Dominguez", "role": "Ivan", "washSales": 30046, "armSold": 978, "captureRate": 14.63, "rpc": 13.37, "currentLevel": 3, "neededForNextLevel": 2, "totalPct": 32.6, "retailPct": 37.9, "levelAsOf": "July"}, {"name": "Lopez", "role": "Alex", "washSales": 1855, "armSold": 29, "captureRate": 5.77, "rpc": 14.16, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Keval", "role": "Nikhil", "washSales": 3421, "armSold": 108, "captureRate": 11.92, "rpc": 13.96, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Quiroga", "role": "Christian", "washSales": 3822, "armSold": 147, "captureRate": 16.78, "rpc": 13.21, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Paguese", "role": "Jay", "washSales": 13869, "armSold": 429, "captureRate": 15.2, "rpc": 14.71}, {"name": "Sanchez", "role": "Rubi", "washSales": 5766, "armSold": 272, "captureRate": 21.83, "rpc": 13.85}, {"name": "Bennett", "role": "Malaya", "washSales": 2542, "armSold": 65, "captureRate": 14.1, "rpc": 14.05}], "346": [{"name": "Torres", "role": "Jon", "washSales": 13072, "armSold": 382, "captureRate": 17.82, "rpc": 14.26, "currentLevel": 2, "neededForNextLevel": 18, "totalPct": 14.5, "retailPct": 18.2, "levelAsOf": "July"}, {"name": "Santiago", "role": "Christian", "washSales": 11188, "armSold": 414, "captureRate": 23.46, "rpc": 15.17, "currentLevel": 3, "neededForNextLevel": 14, "totalPct": 32.2, "retailPct": 33.5, "levelAsOf": "July"}, {"name": "Glazner", "role": "Josh", "washSales": 6470, "armSold": 123, "captureRate": 12.17, "rpc": 13.72, "currentLevel": 1, "neededForNextLevel": 24, "totalPct": 6.8, "retailPct": 6.1, "levelAsOf": "July"}, {"name": "Hileman", "role": "Mazzy", "washSales": 1659, "armSold": 23, "captureRate": 7.06, "rpc": 14.58, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Adams", "role": "Caleb", "washSales": 3103, "armSold": 83, "captureRate": 14.36, "rpc": 14.36, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Bias", "role": "Nyeia", "washSales": 2085, "armSold": 36, "captureRate": 8.91, "rpc": 13.11}, {"name": "Braun", "role": "Seth", "washSales": 3356, "armSold": 71, "captureRate": 11.36, "rpc": 14.64}, {"name": "Garcia", "role": "Emma", "washSales": 6528, "armSold": 195, "captureRate": 18.91, "rpc": 14.82}, {"name": "Baughman", "role": "Makienzie", "washSales": 2067, "armSold": 30, "captureRate": 10.2, "rpc": 13.47}, {"name": "Gonzalez", "role": "Israel", "washSales": 2637, "armSold": 57, "captureRate": 15.08, "rpc": 13.7}, {"name": "Jefferson", "role": "JD", "washSales": 873, "armSold": 16, "captureRate": 12.31, "rpc": 13.02}, {"name": "Pena", "role": "Koko", "washSales": 2224, "armSold": 65, "captureRate": 20.44, "rpc": 10.72}, {"name": "Koon", "role": "Paige", "washSales": 770, "armSold": 15, "captureRate": 13.27, "rpc": 12.76}], "347": [{"name": "Hallcy", "role": "Deandre", "washSales": 19603, "armSold": 694, "captureRate": 13.8, "rpc": 15.24, "currentLevel": 3, "neededForNextLevel": 22, "totalPct": 26.9, "retailPct": 32.1, "levelAsOf": "July"}, {"name": "Fall", "role": "Abdoulaye", "washSales": 9116, "armSold": 311, "captureRate": 14.82, "rpc": 16.54, "currentLevel": 1, "neededForNextLevel": 4, "totalPct": 17.8, "retailPct": 16.2, "levelAsOf": "July"}, {"name": "Narbayev", "role": "Akbar", "washSales": 7804, "armSold": 195, "captureRate": 11.34, "rpc": 15.71, "currentLevel": 1, "neededForNextLevel": 13, "totalPct": 9.0, "retailPct": 9.5, "levelAsOf": "July"}, {"name": "Knox", "role": "Kylie", "washSales": 13502, "armSold": 273, "captureRate": 8.5, "rpc": 15.49, "currentLevel": 1, "neededForNextLevel": 27, "totalPct": 13.0, "retailPct": 12.4, "levelAsOf": "July"}, {"name": "Hicks", "role": "Brad", "washSales": 7610, "armSold": 71, "captureRate": 6.08, "rpc": 14.24, "currentLevel": 1, "neededForNextLevel": 27, "totalPct": 9.3, "retailPct": 4.6, "levelAsOf": "July"}, {"name": "Hill", "role": "Jacob", "washSales": 2639, "armSold": 91, "captureRate": 16.61, "rpc": 12.29}, {"name": "Hagen", "role": "Joshua", "washSales": 3296, "armSold": 35, "captureRate": 6.53, "rpc": 13.28}, {"name": "Sarr", "role": "Jamil", "washSales": 2783, "armSold": 85, "captureRate": 15.77, "rpc": 14.42}, {"name": "Miranda", "role": "Ryan", "washSales": 4496, "armSold": 114, "captureRate": 11.5, "rpc": 15.78}, {"name": "Swetlik", "role": "Zack", "washSales": 579, "armSold": 19, "captureRate": 13.67, "rpc": 27.46}], "348": [{"name": "Cass", "role": "SA", "washSales": 9528, "armSold": 271, "captureRate": 12.81, "rpc": 14.28, "currentLevel": 1, "neededForNextLevel": 17, "totalPct": 10.7, "retailPct": 13.3, "levelAsOf": "July"}, {"name": "Christine", "role": "SA", "washSales": 1732, "armSold": 31, "captureRate": 7.75, "rpc": 14.46, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 3.2, "retailPct": 3.7, "levelAsOf": "July"}, {"name": "Zach", "role": "AGM", "washSales": 1705, "armSold": 41, "captureRate": 18.81, "rpc": 10.96, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Jay", "role": "SGM", "washSales": 2402, "armSold": 51, "captureRate": 11.09, "rpc": 14.18, "currentLevel": 1, "neededForNextLevel": 25, "totalPct": 4.1, "retailPct": 1.9, "levelAsOf": "July"}, {"name": "Tristin", "role": "SA", "washSales": 4446, "armSold": 82, "captureRate": 8.81, "rpc": 14.79, "currentLevel": 1, "neededForNextLevel": 25, "totalPct": 6.4, "retailPct": 6.6, "levelAsOf": "July"}, {"name": "Jordan", "role": "TL", "washSales": 4517, "armSold": 117, "captureRate": 12.25, "rpc": 13.36}, {"name": "Luke F", "role": "SA", "washSales": 4887, "armSold": 168, "captureRate": 16.34, "rpc": 13.23}, {"name": "Peter", "role": "SA", "washSales": 3191, "armSold": 115, "captureRate": 16.74, "rpc": 14.0}, {"name": "Ayden", "role": "SA", "washSales": 2968, "armSold": 94, "captureRate": 14.44, "rpc": 14.52}, {"name": "Nevo", "role": "SA", "washSales": 3320, "armSold": 211, "captureRate": 31.92, "rpc": 15.87}, {"name": "Maria", "role": "AGM", "washSales": 928, "armSold": 44, "captureRate": 22.92, "rpc": 13.56}, {"name": "Katie", "role": "SA", "washSales": 1451, "armSold": 41, "captureRate": 13.44, "rpc": 15.45}, {"name": "Cat", "role": "SA", "washSales": 1788, "armSold": 32, "captureRate": 8.56, "rpc": 14.42}], "349": [{"name": "Owen", "role": "Luke", "washSales": 6414, "armSold": 141, "captureRate": 10.89, "rpc": -25.99, "currentLevel": 1, "neededForNextLevel": 23, "totalPct": 14.0, "retailPct": 10.3, "levelAsOf": "July"}, {"name": "Lucas", "role": "Omar", "washSales": 5527, "armSold": 54, "captureRate": 5.29, "rpc": 15.99, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 6.7, "retailPct": -5.1, "levelAsOf": "July"}, {"name": "Northington", "role": "Sam", "washSales": 1308, "armSold": 7, "captureRate": 2.93, "rpc": 15.29, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Sanchez", "role": "Jaxsen", "washSales": 4150, "armSold": 128, "captureRate": 14.92, "rpc": 13.19, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 6.0, "retailPct": 3.8, "levelAsOf": "July"}, {"name": "Choat", "role": "Houston", "washSales": 2287, "armSold": 22, "captureRate": 4.21, "rpc": 14.68, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 3.5, "retailPct": 4.5, "levelAsOf": "July"}, {"name": "Snodgrass", "role": "Alli", "washSales": 1623, "armSold": 24, "captureRate": 6.82, "rpc": 14.91}, {"name": "Wright", "role": "Emerson", "washSales": 2025, "armSold": 18, "captureRate": 4.38, "rpc": 14.18}, {"name": "Rivera", "role": "Isabella", "washSales": 434, "armSold": 8, "captureRate": 8.25, "rpc": 9.1}, {"name": "Herrera", "role": "Keane", "washSales": 4171, "armSold": 97, "captureRate": 10.15, "rpc": 42.47}, {"name": "Bikes", "role": "Lukas", "washSales": 2165, "armSold": 41, "captureRate": 7.58, "rpc": 14.64}, {"name": "Runkel", "role": "Cooper", "washSales": 5420, "armSold": 117, "captureRate": 11.57, "rpc": 14.43}], "352": [{"name": "Marcus", "role": "SGM", "washSales": 8310, "armSold": 249, "captureRate": 10.47, "rpc": 0, "currentLevel": 2, "neededForNextLevel": 5, "totalPct": 24.2, "retailPct": 28.3, "levelAsOf": "July"}, {"name": "Merina", "role": "AGM", "washSales": 8506, "armSold": 222, "captureRate": 8.88, "rpc": 0, "currentLevel": 2, "neededForNextLevel": 4, "totalPct": 31.9, "retailPct": 32.1, "levelAsOf": "July"}, {"name": "Colton", "role": "SA", "washSales": 11006, "armSold": 202, "captureRate": 5.69, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 14, "totalPct": 10.6, "retailPct": 9.9, "levelAsOf": "July"}, {"name": "Jaime", "role": "SA", "washSales": 5148, "armSold": 61, "captureRate": 4.13, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Brett", "role": "SA", "washSales": 53, "armSold": 2, "captureRate": 14.29, "rpc": 0}, {"name": "Jon", "role": "SA", "washSales": 1453, "armSold": 25, "captureRate": 5.81, "rpc": 0}, {"name": "Grace", "role": "SA", "washSales": 616, "armSold": 19, "captureRate": 12.26, "rpc": 0}, {"name": "Malachi", "role": "SA", "washSales": 4406, "armSold": 199, "captureRate": 15.18, "rpc": 0}], "354": [{"name": "Oliver Ramirez", "role": "CST", "washSales": 1765, "armSold": 42, "captureRate": 8.14, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Ariyonna Gallman", "role": "CST", "washSales": 2339, "armSold": 41, "captureRate": 6.19, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 28, "totalPct": 5.9, "retailPct": 6.8, "levelAsOf": "July"}, {"name": "Kerri McIrvin", "role": "SA", "washSales": 1299, "armSold": 27, "captureRate": 6.87, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Monica Norman", "role": "SA", "washSales": 2983, "armSold": 61, "captureRate": 6.02, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Jesus Luna", "role": "CSL", "washSales": 1682, "armSold": 34, "captureRate": 6.85, "rpc": 0, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 5.5, "retailPct": 5.9, "levelAsOf": "July"}, {"name": "Isaiah  Sauls", "role": "TL", "washSales": 3120, "armSold": 67, "captureRate": 6.86, "rpc": 0}, {"name": "Sonia Mendez", "role": "AGM", "washSales": 1137, "armSold": 28, "captureRate": 7.2, "rpc": 0}, {"name": "Blanca Claudio", "role": "SGM", "washSales": 4845, "armSold": 137, "captureRate": 9.16, "rpc": 0}, {"name": "Mikayla Strelsky", "role": "SA", "washSales": 4276, "armSold": 82, "captureRate": 6.75, "rpc": 0}, {"name": "John Magana", "role": "AGM", "washSales": 1234, "armSold": 25, "captureRate": 7.53, "rpc": 0}, {"name": "Natasha", "role": "SA", "washSales": 1602, "armSold": 37, "captureRate": 7.92, "rpc": 0}, {"name": "Mariana", "role": "SA", "washSales": 1403, "armSold": 25, "captureRate": 6.44, "rpc": 0}, {"name": "Luis", "role": "SA", "washSales": 979, "armSold": 40, "captureRate": 13.56, "rpc": 0}], "358": [{"name": "Jose", "role": "SAL", "washSales": 8797, "armSold": 140, "captureRate": 9.23, "rpc": 16.36, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Daniel", "role": "TL", "washSales": 3710, "armSold": 31, "captureRate": 3.94, "rpc": 15.88, "currentLevel": 1, "neededForNextLevel": 30, "totalPct": null, "retailPct": null, "levelAsOf": "July"}, {"name": "Sam", "role": "SA", "washSales": 2019, "armSold": 45, "captureRate": 9.3, "rpc": 14.37, "currentLevel": 1, "neededForNextLevel": 22, "totalPct": 5.0, "retailPct": 4.1, "levelAsOf": "July"}, {"name": "Eili", "role": "SA", "washSales": 13063, "armSold": 286, "captureRate": 11.26, "rpc": 17.35, "currentLevel": 1, "neededForNextLevel": 3, "totalPct": 21.5, "retailPct": 22.7, "levelAsOf": "July"}, {"name": "Nathan", "role": "SA", "washSales": 3171, "armSold": 41, "captureRate": 12.69, "rpc": 28.54}, {"name": "Isaac", "role": "SGM", "washSales": 484, "armSold": 13, "captureRate": 12.62, "rpc": 14.54}, {"name": "LD", "role": "SA", "washSales": 11676, "armSold": 445, "captureRate": 18.78, "rpc": 14.6}, {"name": "Lynn", "role": "CST", "washSales": 875, "armSold": 14, "captureRate": 9.52, "rpc": 15.28}, {"name": "Robert", "role": "SA", "washSales": 343, "armSold": 13, "captureRate": 19.12, "rpc": 14.93}], "359": [{"name": "Tolofari", "role": "Bara", "washSales": 15434, "armSold": 567, "captureRate": 19.05, "rpc": 15.1, "currentLevel": 2, "neededForNextLevel": 9, "totalPct": 27.0, "retailPct": 24.6, "levelAsOf": "July"}, {"name": "Rocha", "role": "Jackson", "washSales": 7752, "armSold": 325, "captureRate": 21.8, "rpc": 15.1, "currentLevel": 1, "neededForNextLevel": 26, "totalPct": 6.8, "retailPct": 5.9, "levelAsOf": "July"}, {"name": "Riley", "role": "Alyssa", "washSales": 15528, "armSold": 329, "captureRate": 11.74, "rpc": 16.13, "currentLevel": 3, "neededForNextLevel": 21, "totalPct": 31.4, "retailPct": 34.6, "levelAsOf": "July"}, {"name": "Beaman", "role": "Logan", "washSales": 4885, "armSold": 137, "captureRate": 11.01, "rpc": 11.59, "currentLevel": 3, "neededForNextLevel": 10, "totalPct": 23.1, "retailPct": 21.7, "levelAsOf": "July"}]};
 const REPORTING_ACCURACY = {"348": [{"name": "Cass", "month": "January", "type": "under", "value": 14}, {"name": "Cass", "month": "February", "type": "under", "value": 77}, {"name": "Cass", "month": "March", "type": "under", "value": 59}, {"name": "Christine", "month": "January", "type": "under", "value": 4}, {"name": "Christine", "month": "February", "type": "under", "value": 2}, {"name": "Christine", "month": "March", "type": "under", "value": 10}, {"name": "Zach", "month": "January", "type": "over", "value": 9}, {"name": "Zach", "month": "February", "type": "error", "value": null}, {"name": "Zach", "month": "March", "type": "under", "value": 24}, {"name": "Jay", "month": "January", "type": "under", "value": 5}, {"name": "Jay", "month": "February", "type": "under", "value": 10}, {"name": "Jay", "month": "March", "type": "under", "value": 13}, {"name": "Tristin", "month": "January", "type": "under", "value": 1}, {"name": "Tristin", "month": "February", "type": "under", "value": 4}, {"name": "Tristin", "month": "March", "type": "under", "value": 33}, {"name": "Jordan", "month": "January", "type": "under", "value": 39}, {"name": "Jordan", "month": "February", "type": "under", "value": 32}, {"name": "Jordan", "month": "March", "type": "under", "value": 7}, {"name": "Luke F", "month": "January", "type": "over", "value": 3}, {"name": "Luke F", "month": "February", "type": "under", "value": 7}, {"name": "Luke F", "month": "March", "type": "under", "value": 59}, {"name": "Peter", "month": "January", "type": "under", "value": 8}, {"name": "Peter", "month": "February", "type": "under", "value": 53}, {"name": "Peter", "month": "March", "type": "under", "value": 24}, {"name": "Ayden", "month": "January", "type": "error", "value": null}, {"name": "Ayden", "month": "February", "type": "under", "value": 17}, {"name": "Ayden", "month": "March", "type": "under", "value": 51}, {"name": "Nevo", "month": "January", "type": "error", "value": null}, {"name": "Nevo", "month": "February", "type": "error", "value": null}, {"name": "Nevo", "month": "March", "type": "error", "value": null}], "354": [{"name": "Oliver Ramirez", "month": "January", "type": "under", "value": 1}, {"name": "Oliver Ramirez", "month": "February", "type": "under", "value": 2}, {"name": "Oliver Ramirez", "month": "March", "type": "under", "value": 22}, {"name": "Ariyonna Gallman", "month": "January", "type": "under", "value": 2}, {"name": "Ariyonna Gallman", "month": "February", "type": "under", "value": 6}, {"name": "Ariyonna Gallman", "month": "March", "type": "under", "value": 5}, {"name": "Kerri McIrvin", "month": "January", "type": "equal", "value": 0}, {"name": "Kerri McIrvin", "month": "February", "type": "under", "value": 7}, {"name": "Kerri McIrvin", "month": "March", "type": "under", "value": 13}, {"name": "Monica Norman", "month": "January", "type": "under", "value": 5}, {"name": "Monica Norman", "month": "February", "type": "under", "value": 18}, {"name": "Monica Norman", "month": "March", "type": "under", "value": 19}, {"name": "Jesus Luna", "month": "January", "type": "under", "value": 2}, {"name": "Jesus Luna", "month": "February", "type": "under", "value": 3}, {"name": "Jesus Luna", "month": "March", "type": "under", "value": 6}, {"name": "Isaiah  Sauls", "month": "January", "type": "over", "value": 4}, {"name": "Isaiah  Sauls", "month": "February", "type": "under", "value": 15}, {"name": "Isaiah  Sauls", "month": "March", "type": "under", "value": 3}, {"name": "Sonia Mendez", "month": "January", "type": "under", "value": 4}, {"name": "Sonia Mendez", "month": "February", "type": "under", "value": 8}, {"name": "Sonia Mendez", "month": "March", "type": "error", "value": null}, {"name": "Blanca Claudio", "month": "January", "type": "under", "value": 13}, {"name": "Blanca Claudio", "month": "February", "type": "under", "value": 11}, {"name": "Blanca Claudio", "month": "March", "type": "under", "value": 8}, {"name": "Mikayla Strelsky", "month": "January", "type": "error", "value": null}, {"name": "Mikayla Strelsky", "month": "February", "type": "error", "value": null}, {"name": "Mikayla Strelsky", "month": "March", "type": "under", "value": 30}, {"name": "John Magana", "month": "January", "type": "error", "value": null}, {"name": "John Magana", "month": "February", "type": "error", "value": null}, {"name": "John Magana", "month": "March", "type": "error", "value": null}]};
+
+// Per-employee capture rate by month (Jan-Jul, real data from each site's monthly
+// Scorecard rows), used for the individual capture-rate scoreboard.
+const STAFF_MONTHLY_CAPTURE = {"319":{"Jayare":[0,0,0,0,4.52,5.56,4.94],"Raeden":[6.19,5.79,10.75,10.16,13.59,10.38,7.14],"Daniel":[9.42,13.28,13.01,14.75,9.4,0,16.67],"Marina":[0,0,0,8.89,5.46,10.83,12.0],"James":[9.0,15.86,12.63,9.76,12.0,14.41,12.64],"Miah":[0,12.7,10.46,12.96,11.89,8.6,15.66],"Kavares":[1.27,5.34,7.55,10.53,3.41,4.65,2.38],"Julius":[9.09,10.81,13.7,4.65,7.69,0,0]},"341":{"Parker":[10.46,11.07,0,0,0,0,0],"ugarte":[13.66,11.8,8.97,0,0,0,0],"Watson":[12.5,14.97,13.19,14.47,5.81,0,0],"Nusbaum":[22.46,25.58,17.92,18.71,16.76,16.07,0],"Kewish":[6.72,6.15,12.12,7.11,6.85,0,0],"Brown":[17.58,7.63,10.54,10.16,0,0,0],"Mendoza":[8.27,8.63,17.07,7.07,8.31,0,0],"Daniels":[0,13.84,11.63,14.48,18.78,13.9,19.51],"Thomas":[0,0,0,0,9.88,15.09,18.81],"Williams":[0,0,0,0,16.28,16.84,23.96],"Sebastian":[0,0,0,0,24.14,11.95,3.51],"Sandoval":[0,0,0,0,0,16.3,16.77]},"342":{"Pierson":[19.04,17.72,15.17,17.58,19.04,19.72,15.28],"Epstein":[13.41,15.95,12.77,12.5,14.34,0,0],"Tolofari":[8.09,12.18,9.79,13.89,0,0,0],"Gates":[12.12,13.04,10.81,26.67,26.67,7.69,17.86],"Coker":[8.81,7.69,16.47,25.0,22.81,8.43,13.11],"Bowman":[14.29,17.21,13.11,16.81,9.83,13.62,15.29],"Margrum":[0,0,0,14.81,13.14,12.21,15.75],"Robinson":[0,0,0,0,0,8.33,5.36]},"343":{"Bodkins":[8.72,3.98,-14.77,12.93,10.6,5.71,12.16],"allen":[0,0,0,0,0,37.93,18.18],"Ojeda":[16.72,14.17,13.82,10.5,14.15,16.52,15.45],"Martinez":[0,0,0,0,0,12.88,11.27],"Gjonaj":[0,0,0,0,0,0,9.38],"Combs":[0,0,0,0,27.06,7.66,5.93],"Stokes":[0,0,0,15.38,6.25,12.24,0],"Botello":[0,0,0,30.43,10.0,7.69,5.56],"Mazolla":[0,0,0,0,8.77,17.07,0]},"344":{"Caroline":[13.92,4.0,0,0,0,0,0],"Jose":[9.66,9.8,0,0,6.67,0,0],"Christa":[11.83,7.95,14.43,21.05,10.99,10.23,9.09],"Keyauna":[14.94,9.86,13.79,13.64,7.44,10.5,9.9],"Omarion":[10.58,5.94,9.9,0,0,0,0],"Graham":[9.05,8.44,9.09,9.31,9.18,13.52,7.07],"DeAndrae":[18.07,15.12,17.65,19.1,11.8,18.06,17.24],"Eiden":[0,27.75,12.11,14.29,8.21,0,0],"Hennig":[0,0,10.47,42.86,0,0,0],"Rodriguez":[0,0,0,9.76,0,0,0],"Padilla":[0,0,0,0,0,10.64,16.67],"Shahry":[0,0,0,0,0,6.04,6.73],"Rafalowski":[0,0,0,0,0,0,9.29]},"345":{"Torrez":[18.1,14.56,14.0,23.61,18.46,20.06,16.33],"Dominguez":[12.58,11.54,18.11,13.09,16.73,15.99,12.83],"Lopez":[5.21,7.25,0,0,0,0,0],"Keval":[7.07,14.29,12.75,20.99,0,0,0],"Quiroga":[11.44,19.16,26.43,0,0,0,0],"Paguese":[8.63,10.8,16.54,18.0,15.6,18.63,17.27],"Sanchez":[0,6.25,0,0,19.4,25.67,23.11],"Bennett":[0,0,0,0,0,14.21,11.67]},"346":{"Torres":[13.28,19.09,16.16,16.33,22.17,19.89,20.65],"Santiago":[30.53,28.07,22.8,20.96,19.48,21.81,21.4],"Glazner":[9.84,8.79,13.04,13.64,18.52,14.07,11.54],"Hileman":[6.45,8.97,0,0,0,0,0],"Adams":[20.0,9.9,12.05,15.07,16.9,25.0,0],"Bias":[9.75,7.44,0,0,0,0,0],"Braun":[10.07,6.57,13.92,0,22.73,2.74,19.05],"Garcia":[0,0,15.05,17.39,30.72,20.86,26.53],"Baughman":[0,0,0,12.41,8.05,0,0],"Gonzalez":[0,0,0,0,15.33,14.53,0],"Jefferson":[0,0,0,0,14.1,9.62,0],"Pena":[0,0,0,25.76,46.15,22.11,11.45],"Koon":[0,0,0,0,0,0,14.42]},"347":{"Hallcy":[13.34,14.64,11.61,17.3,13.89,15.85,12.35],"Fall":[11.08,8.33,15.23,22.29,16.57,15.34,11.98],"Narbayev":[11.84,7.79,8.15,13.56,16.08,12.04,13.39],"Knox":[8.89,10.26,8.14,6.94,0,8.15,1.82],"Hicks":[6.27,4.76,9.38,5.22,6.94,6.49,4.84],"Hill":[12.57,13.61,19.54,25.86,19.67,0,41.67],"Hagen":[3.76,5.13,6.54,16.33,13.95,3.85,0],"Sarr":[0,0,6.38,16.06,15.45,22.73,0],"Miranda":[0,0,0,19.67,12.41,10.06,9.48],"Swetlik":[0,0,0,0,0,15.22,12.9]},"348":{"Cass":[12.5,15.34,11.17,11.46,11.02,19.44,11.4],"Christine":[4.67,6.9,17.54,0,6.56,7.41,6.25],"Zach":[13.04,0,33.8,20.0,0,0,0],"Jay":[5.79,7.69,10.57,22.73,20.0,100,31.25],"Tristin":[10.17,10.0,11.22,7.18,7.05,6.85,8.77],"Jordan":[10.47,10.13,12.96,14.29,20.55,20.0,30.0],"Luke F":[12.16,11.29,22.18,25.0,16.25,16.67,0],"Peter":[10.22,24.09,14.63,18.89,7.41,0,0],"Ayden":[0,12.06,17.06,13.12,9.8,0,0],"Nevo":[0,0,0,0,26.27,34.84,35.65],"Maria":[0,0,0,0,25.0,26.98,18.82],"Katie":[0,0,0,0,9.52,14.81,13.75],"Cat":[0,0,0,0,12.14,5.52,5.36]},"349":{"Owen":[8.71,12.32,10.75,18.0,11.59,14.4,7.87],"Lucas":[4.55,2.37,5.74,6.86,5.21,8.22,-4.55],"Northington":[3.95,1.15,0,0,0,0,0],"Sanchez":[10.38,5.62,30.19,29.03,23.66,21.19,6.06],"Choat":[1.56,4.73,9.09,0,3.85,2.7,5.13],"Snodgrass":[7.18,13.33,6.58,0,11.76,0,0],"Wright":[3.39,4.94,5.0,5.17,5.88,8.33,0],"Rivera":[9.21,4.76,0,0,0,0,0],"Herrera":[0,9.85,10.97,14.46,9.95,4.88,8.0],"Bikes":[0,2.14,12.88,0,6.78,12.64,6.58],"Runkel":[0,0,9.61,14.68,12.98,9.03,17.14]},"352":{"Marcus":[9.14,12.57,8.51,12.0,11.34,11.72,9.55],"Merina":[8.62,7.82,14.57,0,8.97,7.44,8.61],"Colton":[3.92,6.6,8.05,0,0,5.53,9.7],"Jaime":[5.73,4.68,3.28,3.85,0,0,0],"Brett":[0,0,0,14.29,0,0,0],"Jon":[0,4.98,4.83,10.94,0,0,0],"Grace":[0,0,0,0,12.26,0,0],"Malachi":[0,0,0,0,23.33,14.13,0]},"354":{"Oliver Ramirez":[2.7,4.88,8.8,10.2,7.78,0,0],"Ariyonna Gallman":[8.74,11.11,4.31,0,5.29,6.9,4.08],"Kerri McIrvin":[1.67,10.77,6.88,7.59,0,0,0],"Monica Norman":[6.35,7.11,6.15,5.26,1.33,0,0],"Jesus Luna":[12.5,4.69,6.59,6.06,4.72,7.69,9.3],"Isaiah  Sauls":[7.37,7.11,3.3,7.69,8.22,6.12,0],"Sonia Mendez":[7.09,7.48,0,0,0,0,0],"Blanca Claudio":[8.89,6.83,6.45,5.39,9.42,11.08,12.89],"Mikayla Strelsky":[0,0,7.52,5.47,6.81,8.6,8.77],"John Magana":[0,0,0,2.56,6.78,6.9,21.43],"Natasha":[0,0,0,0,8.87,7.39,8.14],"Mariana":[0,0,0,0,2.38,6.35,8.51],"Luis":[0,0,0,0,0,4.92,15.81]},"358":{"Jose":[6.59,9.12,9.03,-68.75,8.17,2.97,0],"Daniel":[2.89,0,3.26,-133.33,6.06,3.8,0],"Sam":[7.28,3.53,9.68,27.27,50.0,10.19,13.11],"Eili":[6.53,12.0,9.86,-100,10.71,10.56,8.08],"Nathan":[1.79,3.09,7.75,-92.0,5.66,0,0],"Isaac":[0,0,0,0,7.69,16.13,6.67],"LD":[0,0,0,0,19.48,18.26,18.34],"Lynn":[0,0,0,0,10.81,7.55,10.0],"Robert":[0,0,0,0,0,0,19.12]},"359":{"Tolofari":[20.58,18.88,21.88,19.14,14.41,14.68,17.37],"Rocha":[21.93,25.96,23.8,18.29,15.62,13.82,7.02],"Beaman":[10.93,1.89,13.51,0,0,0,31.25]}};
+const STAFF_CAPTURE_MONTHS = ["January", "February", "March", "April", "May", "June", "July"];
 
 const fmtUSD = n => "$" + Math.round(n).toLocaleString("en-US");
 const fmtNum = n => Math.round(n).toLocaleString("en-US");
@@ -615,6 +654,15 @@ function isNotDecreasing(series, idxs) {
   if (lastIdx === 0) return true;
   return series[lastIdx] >= series[lastIdx - 1] - 0.001;
 }
+// Unweighted rolling 4-week average — closest approximation to a Rinsed-style
+// rolling NPS metric without API access to weight by response volume.
+function rolling4(series) {
+  return series.map((_, i) => {
+    const start = Math.max(0, i - 3);
+    const slice = series.slice(start, i + 1);
+    return +(slice.reduce((a, b) => a + b, 0) / slice.length).toFixed(2);
+  });
+}
 
 function aggregateSiteOverview(code, idxs) {
   const fin = WEEKLY_FIN[code];
@@ -628,27 +676,37 @@ function aggregateSiteOverview(code, idxs) {
 
 function computeStandards(code, idxs) {
   const r = RECAP[code];
+  const endIdx = Math.max(...idxs);
   const hoursAvg = avg(r.hours, idxs);
   const otAvg = avg(r.overtime, idxs);
   const glAvg = avg(r.goLearn, idxs);
   const rcAvg = avg(r.reviewCount, idxs);
   const rsAvg = avg(r.reviewStars, idxs);
-  const npsAvg = avg(r.nps, idxs);
+  const npsRolling = rolling4(r.nps);
+  const npsAvg = npsRolling[endIdx];
   const crAvg = avg(r.captureRate, idxs);
   const ngSum = sum(r.netGains, idxs);
   const bh = BH_STANDARD[code];
   const rsDecreasing = !isNotDecreasing(r.reviewStars, idxs);
   const crDecreasing = !isNotDecreasing(r.captureRate, idxs);
-  return [
+  const rows = [
     { label: "Weekly Labor Hours", actual: hoursAvg.toFixed(1), standard: bh.toFixed(1) + " target", bad: hoursAvg > bh },
     { label: "Overtime Hours", actual: otAvg.toFixed(1), standard: "≤ 10", bad: otAvg > 10 },
     { label: "GO Learn Completion", actual: glAvg.toFixed(0) + "%", standard: "≥ 95%", bad: glAvg < 95 },
     { label: "Review Count", actual: rcAvg.toFixed(1), standard: "≥ 10 / wk", bad: rcAvg < 10 },
     { label: "Review Stars", actual: rsAvg.toFixed(2), standard: "≥ 3.5, not decreasing", bad: rsAvg < 3.5 || rsDecreasing },
-    { label: "Customer NPS", actual: npsAvg.toFixed(1), standard: "≥ 50", bad: npsAvg < 50 },
+    { label: "Customer NPS (4-wk avg)", actual: npsAvg.toFixed(1), standard: "≥ 50", bad: npsAvg < 50 },
     { label: "Capture Rate", actual: crAvg.toFixed(2) + "%", standard: "≥ 12%, not decreasing", bad: crAvg < 12 || crDecreasing },
     { label: "Net Membership Gains", actual: (ngSum >= 0 ? "+" : "") + ngSum, standard: "> 0", bad: ngSum <= 0 },
   ];
+  rows.forEach((row, i) => {
+    const def = METRIC_DEFS[i];
+    const series = def.getSeries(code);
+    const info = computeTrendInfo(series, v => def.isBad(v, code), def.better);
+    row.streak = info.streak;
+    row.trendText = formatTrendText(info, def);
+  });
+  return rows;
 }
 
 // ---------- Tab switching ----------
@@ -900,7 +958,7 @@ function renderSiteDetail(code) {
     tr.classList.add(r.bad ? "flag-row-bad" : "flag-row-good");
     const pillClass = r.bad ? "status-bad" : "status-good";
     const pillText = r.bad ? "Below Standard" : "Meets Standard";
-    tr.innerHTML = `<td>${r.label}</td><td class="num">${r.actual}</td><td class="num">${r.standard}</td><td><span class="status-pill ${pillClass}">${pillText}</span></td>`;
+    tr.innerHTML = `<td>${r.label}</td><td class="num">${r.actual}</td><td class="num">${r.standard}</td><td><span class="status-pill ${pillClass}">${pillText}</span></td><td>${r.trendText}</td>`;
     tbody.appendChild(tr);
   });
 
@@ -908,10 +966,10 @@ function renderSiteDetail(code) {
   const hoursSeries = RECAP[code].hours;
   const t = RECAP[code];
   const latestCapture = t.captureRate[t.captureRate.length - 1];
-  const latestNps = t.nps[t.nps.length - 1];
-  const avgNps4 = +(t.nps.slice(-4).reduce((a, b) => a + b, 0) / 4).toFixed(1);
+  const npsRollingFull = rolling4(t.nps);
+  const latestNpsRolling = npsRollingFull[npsRollingFull.length - 1];
   document.getElementById("captureTrendStat").innerHTML = `Latest week: <b>${latestCapture}%</b> · 28-week range: ${Math.min(...t.captureRate)}% – ${Math.max(...t.captureRate)}%`;
-  document.getElementById("npsTrendStat").innerHTML = `Latest week: <b>${latestNps}</b> · 4-week avg: <b>${avgNps4}</b>`;
+  document.getElementById("npsTrendStat").innerHTML = `Latest 4-wk avg: <b>${latestNpsRolling.toFixed(1)}</b> · 28-week range: ${Math.min(...npsRollingFull).toFixed(1)} – ${Math.max(...npsRollingFull).toFixed(1)}`;
 
   if (CHARTS_AVAILABLE) {
     if (laborChartInstance) laborChartInstance.destroy();
@@ -951,7 +1009,7 @@ function renderSiteDetail(code) {
       type: "line",
       data: {
         labels: WEEK_SHORT_LABELS,
-        datasets: [{ label: "NPS", data: t.nps, borderColor: COLOR_ORANGE, backgroundColor: "rgba(241,82,30,0.08)", fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
+        datasets: [{ label: "NPS (4-wk avg)", data: npsRollingFull, borderColor: COLOR_ORANGE, backgroundColor: "rgba(241,82,30,0.08)", fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
       },
       options: {
         plugins: { legend: { display: false } },
@@ -1057,14 +1115,22 @@ function renderStaffView(code) {
 
 // ================= EXCEPTIONS =================
 const METRIC_DEFS = [
-  { key: "hours", label: "Weekly Labor Hours", isBad: (v, code) => v > BH_STANDARD[code] },
-  { key: "overtime", label: "Overtime Hours", isBad: v => v > 10 },
-  { key: "goLearn", label: "GO Learn Completion", isBad: v => v < 95 },
-  { key: "reviewCount", label: "Review Count", isBad: v => v < 10 },
-  { key: "reviewStars", label: "Review Stars", isBad: v => v < 3.5 },
-  { key: "nps", label: "Customer NPS", isBad: v => v < 50 },
-  { key: "captureRate", label: "Capture Rate", isBad: v => v < 12 },
-  { key: "netGains", label: "Net Membership Gains", isBad: v => v <= 0 },
+  { key: "hours", label: "Weekly Labor Hours", isBad: (v, code) => v > BH_STANDARD[code], better: -1,
+    getSeries: code => RECAP[code].hours, fmt: v => v.toFixed(1), deltaFmt: v => (v >= 0 ? "+" : "") + v.toFixed(1) + " hrs" },
+  { key: "overtime", label: "Overtime Hours", isBad: v => v > 10, better: -1,
+    getSeries: code => RECAP[code].overtime, fmt: v => v.toFixed(1), deltaFmt: v => (v >= 0 ? "+" : "") + v.toFixed(1) + " hrs" },
+  { key: "goLearn", label: "GO Learn Completion", isBad: v => v < 95, better: 1,
+    getSeries: code => RECAP[code].goLearn, fmt: v => Math.round(v) + "%", deltaFmt: v => (v >= 0 ? "+" : "") + Math.round(v) + " pts" },
+  { key: "reviewCount", label: "Review Count", isBad: v => v < 10, better: 1,
+    getSeries: code => RECAP[code].reviewCount, fmt: v => v.toFixed(1), deltaFmt: v => (v >= 0 ? "+" : "") + v.toFixed(1) },
+  { key: "reviewStars", label: "Review Stars", isBad: v => v < 3.5, better: 1,
+    getSeries: code => RECAP[code].reviewStars, fmt: v => v.toFixed(2), deltaFmt: v => (v >= 0 ? "+" : "") + v.toFixed(2) },
+  { key: "nps", label: "Customer NPS (4-wk avg)", isBad: v => v < 50, better: 1,
+    getSeries: code => rolling4(RECAP[code].nps), fmt: v => v.toFixed(1), deltaFmt: v => (v >= 0 ? "+" : "") + v.toFixed(1) + " pts" },
+  { key: "captureRate", label: "Capture Rate", isBad: v => v < 12, better: 1,
+    getSeries: code => RECAP[code].captureRate, fmt: v => v.toFixed(2) + "%", deltaFmt: v => (v >= 0 ? "+" : "") + v.toFixed(2) + " pts" },
+  { key: "netGains", label: "Net Membership Gains", isBad: v => v <= 0, better: 1,
+    getSeries: code => RECAP[code].netGains, fmt: v => (v >= 0 ? "+" : "") + Math.round(v), deltaFmt: v => (v >= 0 ? "+" : "") + Math.round(v) },
 ];
 const MONTH_ORDER = ["January", "February", "March"];
 
@@ -1077,20 +1143,50 @@ function computeStreak(series, isBadFn) {
   return streak;
 }
 
+// Combines streak length + week-over-week / run-length change into one
+// direction read ("improving" / "worsening" / "flat"), respecting each
+// metric's polarity (better = +1 if higher is good, -1 if lower is good).
+function computeTrendInfo(series, isBadFn, better) {
+  const lastIdx = series.length - 1;
+  const current = series[lastIdx];
+  const streak = computeStreak(series, isBadFn);
+  const prev = lastIdx > 0 ? series[lastIdx - 1] : null;
+  const change = prev !== null ? +(current - prev).toFixed(2) : null;
+  let runChange = null;
+  if (streak > 1) {
+    const startIdx = Math.max(0, lastIdx - streak);
+    runChange = +(current - series[startIdx]).toFixed(2);
+  }
+  const basisChange = runChange !== null ? runChange : change;
+  let direction = "flat";
+  if (basisChange !== null) {
+    const signed = basisChange * better;
+    direction = signed > 0.001 ? "improving" : signed < -0.001 ? "worsening" : "flat";
+  }
+  return { current, prev, change, streak, runChange, direction };
+}
+
+function formatTrendText(info, def) {
+  if (info.streak > 1 && info.runChange !== null) {
+    return `${def.deltaFmt(info.runChange)} over ${info.streak} wks · ${info.direction}`;
+  }
+  if (info.change !== null) {
+    return `prev ${def.fmt(info.prev)} (${def.deltaFmt(info.change)})`;
+  }
+  return "—";
+}
+
 function computeExceptions(idxs) {
   const rows = [];
   SITE_CODES.forEach(code => {
     const std = computeStandards(code, idxs);
-    std.forEach((row, i) => {
+    std.forEach(row => {
       if (!row.bad) return;
-      const def = METRIC_DEFS[i];
-      const streak = computeStreak(RECAP[code][def.key], v => def.isBad(v, code));
-      rows.push({ code, name: SITE_META[code], district: DISTRICTS[code], category: def.label, actual: row.actual, standard: row.standard, streak, type: "standard" });
+      rows.push({ code, name: SITE_META[code], district: DISTRICTS[code], category: row.label, actual: row.actual, standard: row.standard, streak: row.streak, trendText: row.trendText, type: "standard" });
     });
   });
   rows.sort((a, b) => {
-    const as = a.streak === null ? -1 : a.streak, bs = b.streak === null ? -1 : b.streak;
-    if (bs !== as) return bs - as;
+    if (b.streak !== a.streak) return b.streak - a.streak;
     return a.code.localeCompare(b.code);
   });
   return rows;
@@ -1109,20 +1205,17 @@ function buildExceptionTable(siteRows) {
   const tableWrap = document.createElement("div");
   tableWrap.className = "table-scroll";
   const table = document.createElement("table");
-  table.innerHTML = `<thead><tr><th>Category</th><th class="num">Actual</th><th class="num">Standard</th><th>Duration</th></tr></thead>`;
+  table.innerHTML = `<thead><tr><th>Category</th><th class="num">Actual</th><th class="num">Standard</th><th>Trend</th></tr></thead>`;
   const tbody = document.createElement("tbody");
   siteRows.forEach(r => {
     const tr = document.createElement("tr");
     tr.classList.add("flag-row-bad");
     tr.style.cursor = "pointer";
-    const duration = r.streak === null
-      ? (r.illustrative ? `${r.month} · illustrative` : r.month)
-      : (r.streak <= 1 ? "New this week" : `${r.streak} consecutive weeks`);
     tr.innerHTML = `
       <td>${r.category}</td>
       <td class="num">${r.actual}</td>
       <td class="num">${r.standard}</td>
-      <td>${duration}</td>
+      <td>${r.trendText}</td>
     `;
     tr.addEventListener("click", exceptionRowClickHandler(r.code));
     tbody.appendChild(tr);
@@ -1227,6 +1320,239 @@ function renderExceptions() {
   });
 }
 
+// ================= SCOREBOARD =================
+// Priority order matters here: sales metrics first (capture rate leads),
+// then money-saving metrics, then customer-experience metrics.
+const SCOREBOARD_METRICS = [
+  { category: "Sales", label: "Capture Rate", better: 1, fmt: v => v.toFixed(2) + "%", getSeries: code => WEEKLY_FIN[code].map(w => w.captureRate) },
+  { category: "Sales", label: "Net Carwash Sales", better: 1, fmt: v => fmtUSD(v), getSeries: code => WEEKLY_FIN[code].map(w => w.netSales) },
+  { category: "Sales", label: "Wash Volume", better: 1, fmt: v => fmtNum(v) + " cars", getSeries: code => WEEKLY_FIN[code].map(w => w.washSales) },
+  { category: "Sales", label: "ARM Plans Sold", better: 1, fmt: v => fmtNum(v), getSeries: code => WEEKLY_FIN[code].map(w => w.armSold) },
+  { category: "Sales", label: "RPC", better: 1, fmt: v => "$" + v.toFixed(2), getSeries: code => WEEKLY_FIN[code].map(w => w.rpc) },
+  { category: "Sales", label: "Net Membership Gains", better: 1, fmt: v => (v >= 0 ? "+" : "") + Math.round(v), getSeries: code => RECAP[code].netGains },
+  { category: "Money Saving", label: "Labor Efficiency", better: -1, fmt: v => v.toFixed(0) + "% of target", getSeries: code => RECAP[code].hours.map(v => +(v / BH_STANDARD[code] * 100).toFixed(1)) },
+  { category: "Money Saving", label: "Overtime Hours", better: -1, fmt: v => v.toFixed(1) + " hrs", getSeries: code => RECAP[code].overtime },
+  { category: "Customer Experience", label: "Customer NPS (4-wk avg)", better: 1, fmt: v => v.toFixed(1), getSeries: code => rolling4(RECAP[code].nps) },
+  { category: "Customer Experience", label: "Review Stars", better: 1, fmt: v => v.toFixed(2) + "★", getSeries: code => RECAP[code].reviewStars },
+  { category: "Customer Experience", label: "Review Count", better: 1, fmt: v => v.toFixed(1) + "/wk", getSeries: code => RECAP[code].reviewCount },
+];
+const SCOREBOARD_CONTAINER_BY_CATEGORY = { "Sales": "scoreboard-sales", "Money Saving": "scoreboard-money", "Customer Experience": "scoreboard-customer" };
+
+function computeWeeklyRanks(def) {
+  const valuesByCode = {};
+  SITE_CODES.forEach(code => { valuesByCode[code] = def.getSeries(code); });
+  const ranksByWeek = [];
+  for (let w = 0; w < WEEKS.length; w++) {
+    const entries = SITE_CODES.map(code => ({ code, value: valuesByCode[code][w] }));
+    entries.sort((a, b) => {
+      const diff = def.better === 1 ? (b.value - a.value) : (a.value - b.value);
+      return diff !== 0 ? diff : (+a.code - +b.code);
+    });
+    const rankMap = {};
+    entries.forEach((e, i) => { rankMap[e.code] = i + 1; });
+    ranksByWeek.push(rankMap);
+  }
+  return { valuesByCode, ranksByWeek };
+}
+
+function buildScoreboardRows(def) {
+  const { valuesByCode, ranksByWeek } = computeWeeklyRanks(def);
+  const lastIdx = WEEKS.length - 1;
+  const currentRanks = ranksByWeek[lastIdx];
+  const prevRanks = lastIdx > 0 ? ranksByWeek[lastIdx - 1] : null;
+
+  const rows = SITE_CODES.map(code => {
+    const rank = currentRanks[code];
+    const value = valuesByCode[code][lastIdx];
+    const prevRank = prevRanks ? prevRanks[code] : null;
+    const rankChange = prevRank !== null ? prevRank - rank : null;
+
+    let timeInRank = 1;
+    for (let w = lastIdx - 1; w >= 0; w--) {
+      if (ranksByWeek[w][code] === rank) timeInRank++;
+      else break;
+    }
+    return { code, name: SITE_META[code], rank, value, rankChange, timeInRank };
+  });
+  rows.sort((a, b) => a.rank - b.rank);
+  return rows;
+}
+
+function buildScoreboardCard(def) {
+  const rows = buildScoreboardRows(def);
+  const panel = document.createElement("div");
+  panel.className = "panel scoreboard-card";
+
+  const header = document.createElement("h2");
+  header.innerHTML = `${def.label} <span>current-week standings</span>`;
+  panel.appendChild(header);
+
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "table-scroll";
+  const table = document.createElement("table");
+  table.innerHTML = `<thead><tr><th class="num">#</th><th>Site</th><th class="num">Value</th><th>Change</th><th>Time in Rank</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+
+  rows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    if (i >= 5) { tr.className = "sb-extra"; tr.style.display = "none"; }
+    const rankClass = r.rank === 1 ? "rank-1" : r.rank === 2 ? "rank-2" : r.rank === 3 ? "rank-3" : "";
+    let changeHtml;
+    if (r.rankChange === null || r.rankChange === 0) changeHtml = `<span class="sb-change sb-flat">— same</span>`;
+    else if (r.rankChange > 0) changeHtml = `<span class="sb-change sb-up">▲ ${r.rankChange}</span>`;
+    else changeHtml = `<span class="sb-change sb-down">▼ ${Math.abs(r.rankChange)}</span>`;
+    tr.innerHTML = `
+      <td class="num"><span class="rank-pill ${rankClass}">${r.rank}</span></td>
+      <td><div class="site-name">${r.name}</div><div class="site-code">${r.code}</div></td>
+      <td class="num">${def.fmt(r.value)}</td>
+      <td>${changeHtml}</td>
+      <td>${r.timeInRank === 1 ? "New at this rank" : r.timeInRank + " wks"}</td>
+    `;
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", exceptionRowClickHandler(r.code));
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  panel.appendChild(tableWrap);
+
+  if (rows.length > 5) {
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "sb-toggle";
+    toggle.textContent = `Show all ${rows.length} sites ▾`;
+    let expanded = false;
+    toggle.addEventListener("click", () => {
+      expanded = !expanded;
+      tbody.querySelectorAll(".sb-extra").forEach(tr => { tr.style.display = expanded ? "" : "none"; });
+      toggle.textContent = expanded ? "Show top 5 only ▴" : `Show all ${rows.length} sites ▾`;
+    });
+    panel.appendChild(toggle);
+  }
+
+  return panel;
+}
+
+// ---- Individual staff capture rate (monthly, market-wide) ----
+function computeStaffCaptureRanks() {
+  const employees = [];
+  Object.keys(STAFF_MONTHLY_CAPTURE).forEach(code => {
+    Object.keys(STAFF_MONTHLY_CAPTURE[code]).forEach(name => {
+      employees.push({ code, name, key: code + "|" + name, series: STAFF_MONTHLY_CAPTURE[code][name] });
+    });
+  });
+  const numMonths = STAFF_CAPTURE_MONTHS.length;
+  const ranksByMonth = [];
+  for (let m = 0; m < numMonths; m++) {
+    const entries = employees.map(e => ({ key: e.key, value: e.series[m] }));
+    entries.sort((a, b) => (b.value - a.value) || a.key.localeCompare(b.key));
+    const rankMap = {};
+    entries.forEach((e, i) => { rankMap[e.key] = i + 1; });
+    ranksByMonth.push(rankMap);
+  }
+  return { employees, ranksByMonth };
+}
+
+function buildStaffCaptureRows() {
+  const { employees, ranksByMonth } = computeStaffCaptureRanks();
+  const lastIdx = STAFF_CAPTURE_MONTHS.length - 1;
+  const currentRanks = ranksByMonth[lastIdx];
+  const prevRanks = ranksByMonth[lastIdx - 1];
+
+  const rows = employees.map(e => {
+    const rank = currentRanks[e.key];
+    const value = e.series[lastIdx];
+    const prevRank = prevRanks[e.key];
+    const rankChange = prevRank - rank;
+    let timeInRank = 1;
+    for (let m = lastIdx - 1; m >= 0; m--) {
+      if (ranksByMonth[m][e.key] === rank) timeInRank++;
+      else break;
+    }
+    return { code: e.code, siteName: SITE_META[e.code], name: e.name, rank, value, rankChange, timeInRank };
+  });
+  rows.sort((a, b) => a.rank - b.rank);
+  return rows;
+}
+
+function buildStaffCaptureCard() {
+  const rows = buildStaffCaptureRows();
+  const panel = document.createElement("div");
+  panel.className = "panel scoreboard-card";
+  const header = document.createElement("h2");
+  header.innerHTML = `Individual Capture Rate <span>market-wide, current-month standings</span>`;
+  panel.appendChild(header);
+
+  const tableWrap = document.createElement("div");
+  tableWrap.className = "table-scroll";
+  const table = document.createElement("table");
+  table.innerHTML = `<thead><tr><th class="num">#</th><th>Employee</th><th class="num">Capture Rate</th><th>Change</th><th>Time in Rank</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+
+  rows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    if (i >= 5) { tr.className = "sb-extra"; tr.style.display = "none"; }
+    const rankClass = r.rank === 1 ? "rank-1" : r.rank === 2 ? "rank-2" : r.rank === 3 ? "rank-3" : "";
+    let changeHtml;
+    if (r.rankChange === 0) changeHtml = `<span class="sb-change sb-flat">— same</span>`;
+    else if (r.rankChange > 0) changeHtml = `<span class="sb-change sb-up">▲ ${r.rankChange}</span>`;
+    else changeHtml = `<span class="sb-change sb-down">▼ ${Math.abs(r.rankChange)}</span>`;
+    tr.innerHTML = `
+      <td class="num"><span class="rank-pill ${rankClass}">${r.rank}</span></td>
+      <td><div class="site-name">${r.name}</div><div class="site-code">${r.siteName} (${r.code})</div></td>
+      <td class="num">${r.value.toFixed(2)}%</td>
+      <td>${changeHtml}</td>
+      <td>${r.timeInRank === 1 ? "New at this rank" : r.timeInRank + " mos"}</td>
+    `;
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", exceptionRowClickHandler(r.code));
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  panel.appendChild(tableWrap);
+
+  if (rows.length > 5) {
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "sb-toggle";
+    toggle.textContent = `Show all ${rows.length} employees ▾`;
+    let expanded = false;
+    toggle.addEventListener("click", () => {
+      expanded = !expanded;
+      tbody.querySelectorAll(".sb-extra").forEach(tr => { tr.style.display = expanded ? "" : "none"; });
+      toggle.textContent = expanded ? "Show top 5 only ▴" : `Show all ${rows.length} employees ▾`;
+    });
+    panel.appendChild(toggle);
+  }
+
+  const note = document.createElement("p");
+  note.className = "stat-line";
+  note.style.cssText = "margin-top:8px;";
+  note.textContent = "Based on each employee's monthly Scorecard total, real data through July, ranked market-wide across all 14 sites — not just within their own site.";
+  panel.appendChild(note);
+
+  return panel;
+}
+
+function renderScoreboard() {
+  Object.values(SCOREBOARD_CONTAINER_BY_CATEGORY).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = "";
+  });
+  let staffCardInserted = false;
+  SCOREBOARD_METRICS.forEach(def => {
+    const container = document.getElementById(SCOREBOARD_CONTAINER_BY_CATEGORY[def.category]);
+    container.appendChild(buildScoreboardCard(def));
+    if (!staffCardInserted && def.label === "Capture Rate") {
+      container.appendChild(buildStaffCaptureCard());
+      staffCardInserted = true;
+    }
+  });
+}
+
 // ---------- Init ----------
 try {
   setActiveRangePill(currentRange);
@@ -1235,6 +1561,7 @@ try {
   renderSiteDetail("319");
   renderStaffView("319");
   renderExceptions();
+  renderScoreboard();
 } catch (e) {
   console.error("Dashboard init error:", e);
   const wrap = document.querySelector(".wrap");
