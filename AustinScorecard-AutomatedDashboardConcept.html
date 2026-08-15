@@ -35,10 +35,19 @@
     background: var(--bg);
     color: var(--text);
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    padding: 28px;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1180px; margin: 0 auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 18px 28px 28px; }
+
+  .sticky-top {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    transition: box-shadow 0.15s;
+  }
+  .sticky-top.is-stuck { box-shadow: 0 2px 12px rgba(18,24,26,0.09); }
+  .sticky-inner { max-width: 1180px; margin: 0 auto; padding: 16px 28px 10px; transition: padding 0.15s; }
+  .sticky-top.is-stuck .sticky-inner { padding-top: 9px; padding-bottom: 7px; }
 
   header {
     display: flex;
@@ -46,11 +55,16 @@
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+    transition: margin 0.15s;
   }
+  .sticky-top.is-stuck header { margin-bottom: 6px; }
   .brand { display: flex; align-items: center; gap: 13px; }
-  h1 { font-family: "Poppins", sans-serif; font-size: 21px; margin: 0 0 3px; font-weight: 800; letter-spacing: -0.01em; }
+  h1 { font-family: "Poppins", sans-serif; font-size: 19px; margin: 0 0 3px; font-weight: 800; letter-spacing: -0.01em; transition: font-size 0.15s; }
+  .sticky-top.is-stuck h1 { font-size: 15px; margin-bottom: 0; }
   .subtitle { color: var(--muted); font-size: 13px; margin: 0; }
+  .sticky-top.is-stuck .subtitle,
+  .sticky-top.is-stuck .sources { display: none; }
   .badge-mock {
     display: inline-block;
     font-size: 10px;
@@ -80,18 +94,49 @@
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 5px rgba(14,169,104,0.6); }
   .sync-time { color: var(--muted); font-weight: 400; font-size: 10.5px; margin-top: 1px; }
 
-  .range-bar {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-    padding: 12px 14px; margin-bottom: 16px; box-shadow: var(--shadow);
+  .tabbar {
+    display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    scrollbar-width: none;
+    transition: margin 0.15s;
   }
+  .sticky-top.is-stuck .tabbar { margin-bottom: 8px; }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tabbtn {
+    background: transparent; border: none; color: var(--muted);
+    font-size: 13px; font-weight: 600; padding: 9px 16px; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    font-family: inherit; white-space: nowrap;
+    transition: padding 0.15s;
+  }
+  .sticky-top.is-stuck .tabbtn { padding: 6px 14px; font-size: 12.5px; }
+  .tabbtn:hover { color: var(--text); }
+  .tabbtn.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+
+  .range-bar {
+    display: none;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+    transition: padding 0.15s;
+  }
+  .range-bar.show { display: block; }
+  .sticky-top.is-stuck .range-bar { padding: 6px 12px; }
   .range-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .range-pill {
+  .range-pill, .period-pill {
     background: var(--panel2); border: 1px solid var(--border); border-radius: 20px;
     padding: 7px 14px; font-size: 12.5px; font-weight: 600; color: var(--muted);
     cursor: pointer; font-family: inherit; white-space: nowrap;
+    transition: padding 0.15s, font-size 0.15s;
   }
-  .range-pill:hover:not(.active) { background: var(--accent-tint); color: var(--text); }
-  .range-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .sticky-top.is-stuck .range-pill, .sticky-top.is-stuck .period-pill { padding: 5px 12px; font-size: 12px; }
+  .range-pill:hover:not(.active), .period-pill:hover:not(.active) { background: var(--accent-tint); color: var(--text); }
+  .range-pill.active, .period-pill.active {
+    background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 800;
+    box-shadow: 0 0 0 3px rgba(23,169,214,0.22);
+  }
+  .range-pill.active::before, .period-pill.active::before { content: "● "; font-size: 8px; vertical-align: middle; }
   .range-custom { display: none; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .range-custom.show { display: flex; }
   .range-custom label { font-size: 12px; color: var(--muted); }
@@ -99,32 +144,20 @@
     background: var(--panel2); color: var(--text); border: 1px solid var(--border);
     border-radius: 7px; padding: 6px 9px; font-size: 12.5px; font-family: inherit;
   }
-  .range-label { color: var(--muted); font-size: 12px; margin-top: 9px; }
-  .range-label b { color: var(--text); }
+  .range-label { color: var(--muted); font-size: 12px; margin-top: 8px; font-weight: 600; }
+  .range-label b { color: var(--accent-dark); font-weight: 800; }
+  .sticky-top.is-stuck .range-label { margin-top: 5px; }
 
-  .tabbar {
-    display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 22px;
-    scrollbar-width: none;
-  }
-  .tabbar::-webkit-scrollbar { display: none; }
-  .tabbtn {
-    background: transparent; border: none; color: var(--muted);
-    font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-    font-family: inherit; white-space: nowrap;
-  }
-  .tabbtn:hover { color: var(--text); }
-  .tabbtn.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+  .period-note { font-size: 12px; color: var(--muted); margin-left: 4px; }
 
   .site-toolbar {
-    display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
     box-shadow: var(--shadow);
+    transition: padding 0.15s;
   }
   .site-toolbar.show { display: flex; }
+  .sticky-top.is-stuck .site-toolbar { padding: 6px 12px; }
   .site-toolbar label { font-size: 12px; color: var(--muted); }
   .site-toolbar select {
     background: var(--panel2); color: var(--text); border: 1px solid var(--border);
@@ -282,6 +315,11 @@
     padding: 6px 14px; font-size: 11.5px; font-weight: 700; color: var(--accent-dark); cursor: pointer; font-family: inherit;
   }
   .sb-toggle:hover { background: var(--accent-tint); }
+  .sb-scroll-capped { max-height: 480px; overflow-y: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 8px; }
+  .sb-scroll-capped table { min-width: 0; }
+  .sb-scroll-capped thead th { position: sticky; top: 0; background: var(--panel); z-index: 1; }
+  .scoreboard-period-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .scoreboard-period-bar .range-pill { padding: 6px 14px; font-size: 12px; }
 
   /* ---------- Responsive ---------- */
   @media (max-width: 860px) {
@@ -290,9 +328,9 @@
     .scoreboard-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
-    body { padding: 14px; }
-    .wrap { max-width: 100%; }
-    header { gap: 12px; margin-bottom: 16px; }
+    .wrap { max-width: 100%; padding: 14px 14px 20px; }
+    .sticky-inner { padding: 12px 14px 8px; }
+    header { gap: 12px; margin-bottom: 10px; }
     h1 { font-size: 17px; }
     .subtitle { font-size: 12px; }
     .badge-mock { display: block; width: fit-content; margin: 4px 0 0; }
@@ -301,7 +339,7 @@
     .source-chip .label { font-size: 9px; }
     .source-chip .status { font-size: 11px; }
     .sync-time { display: none; }
-    .range-pill { padding: 6px 11px; font-size: 11.5px; }
+    .range-pill, .period-pill { padding: 6px 11px; font-size: 11.5px; }
     .tabbtn { padding: 9px 12px; font-size: 12.5px; }
     .site-toolbar { padding: 9px 12px; }
     .kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -318,64 +356,78 @@
 </style>
 </head>
 <body>
+<div class="sticky-top" id="stickyTop">
+  <div class="sticky-inner">
+
+    <header>
+      <div class="brand">
+        <div>
+          <h1>Austin Market Scorecard <span class="badge-mock">Proof of Concept</span></h1>
+          <p class="subtitle">14 sites · live, connected performance dashboard</p>
+        </div>
+      </div>
+      <div class="sources">
+        <div class="source-chip">
+          <div class="label">UKG (Labor)</div>
+          <div class="status"><span class="dot"></span>Connected</div>
+          <div class="sync-time">synced 4 min ago</div>
+        </div>
+        <div class="source-chip">
+          <div class="label">POS / Wash Sales</div>
+          <div class="status"><span class="dot"></span>Connected</div>
+          <div class="sync-time">synced 4 min ago</div>
+        </div>
+        <div class="source-chip">
+          <div class="label">ARM / Membership</div>
+          <div class="status"><span class="dot"></span>Connected</div>
+          <div class="sync-time">synced 4 min ago</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabbar">
+      <button class="tabbtn active" data-view="overview">Market Overview</button>
+      <button class="tabbtn" data-view="exceptions">Exceptions</button>
+      <button class="tabbtn" data-view="scoreboard">Scoreboard</button>
+      <button class="tabbtn" data-view="detail">Site Detail</button>
+      <button class="tabbtn" data-view="staff">Staff &amp; Compliance</button>
+    </div>
+
+    <div class="range-bar show" id="rangeBarMain">
+      <div class="range-pills" id="rangePills">
+        <button class="range-pill" data-range="previous_week">Previous Week</button>
+        <button class="range-pill" data-range="current_month">Current Month</button>
+        <button class="range-pill" data-range="previous_month">Previous Month</button>
+        <button class="range-pill" data-range="ytd">YTD</button>
+        <button class="range-pill" data-range="custom">Custom</button>
+      </div>
+      <div class="range-custom" id="rangeCustom">
+        <label for="customFrom">From week ending</label>
+        <select id="customFrom"></select>
+        <label for="customTo">to</label>
+        <select id="customTo"></select>
+      </div>
+      <div class="range-label" id="rangeLabel"></div>
+    </div>
+
+    <div class="range-bar" id="rangeBarScoreboard">
+      <div class="range-pills" id="scoreboardPeriodBar">
+        <button type="button" class="period-pill active" data-period="week">Past Week</button>
+        <button type="button" class="period-pill" data-period="mtd">Month to Date</button>
+        <button type="button" class="period-pill" data-period="ytd">Year to Date</button>
+      </div>
+      <div class="range-label" id="scoreboardPeriodLabel">Showing: <b>Past Week</b> standings</div>
+    </div>
+
+    <div class="site-toolbar" id="siteToolbar">
+      <label for="siteSelect">Site:</label>
+      <select id="siteSelect"></select>
+      <span id="siteRankNote" style="color:var(--muted); font-size:12px;"></span>
+    </div>
+
+  </div>
+</div>
 <div class="wrap">
-
-  <header>
-    <div class="brand">
-      <div>
-        <h1>Austin Market Scorecard <span class="badge-mock">Proof of Concept</span></h1>
-        <p class="subtitle">14 sites · live, connected performance dashboard</p>
-      </div>
-    </div>
-    <div class="sources">
-      <div class="source-chip">
-        <div class="label">UKG (Labor)</div>
-        <div class="status"><span class="dot"></span>Connected</div>
-        <div class="sync-time">synced 4 min ago</div>
-      </div>
-      <div class="source-chip">
-        <div class="label">POS / Wash Sales</div>
-        <div class="status"><span class="dot"></span>Connected</div>
-        <div class="sync-time">synced 4 min ago</div>
-      </div>
-      <div class="source-chip">
-        <div class="label">ARM / Membership</div>
-        <div class="status"><span class="dot"></span>Connected</div>
-        <div class="sync-time">synced 4 min ago</div>
-      </div>
-    </div>
-  </header>
-
-  <div class="range-bar">
-    <div class="range-pills" id="rangePills">
-      <button class="range-pill" data-range="previous_week">Previous Week</button>
-      <button class="range-pill" data-range="current_month">Current Month</button>
-      <button class="range-pill" data-range="previous_month">Previous Month</button>
-      <button class="range-pill" data-range="ytd">YTD</button>
-      <button class="range-pill" data-range="custom">Custom</button>
-    </div>
-    <div class="range-custom" id="rangeCustom">
-      <label for="customFrom">From week ending</label>
-      <select id="customFrom"></select>
-      <label for="customTo">to</label>
-      <select id="customTo"></select>
-    </div>
-    <div class="range-label" id="rangeLabel"></div>
-  </div>
-
-  <div class="tabbar">
-    <button class="tabbtn active" data-view="overview">Market Overview</button>
-    <button class="tabbtn" data-view="exceptions">Exceptions</button>
-    <button class="tabbtn" data-view="scoreboard">Scoreboard</button>
-    <button class="tabbtn" data-view="detail">Site Detail</button>
-    <button class="tabbtn" data-view="staff">Staff &amp; Compliance</button>
-  </div>
-
-  <div class="site-toolbar" id="siteToolbar">
-    <label for="siteSelect">Site:</label>
-    <select id="siteSelect"></select>
-    <span id="siteRankNote" style="color:var(--muted); font-size:12px;"></span>
-  </div>
 
   <!-- ===================== DISTRICT OVERVIEW ===================== -->
   <div class="view active" id="view-overview">
@@ -474,7 +526,7 @@
   <!-- ===================== SCOREBOARD ===================== -->
   <div class="view" id="view-scoreboard">
     <div class="note" style="margin-bottom:16px;">
-      <b>How this works:</b> standings are always based on the most recent completed week, independent of the date range control above, so movement and time-in-rank stay meaningful week to week. Sales metrics are prioritized first (capture rate leads), then the metrics that save money, then customer experience. Each board shows the top 5 by default — expand any of them to see all 14 sites. Click a row to jump to that site's detail view.
+      <b>How this works:</b> standings are always as of the most recent completed week, so movement and time-in-rank stay meaningful week to week — the Past Week / Month to Date / Year to Date toggle pinned above changes what's being ranked (a single week's number vs. a running month/year total), not which week you're looking at. Two boards ignore that toggle on purpose: Customer NPS stays a fixed 4-week rolling average, and Total Members is a running balance that doesn't sum or average over a period. Sales metrics are prioritized first (capture rate leads), then the metrics that save money, then customer experience. Each board shows the top 5 by default — expand any of them to see the rest. Click a row to jump to that site's detail view.
     </div>
 
     <h3 class="scoreboard-category-title">Sales</h3>
@@ -573,6 +625,12 @@ const REPORTING_ACCURACY = {"348": [{"name": "Cass", "month": "January", "type":
 // Scorecard rows), used for the individual capture-rate scoreboard.
 const STAFF_MONTHLY_CAPTURE = {"319":{"Jayare":[0,0,0,0,4.52,5.56,4.94],"Raeden":[6.19,5.79,10.75,10.16,13.59,10.38,7.14],"Daniel":[9.42,13.28,13.01,14.75,9.4,0,16.67],"Marina":[0,0,0,8.89,5.46,10.83,12.0],"James":[9.0,15.86,12.63,9.76,12.0,14.41,12.64],"Miah":[0,12.7,10.46,12.96,11.89,8.6,15.66],"Kavares":[1.27,5.34,7.55,10.53,3.41,4.65,2.38],"Julius":[9.09,10.81,13.7,4.65,7.69,0,0]},"341":{"Parker":[10.46,11.07,0,0,0,0,0],"ugarte":[13.66,11.8,8.97,0,0,0,0],"Watson":[12.5,14.97,13.19,14.47,5.81,0,0],"Nusbaum":[22.46,25.58,17.92,18.71,16.76,16.07,0],"Kewish":[6.72,6.15,12.12,7.11,6.85,0,0],"Brown":[17.58,7.63,10.54,10.16,0,0,0],"Mendoza":[8.27,8.63,17.07,7.07,8.31,0,0],"Daniels":[0,13.84,11.63,14.48,18.78,13.9,19.51],"Thomas":[0,0,0,0,9.88,15.09,18.81],"Williams":[0,0,0,0,16.28,16.84,23.96],"Sebastian":[0,0,0,0,24.14,11.95,3.51],"Sandoval":[0,0,0,0,0,16.3,16.77]},"342":{"Pierson":[19.04,17.72,15.17,17.58,19.04,19.72,15.28],"Epstein":[13.41,15.95,12.77,12.5,14.34,0,0],"Tolofari":[8.09,12.18,9.79,13.89,0,0,0],"Gates":[12.12,13.04,10.81,26.67,26.67,7.69,17.86],"Coker":[8.81,7.69,16.47,25.0,22.81,8.43,13.11],"Bowman":[14.29,17.21,13.11,16.81,9.83,13.62,15.29],"Margrum":[0,0,0,14.81,13.14,12.21,15.75],"Robinson":[0,0,0,0,0,8.33,5.36]},"343":{"Bodkins":[8.72,3.98,-14.77,12.93,10.6,5.71,12.16],"allen":[0,0,0,0,0,37.93,18.18],"Ojeda":[16.72,14.17,13.82,10.5,14.15,16.52,15.45],"Martinez":[0,0,0,0,0,12.88,11.27],"Gjonaj":[0,0,0,0,0,0,9.38],"Combs":[0,0,0,0,27.06,7.66,5.93],"Stokes":[0,0,0,15.38,6.25,12.24,0],"Botello":[0,0,0,30.43,10.0,7.69,5.56],"Mazolla":[0,0,0,0,8.77,17.07,0]},"344":{"Caroline":[13.92,4.0,0,0,0,0,0],"Jose":[9.66,9.8,0,0,6.67,0,0],"Christa":[11.83,7.95,14.43,21.05,10.99,10.23,9.09],"Keyauna":[14.94,9.86,13.79,13.64,7.44,10.5,9.9],"Omarion":[10.58,5.94,9.9,0,0,0,0],"Graham":[9.05,8.44,9.09,9.31,9.18,13.52,7.07],"DeAndrae":[18.07,15.12,17.65,19.1,11.8,18.06,17.24],"Eiden":[0,27.75,12.11,14.29,8.21,0,0],"Hennig":[0,0,10.47,42.86,0,0,0],"Rodriguez":[0,0,0,9.76,0,0,0],"Padilla":[0,0,0,0,0,10.64,16.67],"Shahry":[0,0,0,0,0,6.04,6.73],"Rafalowski":[0,0,0,0,0,0,9.29]},"345":{"Torrez":[18.1,14.56,14.0,23.61,18.46,20.06,16.33],"Dominguez":[12.58,11.54,18.11,13.09,16.73,15.99,12.83],"Lopez":[5.21,7.25,0,0,0,0,0],"Keval":[7.07,14.29,12.75,20.99,0,0,0],"Quiroga":[11.44,19.16,26.43,0,0,0,0],"Paguese":[8.63,10.8,16.54,18.0,15.6,18.63,17.27],"Sanchez":[0,6.25,0,0,19.4,25.67,23.11],"Bennett":[0,0,0,0,0,14.21,11.67]},"346":{"Torres":[13.28,19.09,16.16,16.33,22.17,19.89,20.65],"Santiago":[30.53,28.07,22.8,20.96,19.48,21.81,21.4],"Glazner":[9.84,8.79,13.04,13.64,18.52,14.07,11.54],"Hileman":[6.45,8.97,0,0,0,0,0],"Adams":[20.0,9.9,12.05,15.07,16.9,25.0,0],"Bias":[9.75,7.44,0,0,0,0,0],"Braun":[10.07,6.57,13.92,0,22.73,2.74,19.05],"Garcia":[0,0,15.05,17.39,30.72,20.86,26.53],"Baughman":[0,0,0,12.41,8.05,0,0],"Gonzalez":[0,0,0,0,15.33,14.53,0],"Jefferson":[0,0,0,0,14.1,9.62,0],"Pena":[0,0,0,25.76,46.15,22.11,11.45],"Koon":[0,0,0,0,0,0,14.42]},"347":{"Hallcy":[13.34,14.64,11.61,17.3,13.89,15.85,12.35],"Fall":[11.08,8.33,15.23,22.29,16.57,15.34,11.98],"Narbayev":[11.84,7.79,8.15,13.56,16.08,12.04,13.39],"Knox":[8.89,10.26,8.14,6.94,0,8.15,1.82],"Hicks":[6.27,4.76,9.38,5.22,6.94,6.49,4.84],"Hill":[12.57,13.61,19.54,25.86,19.67,0,41.67],"Hagen":[3.76,5.13,6.54,16.33,13.95,3.85,0],"Sarr":[0,0,6.38,16.06,15.45,22.73,0],"Miranda":[0,0,0,19.67,12.41,10.06,9.48],"Swetlik":[0,0,0,0,0,15.22,12.9]},"348":{"Cass":[12.5,15.34,11.17,11.46,11.02,19.44,11.4],"Christine":[4.67,6.9,17.54,0,6.56,7.41,6.25],"Zach":[13.04,0,33.8,20.0,0,0,0],"Jay":[5.79,7.69,10.57,22.73,20.0,100,31.25],"Tristin":[10.17,10.0,11.22,7.18,7.05,6.85,8.77],"Jordan":[10.47,10.13,12.96,14.29,20.55,20.0,30.0],"Luke F":[12.16,11.29,22.18,25.0,16.25,16.67,0],"Peter":[10.22,24.09,14.63,18.89,7.41,0,0],"Ayden":[0,12.06,17.06,13.12,9.8,0,0],"Nevo":[0,0,0,0,26.27,34.84,35.65],"Maria":[0,0,0,0,25.0,26.98,18.82],"Katie":[0,0,0,0,9.52,14.81,13.75],"Cat":[0,0,0,0,12.14,5.52,5.36]},"349":{"Owen":[8.71,12.32,10.75,18.0,11.59,14.4,7.87],"Lucas":[4.55,2.37,5.74,6.86,5.21,8.22,-4.55],"Northington":[3.95,1.15,0,0,0,0,0],"Sanchez":[10.38,5.62,30.19,29.03,23.66,21.19,6.06],"Choat":[1.56,4.73,9.09,0,3.85,2.7,5.13],"Snodgrass":[7.18,13.33,6.58,0,11.76,0,0],"Wright":[3.39,4.94,5.0,5.17,5.88,8.33,0],"Rivera":[9.21,4.76,0,0,0,0,0],"Herrera":[0,9.85,10.97,14.46,9.95,4.88,8.0],"Bikes":[0,2.14,12.88,0,6.78,12.64,6.58],"Runkel":[0,0,9.61,14.68,12.98,9.03,17.14]},"352":{"Marcus":[9.14,12.57,8.51,12.0,11.34,11.72,9.55],"Merina":[8.62,7.82,14.57,0,8.97,7.44,8.61],"Colton":[3.92,6.6,8.05,0,0,5.53,9.7],"Jaime":[5.73,4.68,3.28,3.85,0,0,0],"Brett":[0,0,0,14.29,0,0,0],"Jon":[0,4.98,4.83,10.94,0,0,0],"Grace":[0,0,0,0,12.26,0,0],"Malachi":[0,0,0,0,23.33,14.13,0]},"354":{"Oliver Ramirez":[2.7,4.88,8.8,10.2,7.78,0,0],"Ariyonna Gallman":[8.74,11.11,4.31,0,5.29,6.9,4.08],"Kerri McIrvin":[1.67,10.77,6.88,7.59,0,0,0],"Monica Norman":[6.35,7.11,6.15,5.26,1.33,0,0],"Jesus Luna":[12.5,4.69,6.59,6.06,4.72,7.69,9.3],"Isaiah  Sauls":[7.37,7.11,3.3,7.69,8.22,6.12,0],"Sonia Mendez":[7.09,7.48,0,0,0,0,0],"Blanca Claudio":[8.89,6.83,6.45,5.39,9.42,11.08,12.89],"Mikayla Strelsky":[0,0,7.52,5.47,6.81,8.6,8.77],"John Magana":[0,0,0,2.56,6.78,6.9,21.43],"Natasha":[0,0,0,0,8.87,7.39,8.14],"Mariana":[0,0,0,0,2.38,6.35,8.51],"Luis":[0,0,0,0,0,4.92,15.81]},"358":{"Jose":[6.59,9.12,9.03,-68.75,8.17,2.97,0],"Daniel":[2.89,0,3.26,-133.33,6.06,3.8,0],"Sam":[7.28,3.53,9.68,27.27,50.0,10.19,13.11],"Eili":[6.53,12.0,9.86,-100,10.71,10.56,8.08],"Nathan":[1.79,3.09,7.75,-92.0,5.66,0,0],"Isaac":[0,0,0,0,7.69,16.13,6.67],"LD":[0,0,0,0,19.48,18.26,18.34],"Lynn":[0,0,0,0,10.81,7.55,10.0],"Robert":[0,0,0,0,0,0,19.12]},"359":{"Tolofari":[20.58,18.88,21.88,19.14,14.41,14.68,17.37],"Rocha":[21.93,25.96,23.8,18.29,15.62,13.82,7.02],"Beaman":[10.93,1.89,13.51,0,0,0,31.25]}};
 const STAFF_CAPTURE_MONTHS = ["January", "February", "March", "April", "May", "June", "July"];
+
+// Running active-membership balance per site, one value per week (ending count),
+// aligned to the same 28-week WEEKS index used everywhere else. Real data from
+// the Weekly tab's "Current Member Count" block; one isolated gap per site (342,
+// 344, 358) was forward-filled from the prior week.
+const TOTAL_MEMBERS = {"319":[2541,2568,2568,2534,2543,2565,2588,2596,2657,2675,2698,2742,2807,2798,2785,2785,2785,2785,2752,2748,2701,2716,2711,2712,2713,2710,2744,2748],"341":[6269,6229,6216,6108,6117,6142,6107,6095,6085,6063,6029,6112,6238,6234,6225,6225,6225,5986,5966,5940,5894,5875,5862,5856,5840,5827,5891,5916],"342":[3953,3966,3994,3939,3972,4013,4030,4037,4072,4057,4076,4105,4166,4179,4166,4166,4166,4024,4097,4097,4006,3996,3960,3939,3963,3949,3950,3980],"343":[4018,3979,3986,3938,4019,4052,4039,4030,4026,4006,3995,4033,4015,3990,3977,4000,3977,3940,3828,3817,3797,3780,3746,3730,3708,3705,3806,3706],"344":[2989,2973,2954,2909,2901,2908,2888,2884,2892,2884,2897,2936,2974,2958,2945,2945,2945,0,3038,3010,2957,2957,2936,2920,2917,2910,2925,2900],"345":[4278,4394,4404,4331,4355,4355,4363,4362,4405,4388,4450,4533,4648,4637,4596,4558,4543,4524,4490,4506,4500,4505,4484,4503,4461,4491,4546,4548],"346":[3818,3777,3764,3702,3726,3731,3709,3683,3689,3675,3690,3710,3764,3715,3711,3711,3613,3567,3578,3555,3536,3533,3495,3473,3436,3453,3481,3468],"347":[3894,3778,3884,3835,3892,3922,3907,3912,3932,3932,3937,3989,4030,4022,4003,3991,3983,3972,4003,4010,4000,3973,3960,3961,3954,3976,3989,3980],"348":[3227,3219,3254,3218,3222,3221,3241,3255,3265,3276,3327,3382,3443,3434,3452,3383,3387,3378,3380,3372,3359,3344,3344,3348,3341,3360,3363,3377],"349":[2232,2244,2246,2232,2241,2252,2251,2243,2232,2212,2239,2275,2320,2333,2328,2328,2290,2299,2312,2313,2317,2309,2309,2307,2309,2331,2341,2336],"352":[3377,3244,3249,3180,3198,3216,3236,3243,3371,3385,3391,3442,3467,3435,3371,3231,3200,3179,3257,3239,3228,3243,3283,3287,3297,3314,3357,3358],"354":[1506,1498,1517,1499,1511,1531,1521,1521,1539,1534,1545,1565,1517,1580,1575,1575,1575,1481,1568,1571,1561,1556,1549,1564,1552,1570,1602,1626],"358":[3120,3101,3122,3059,3098,3127,3152,3152,3195,3134,3208,3238,3303,3293,3259,3227,3245,3247,3276,3321,3314,3333,3320,3337,3333,3352,3423,3438],"359":[2878,2900,2913,2905,2949,3016,3064,3103,3132,3109,3150,3216,3288,3298,3287,3287,3227,3246,3255,3265,3251,3236,3215,3205,3188,3199,3246,3277]};
 
 const fmtUSD = n => "$" + Math.round(n).toLocaleString("en-US");
 const fmtNum = n => Math.round(n).toLocaleString("en-US");
@@ -713,15 +771,30 @@ function computeStandards(code, idxs) {
 const tabButtons = document.querySelectorAll(".tabbtn");
 const views = document.querySelectorAll(".view");
 const siteToolbar = document.getElementById("siteToolbar");
+const rangeBarMain = document.getElementById("rangeBarMain");
+const rangeBarScoreboard = document.getElementById("rangeBarScoreboard");
+function applySelectorVisibility(target) {
+  rangeBarMain.classList.toggle("show", target === "overview" || target === "exceptions" || target === "detail");
+  rangeBarScoreboard.classList.toggle("show", target === "scoreboard");
+  siteToolbar.classList.toggle("show", target === "detail" || target === "staff");
+}
 tabButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     tabButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     const target = btn.dataset.view;
     views.forEach(v => v.classList.toggle("active", v.id === "view-" + target));
-    siteToolbar.classList.toggle("show", target === "detail" || target === "staff");
+    applySelectorVisibility(target);
   });
 });
+
+// ---------- Sticky header compacting on scroll ----------
+const stickyTop = document.getElementById("stickyTop");
+function updateStickyState() {
+  stickyTop.classList.toggle("is-stuck", window.scrollY > 6);
+}
+window.addEventListener("scroll", updateStickyState, { passive: true });
+updateStickyState();
 
 // ---------- Range control ----------
 const rangePills = document.querySelectorAll(".range-pill");
@@ -1324,46 +1397,75 @@ function renderExceptions() {
 // Priority order matters here: sales metrics first (capture rate leads),
 // then money-saving metrics, then customer-experience metrics.
 const SCOREBOARD_METRICS = [
-  { category: "Sales", label: "Capture Rate", better: 1, fmt: v => v.toFixed(2) + "%", getSeries: code => WEEKLY_FIN[code].map(w => w.captureRate) },
-  { category: "Sales", label: "Net Carwash Sales", better: 1, fmt: v => fmtUSD(v), getSeries: code => WEEKLY_FIN[code].map(w => w.netSales) },
-  { category: "Sales", label: "Wash Volume", better: 1, fmt: v => fmtNum(v) + " cars", getSeries: code => WEEKLY_FIN[code].map(w => w.washSales) },
-  { category: "Sales", label: "ARM Plans Sold", better: 1, fmt: v => fmtNum(v), getSeries: code => WEEKLY_FIN[code].map(w => w.armSold) },
-  { category: "Sales", label: "RPC", better: 1, fmt: v => "$" + v.toFixed(2), getSeries: code => WEEKLY_FIN[code].map(w => w.rpc) },
-  { category: "Sales", label: "Net Membership Gains", better: 1, fmt: v => (v >= 0 ? "+" : "") + Math.round(v), getSeries: code => RECAP[code].netGains },
-  { category: "Money Saving", label: "Labor Efficiency", better: -1, fmt: v => v.toFixed(0) + "% of target", getSeries: code => RECAP[code].hours.map(v => +(v / BH_STANDARD[code] * 100).toFixed(1)) },
-  { category: "Money Saving", label: "Overtime Hours", better: -1, fmt: v => v.toFixed(1) + " hrs", getSeries: code => RECAP[code].overtime },
-  { category: "Customer Experience", label: "Customer NPS (4-wk avg)", better: 1, fmt: v => v.toFixed(1), getSeries: code => rolling4(RECAP[code].nps) },
-  { category: "Customer Experience", label: "Review Stars", better: 1, fmt: v => v.toFixed(2) + "★", getSeries: code => RECAP[code].reviewStars },
-  { category: "Customer Experience", label: "Review Count", better: 1, fmt: v => v.toFixed(1) + "/wk", getSeries: code => RECAP[code].reviewCount },
+  { category: "Sales", label: "Capture Rate", better: 1, aggType: "avg", fmt: v => v.toFixed(2) + "%", getSeries: code => WEEKLY_FIN[code].map(w => w.captureRate) },
+  { category: "Sales", label: "Net Carwash Sales", better: 1, aggType: "sum", fmt: v => fmtUSD(v), getSeries: code => WEEKLY_FIN[code].map(w => w.netSales) },
+  { category: "Sales", label: "Wash Volume", better: 1, aggType: "sum", fmt: v => fmtNum(v) + " cars", getSeries: code => WEEKLY_FIN[code].map(w => w.washSales) },
+  { category: "Sales", label: "ARM Plans Sold", better: 1, aggType: "sum", fmt: v => fmtNum(v), getSeries: code => WEEKLY_FIN[code].map(w => w.armSold) },
+  { category: "Sales", label: "RPC", better: 1, aggType: "avg", fmt: v => "$" + v.toFixed(2), getSeries: code => WEEKLY_FIN[code].map(w => w.rpc) },
+  { category: "Sales", label: "Net Membership Gains", better: 1, aggType: "sum", fmt: v => (v >= 0 ? "+" : "") + Math.round(v), getSeries: code => RECAP[code].netGains },
+  { category: "Sales", label: "Total Members", better: 1, aggType: "snapshot", noPeriodToggle: true, toggleNote: "always shows the current balance — a running total doesn't sum or average over a period the way sales figures do.", fmt: v => fmtNum(v), getSeries: code => TOTAL_MEMBERS[code] },
+  { category: "Money Saving", label: "Labor Efficiency", better: -1, aggType: "avg", fmt: v => v.toFixed(0) + "% of target", getSeries: code => RECAP[code].hours.map(v => +(v / BH_STANDARD[code] * 100).toFixed(1)) },
+  { category: "Money Saving", label: "Overtime Hours", better: -1, aggType: "sum", fmt: v => v.toFixed(1) + " hrs", getSeries: code => RECAP[code].overtime },
+  { category: "Customer Experience", label: "Customer NPS (4-wk avg)", better: 1, aggType: "avg", noPeriodToggle: true, toggleNote: "fixed to a rolling 4-week average by design (see the data note on Site Detail) — layering a period toggle on top would work against that smoothing.", getSeries: code => rolling4(RECAP[code].nps), fmt: v => v.toFixed(1) },
+  { category: "Customer Experience", label: "Review Stars", better: 1, aggType: "avg", fmt: v => v.toFixed(2) + "★", getSeries: code => RECAP[code].reviewStars },
+  { category: "Customer Experience", label: "Review Count", better: 1, aggType: "sum", fmt: v => fmtNum(v), getSeries: code => RECAP[code].reviewCount },
 ];
 const SCOREBOARD_CONTAINER_BY_CATEGORY = { "Sales": "scoreboard-sales", "Money Saving": "scoreboard-money", "Customer Experience": "scoreboard-customer" };
+const SCOREBOARD_PERIOD_LABELS = { week: "current-week", mtd: "month-to-date", ytd: "year-to-date" };
+let scoreboardPeriod = "week";
 
-function computeWeeklyRanks(def) {
+function getPeriodIndices(period, endIdx) {
+  if (period === "ytd") return Array.from({ length: endIdx + 1 }, (_, i) => i);
+  if (period === "mtd") {
+    const endDate = new Date(WEEKS[endIdx].to + "T00:00:00");
+    const endMonth = endDate.getMonth(), endYear = endDate.getFullYear();
+    const idxs = [];
+    for (let i = endIdx; i >= 0; i--) {
+      const d = new Date(WEEKS[i].to + "T00:00:00");
+      if (d.getMonth() === endMonth && d.getFullYear() === endYear) idxs.unshift(i);
+      else break;
+    }
+    return idxs;
+  }
+  return [endIdx];
+}
+
+function aggregateForPeriod(series, idxs, aggType) {
+  if (aggType === "snapshot") return series[Math.max(...idxs)];
+  if (aggType === "sum") return sum(series, idxs);
+  return avg(series, idxs);
+}
+
+function computeWeeklyRanks(def, period) {
   const valuesByCode = {};
   SITE_CODES.forEach(code => { valuesByCode[code] = def.getSeries(code); });
   const ranksByWeek = [];
+  const periodValuesByWeek = [];
   for (let w = 0; w < WEEKS.length; w++) {
-    const entries = SITE_CODES.map(code => ({ code, value: valuesByCode[code][w] }));
+    const idxs = def.noPeriodToggle ? [w] : getPeriodIndices(period, w);
+    const entries = SITE_CODES.map(code => ({ code, value: aggregateForPeriod(valuesByCode[code], idxs, def.aggType) }));
     entries.sort((a, b) => {
       const diff = def.better === 1 ? (b.value - a.value) : (a.value - b.value);
       return diff !== 0 ? diff : (+a.code - +b.code);
     });
-    const rankMap = {};
-    entries.forEach((e, i) => { rankMap[e.code] = i + 1; });
+    const rankMap = {}, valueMap = {};
+    entries.forEach((e, i) => { rankMap[e.code] = i + 1; valueMap[e.code] = e.value; });
     ranksByWeek.push(rankMap);
+    periodValuesByWeek.push(valueMap);
   }
-  return { valuesByCode, ranksByWeek };
+  return { ranksByWeek, periodValuesByWeek };
 }
 
-function buildScoreboardRows(def) {
-  const { valuesByCode, ranksByWeek } = computeWeeklyRanks(def);
+function buildScoreboardRows(def, period) {
+  const { ranksByWeek, periodValuesByWeek } = computeWeeklyRanks(def, period);
   const lastIdx = WEEKS.length - 1;
   const currentRanks = ranksByWeek[lastIdx];
   const prevRanks = lastIdx > 0 ? ranksByWeek[lastIdx - 1] : null;
+  const currentValues = periodValuesByWeek[lastIdx];
 
   const rows = SITE_CODES.map(code => {
     const rank = currentRanks[code];
-    const value = valuesByCode[code][lastIdx];
+    const value = currentValues[code];
     const prevRank = prevRanks ? prevRanks[code] : null;
     const rankChange = prevRank !== null ? prevRank - rank : null;
 
@@ -1379,13 +1481,21 @@ function buildScoreboardRows(def) {
 }
 
 function buildScoreboardCard(def) {
-  const rows = buildScoreboardRows(def);
+  const effectivePeriod = def.noPeriodToggle ? "week" : scoreboardPeriod;
+  const rows = buildScoreboardRows(def, effectivePeriod);
   const panel = document.createElement("div");
   panel.className = "panel scoreboard-card";
 
   const header = document.createElement("h2");
-  header.innerHTML = `${def.label} <span>current-week standings</span>`;
+  header.innerHTML = `${def.label} <span>${SCOREBOARD_PERIOD_LABELS[effectivePeriod]} standings</span>`;
   panel.appendChild(header);
+  if (def.noPeriodToggle) {
+    const note = document.createElement("p");
+    note.className = "stat-line";
+    note.style.cssText = "margin:-2px 0 10px;";
+    note.textContent = def.toggleNote;
+    panel.appendChild(note);
+  }
 
   const tableWrap = document.createElement("div");
   tableWrap.className = "table-scroll";
@@ -1485,7 +1595,7 @@ function buildStaffCaptureCard() {
   panel.appendChild(header);
 
   const tableWrap = document.createElement("div");
-  tableWrap.className = "table-scroll";
+  tableWrap.className = "table-scroll sb-scroll-capped";
   const table = document.createElement("table");
   table.innerHTML = `<thead><tr><th class="num">#</th><th>Employee</th><th class="num">Capture Rate</th><th>Change</th><th>Time in Rank</th></tr></thead>`;
   const tbody = document.createElement("tbody");
@@ -1537,6 +1647,16 @@ function buildStaffCaptureCard() {
   return panel;
 }
 
+const SCOREBOARD_PERIOD_PILL_LABELS = { week: "Past Week", mtd: "Month to Date", ytd: "Year to Date" };
+document.querySelectorAll("#scoreboardPeriodBar .period-pill").forEach(btn => {
+  btn.addEventListener("click", () => {
+    scoreboardPeriod = btn.dataset.period;
+    document.querySelectorAll("#scoreboardPeriodBar .period-pill").forEach(b => b.classList.toggle("active", b === btn));
+    document.getElementById("scoreboardPeriodLabel").innerHTML = `Showing: <b>${SCOREBOARD_PERIOD_PILL_LABELS[scoreboardPeriod]}</b> standings`;
+    renderScoreboard();
+  });
+});
+
 function renderScoreboard() {
   Object.values(SCOREBOARD_CONTAINER_BY_CATEGORY).forEach(id => {
     const el = document.getElementById(id);
@@ -1555,6 +1675,7 @@ function renderScoreboard() {
 
 // ---------- Init ----------
 try {
+  applySelectorVisibility("overview");
   setActiveRangePill(currentRange);
   updateRangeLabel();
   renderOverview();
